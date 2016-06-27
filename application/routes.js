@@ -8,6 +8,22 @@ const Joi = require('joi'),
   handlers = require('./controllers/handler');
 
 module.exports = function(server) {
+
+  //Upload a PPTX powerpoint presentation which is converted to HTML
+  server.route({
+    method: 'GET',
+    path: '/importPPTX',
+    handler: handlers.importPPTX,
+    config: {
+      validate: {
+        params: {
+        },
+      },
+      tags: ['api'],
+      description: 'Import PPTX presentation file to SlideWiki'
+    }
+  });
+  /*
   //Get slide with id id from database and return it (when not available, return NOT FOUND). Validate id
   server.route({
     method: 'GET',
@@ -72,4 +88,5 @@ module.exports = function(server) {
       description: 'Replace a slide'
     }
   });
+  */
 };
