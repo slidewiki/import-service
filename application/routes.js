@@ -9,8 +9,10 @@ const Joi = require('joi'),
 
 module.exports = function(server) {
 
+  //TODO figure out how I can send file as parameter - maybe filestream? should be POST!!!
   //Upload a PPTX powerpoint presentation which is converted to HTML
   server.route({
+    //will be POST
     method: 'GET',
     path: '/importPPTX',
     handler: handlers.importPPTX,

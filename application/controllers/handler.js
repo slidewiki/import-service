@@ -8,11 +8,17 @@ const boom = require('boom'), //Boom gives us some predefined http codes and pro
   slideDB = require('../database/slideDatabase'), //Database functions specific for slides
   co = require('../common');
 
+
 module.exports = {
 
 
 
-  //Get Slide from database or return NOT FOUND
+
+  //Import uploaded PPTX and transform to HTML via PPTX2HTML  or return ERROR
+  //TODO: can I run client-side non ES6 javascript in node.js?
+  //pptx2html/js/pptx2html.js uses document.ready / Jquery
+  //TODO: find out how use of reveal.js in PPTX2HTML works together with our use of
+  // reveal.js in slidewiki-platform frontend work by Huw on slide viewer.
   importPPTX: function(request, reply) {
     request.log('test', 'test');
     //slideDB.get(encodeURIComponent(request.params.id)).then((slide) => {
