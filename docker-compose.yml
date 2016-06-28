@@ -1,5 +1,5 @@
 template:
-  image: slidewiki/import-service
+  image: slidewiki/importservice
   restart: on-failure:5
   expose:
     - "80"

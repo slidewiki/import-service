@@ -1,13 +1,13 @@
 {
-  "name": "template_application",
+  "name": "import-service",
   "version": "0.1.0",
-  "description": "This is a Microservice template appication, meant to be forked.",
+  "description": "This service handles the import functionality of slidewiki.",
   "repository": {
     "type": "git",
-    "url": "https://github.com/slidewiki/Microservice-Template"
+    "url": "https://github.com/slidewiki/import-service"
   },
-  "bugs": "https://github.com/slidewiki/Microservice-Template/issues",
-  "author": "Roy Meissner (https://rmeissn.github.io/)",
+  "bugs": "https://github.com/slidewiki/import-service/issues",
+  "author": "kadevgraaf",
   "license": "MPL-2.0",
   "main": "server.js",
   "scripts": {
