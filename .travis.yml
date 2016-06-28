@@ -18,8 +18,6 @@ before_script:
 script:
 - sleep 15
 - npm run lint
-- npm run test:unit
-- npm run test:integration
 after_success:
 - cd ..
 - openssl aes-256-cbc -K $encrypted_f73c9005c43d_key -iv $encrypted_f73c9005c43d_iv -in deployment_keys.tar.enc -out deployment_keys.tar -d
