@@ -1,49 +1,64 @@
-$(document).ready(function() {
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PPTX2HTML</title>
+
+<script type="text/javascript">
+
+
+//$(document).ready(function() {
 
 	if (window.Worker) {
-		
-		var $result = $("#result");
+
+		//var $result = $("#result");
+		var result = '';
 		var isDone = false;
-		
-		$("#uploadBtn").on("change", function(evt) {
-			
+
+		//$("#uploadBtn").on("change", function(evt) {
+
 			isDone = false;
-			
-			$result.html("");
-			$("#load-progress").text("0%").attr("aria-valuenow", 0).css("width", "0%");
-			$("#result_block").removeClass("hidden").addClass("show");
-			
-			var fileName = evt.target.files[0];
-			
+
+			//$result.html("");
+			//$("#load-progress").text("0%").attr("aria-valuenow", 0).css("width", "0%");
+			//$("#result_block").removeClass("hidden").addClass("show");
+
+			//var File = evt.target.files[0];
+			var File = "test.pptx";
+
 			// Read the file
 			var reader = new FileReader();
 			reader.onload = (function(theFile) {
 				return function(e) {
-					
+
 					// Web Worker
-					var worker = new Worker('./js/worker.js');
-				
+					//var worker = new Worker('./js/worker.js');
+					var worker = new Worker('./worker.js');
+
 					worker.addEventListener('message', function(e) {
-						
+
 						var msg = e.data;
-						
+
 						switch(msg.type) {
 							case "progress-update":
-								$("#load-progress").text(msg.data.toFixed(2) + "%")
-									.attr("aria-valuenow", msg.data.toFixed(2))
-									.css("width", msg.data.toFixed(2) + "%");
+							//	$("#load-progress").text(msg.data.toFixed(2) + "%")
+								//	.attr("aria-valuenow", msg.data.toFixed(2))
+								//	.css("width", msg.data.toFixed(2) + "%");
 								break;
 							case "slide":
-								$result.append(msg.data);
+								//$result.append(msg.data);
+								result += msg.data;
 								break;
 							case "processMsgQueue":
 								processMsgQueue(msg.data);
 								break;
 							case "pptx-thumb":
-								$("#pptx-thumb").attr("src", "data:image/jpeg;base64," + msg.data);
+								//$("#pptx-thumb").attr("src", "data:image/jpeg;base64," + msg.data);
 								break;
 							case "ExecutionTime":
-								$("#info_block").html("Execution Time: " + msg.data + " (ms)");
+								//$("#info_block").html("Execution Time: " + msg.data + " (ms)");
 								isDone = true;
 								worker.postMessage({
 									"type": "getMsgQueue"
@@ -54,7 +69,8 @@ $(document).ready(function() {
 								break;
 							case "ERROR":
 								console.error('Worker: ', msg.data);
-								$("#error_block").text(msg.data);
+								//$("#error_block").text(msg.data);
+								result += msg.data;
 								break;
 							case "DEBUG":
 								console.debug('Worker: ', msg.data);
@@ -64,25 +80,25 @@ $(document).ready(function() {
 								console.info('Worker: ', msg.data);
 								//$("#info_block").html($("#info_block").html() + "<br><br>" + msg.data);
 						}
-						
+
 					}, false);
-					
+
 					worker.postMessage({
 						"type": "processPPTX",
 						"data": e.target.result
 					});
-					
+
 				}
-			})(fileName);
-			reader.readAsArrayBuffer(fileName);
-			
-		});
-		
+			})(File);
+			reader.readAsArrayBuffer(File);
+
+		//});
+		/*
 		$("#slideContentModel").on("show.bs.modal", function (e) {
 			if (!isDone) { return; }
 			$("#slideContentModel .modal-body textarea").text($result.html());
 		});
-		
+
 		$("#download-btn").click(function () {
 			if (!isDone) { return; }
 			var cssText = "";
@@ -96,36 +112,13 @@ $(document).ready(function() {
 				saveAs(blob, "slides_p.html");
 			});
 		});
-		
+
 		$("#download-reveal-btn").click(function () {
 			if (!isDone) { return; }
 			var cssText = "";
 			$.get("css/pptx2html.css", function (data) {
 				cssText = data;
 			}).done(function () {
-				var revealPrefix = 
-"<script type='text/javascript'>\
-Reveal.initialize({\
-	controls: true,\
-	progress: true,\
-	history: true,\
-	center: true,\
-	keyboard: true,\
-	slideNumber: true,\
-	\
-	theme: Reveal.getQueryHash().theme,\
-	transition: Reveal.getQueryHash().transition || 'default',\
-	\
-	dependencies: [\
-		{ src: 'lib/js/classList.js', condition: function() { return !document.body.classList; } },\
-		{ src: 'plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },\
-		{ src: 'plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },\
-		{ src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } },\
-		{ src: 'plugin/zoom-js/zoom.js', async: true, condition: function() { return !!document.body.classList; } },\
-		{ src: 'plugin/notes/notes.js', async: true, condition: function() { return !!document.body.classList; } }\
-	]\
-});\
-</script>";
 				var headHtml = "<style>" + cssText + "</style>";
 				var bodyHtml = "<div id='slides' class='slides'>" + $result.html() + "</div>";
 				var html = revealPrefix + headHtml + bodyHtml;
@@ -133,7 +126,7 @@ Reveal.initialize({\
 				saveAs(blob, "slides.html");
 			});
 		});
-		
+
 		$("#to-reveal-btn").click(function () {
 			if (localStorage) {
 				localStorage.setItem("slides", LZString.compressToUTF16($result.html()));
@@ -142,14 +135,14 @@ Reveal.initialize({\
 				alert("Browser don't support Web Storage!");
 			}
 		});
-		
+		*/
 	} else {
-		
-		alert("Browser don't support Web Worker!");
-		
+
+		alert("Browser does not support Web Worker!");
+
 	}
-	
-});
+
+//});
 
 function processMsgQueue(queue) {
 	for (var i=0; i<queue.length; i++) {
@@ -158,13 +151,13 @@ function processMsgQueue(queue) {
 }
 
 function processSingleMsg(d) {
-	
+
 	var chartID = d.chartID;
 	var chartType = d.chartType;
 	var chartData = d.chartData;
 
 	var data =  [];
-	
+
 	var chart = null;
 	switch (chartType) {
 		case "lineChart":
@@ -191,7 +184,7 @@ function processSingleMsg(d) {
 			chart.xAxis.tickFormat(function(d) { return chartData[0].xlabels[d] || d; });
 			break;
 		case "scatterChart":
-			
+
 			for (var i=0; i<chartData.length; i++) {
 				var arr = [];
 				for (var j=0; j<chartData[i].length; j++) {
@@ -199,7 +192,7 @@ function processSingleMsg(d) {
 				}
 				data.push({key: 'data' + (i + 1), values: arr});
 			}
-			
+
 			//data = chartData;
 			chart = nv.models.scatterChart()
 						.showDistX(true)
@@ -210,17 +203,23 @@ function processSingleMsg(d) {
 			break;
 		default:
 	}
-	
+
 	if (chart !== null) {
-		
+
 		d3.select("#" + chartID)
 			.append("svg")
 			.datum(data)
 			.transition().duration(500)
 			.call(chart);
-		
+
 		nv.utils.windowResize(chart.update);
-		
+
 	}
-	
+
 }
+</script>
+</head>
+
+<body>
+</body>
+</html>

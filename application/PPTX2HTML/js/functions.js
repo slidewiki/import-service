@@ -1,4 +1,5 @@
-function base64ArrayBuffer(arrayBuffer) {
+module.exports = {
+base64ArrayBuffer(arrayBuffer) {
 	var base64    = '';
 	var encodings = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 	var bytes         = new Uint8Array(arrayBuffer);
@@ -32,13 +33,13 @@ function base64ArrayBuffer(arrayBuffer) {
 	}
 
 	return base64;
-}
+},
 
-function extractFileExtension(filename) {
+ extractFileExtension(filename) {
 	return filename.substr((~-filename.lastIndexOf(".") >>> 0) + 2);
-}
+},
 
-function escapeHtml(text) {
+ escapeHtml(text) {
 	var map = {
 		'&': '&amp;',
 		'<': '&lt;',
@@ -48,3 +49,4 @@ function escapeHtml(text) {
 	};
 	return text.replace(/[&<>"']/g, function(m) { return map[m]; });
 }
+};

@@ -13,12 +13,15 @@ module.exports = function(server) {
   //Upload a PPTX powerpoint presentation which is converted to HTML
   server.route({
     //will be POST
-    method: 'GET',
+    method: 'POST',
     path: '/importPPTX',
     handler: handlers.importPPTX,
     config: {
       validate: {
         params: {
+          payload: Joi.object().keys({
+            file: Joi.string()
+          }).requiredKeys('file')
         },
       },
       tags: ['api'],
