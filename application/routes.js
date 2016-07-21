@@ -9,6 +9,8 @@ const Joi = require('joi'),
 
 module.exports = function(server) {
 
+    //TODO: try multipart multipart/form-data?
+    // SEE RISIS SERVER.JS FOR EXAMPLE
   //TODO figure out how I can send file as parameter - maybe filestream? should be POST!!!
   //Upload a PPTX powerpoint presentation which is converted to HTML
   server.route({
@@ -17,13 +19,20 @@ module.exports = function(server) {
     path: '/importPPTX',
     handler: handlers.importPPTX,
     config: {
-      validate: {
-        params: {
-          payload: Joi.object().keys({
-            file: Joi.string()
-          }).requiredKeys('file')
-        },
+      cors: true,
+      payload: {
+        parse: true,
+        //allow: 'application/vnd.openxmlformats-officedocument.presentationml.presentation' - works!
+        //allow: 'application/x-www-form-urlencoded'
+        allow: 'multipart/form-data'
       },
+      //validate: {
+    //    params: {
+    //      payload: Joi.object().keys({
+    //        file: Joi.string()
+    //      }).requiredKeys('file')
+    //    },
+     // },
       tags: ['api'],
       description: 'Import PPTX presentation file to SlideWiki'
     }

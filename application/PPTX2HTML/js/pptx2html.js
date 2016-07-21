@@ -5,7 +5,8 @@
 //import worker from './worker';
 let worker = require('./worker');
 //var FileReader = require('filereader');
-import FileReader from 'filereader';
+var FileReader = require('filereader');
+//import FileReader from 'filereader';
 
 module.exports = {
 //$(document).ready(function() {
