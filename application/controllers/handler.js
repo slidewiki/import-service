@@ -3,8 +3,8 @@ Handles the requests by executing stuff and replying to the client. Uses promise
 */
 
 'use strict';
-var util = require('util');
-var fs = require('fs');
+let util = require('util');
+let fs = require('fs');
 
 //const boom = require('boom'), //Boom gives us some predefined http codes and proper responses
   //slideDB = require('../database/slideDatabase'), //Database functions specific for slides
@@ -104,19 +104,19 @@ module.exports = {
     //console.log(pptx2html.convert(request.payload.file.files[0])); Uncaught error: Cannot read property '0' of undefined
     //console.log(pptx2html.convert(request.payload.files.files)); Cannot read property 'files' of undefined
 
-    var saveTo = './testingtests.pptx';
-    var fileStream = fs.createWriteStream(saveTo);
+    let saveTo = './testingtests.pptx';
+    let fileStream = fs.createWriteStream(saveTo);
     //fileStream.write(request.payload.file.data);
     fileStream.write(request.payload.file);
     fileStream.end();
-    fileStream.on('error', function (err) {
-        reply("error in upload!");
-        console.log("error", err);
+    fileStream.on('error', (err) => {
+      reply('error in upload!');
+      console.log('error', err);
     });
-    fileStream.on('finish', function (res) {
-        reply("upload completed!");
-        console.log("upload completed");
-});
+    fileStream.on('finish', (res) => {
+      reply('upload completed!');
+      console.log('upload completed');
+    });
 
     //console.log(result);
 
