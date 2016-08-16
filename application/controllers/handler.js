@@ -177,4 +177,16 @@ module.exports = {
     });
   },
   */
+
+
+  ,testPPTX2HTML: function(request, reply) {// Dejan added this to test pptx2html
+    if (!request.payload) {
+      let file = './PPTX2HTML/pptx samples/simple slide - notes - p1,3.pptx';
+      fs.readFile(file, (err, data) => {
+        if (err) throw err;
+        pptx2html.convert(data);
+      });
+    }
+    reply('test completed, look at the console');
+  }
 };

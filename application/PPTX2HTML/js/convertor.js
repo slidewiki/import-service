@@ -1,4 +1,4 @@
-//"use strict";
+"use strict";
 //'use strict';
 //jszip = require('./jszip.min.js');
 let JSZip = require('./jszip.min.js');
@@ -8,7 +8,7 @@ let highlight = require('./highlight.min.js');
 let colz = require('./colz.class.min.js');
 let tXml = require('./tXml.js');
 let functions = require('./functions.js');
-//import tXml from './tXml.js';
+// import tXml from './tXml.js';
 
 //TODO INCLUDE THESE SCRIPTS
 //importScripts(
@@ -22,16 +22,6 @@ let functions = require('./functions.js');
 
 
 //class Worker {
-
-var MsgQueue = new Array();
-
-var themeContent = null;
-
-var chartID = 0;
-
-var titleFontSize = 42;
-var bodyFontSize = 20;
-var otherFontSize = 16;
 
 //TODO - check if functionality from processSingleMsg (after processmsgqueue below) in pptx2html.js is missing..
 /*
@@ -52,15 +42,50 @@ onmessage = function(e) {
 
 }
 */
-module.exports = {
+//let self = module.exports = {
+class Convertor {
+    //constructor(data)
+    constructor()
+    {
+
+        this.chartID = 0;
+
+        this.titleFontSize = 42;
+        this.bodyFontSize = 20;
+        this.otherFontSize = 16;
+
+        this.filesInfo; //= this.getContentTypes(zip);
+        this.slideSize; //= this.getSlideSize(zip);
+        this.themeContent; //= this.loadTheme(zip);
+
+    //alert(this.themeContent);
+        this.slideHtml;
+        this.totalHtmlResult;
+
+        this.eachElement;
+
+
+
+
+
+        //return this.processPPTX(data);
+
+    }
+
+    //var MsgQueue = new Array();
+
+    //var themeContent = null;
 
     processPPTX(data) {
 
         let dateBefore = new Date();
 
         let zip = new JSZip(data);
+        this.filesInfo = this.getContentTypes(zip);
+        this.slideSize = this.getSlideSize(zip);
+        this.themeContent = this.loadTheme(zip);
 
-        let totalHtmlResult = '';
+        //this.totalHtmlResult = '';
 
         if (zip.file('docProps/thumbnail.jpeg') !== null) {
             let pptxThumbImg = functions.base64ArrayBuffer(zip.file('docProps/thumbnail.jpeg').asArrayBuffer());
@@ -68,22 +93,23 @@ module.exports = {
     		//	"type": "pptx-thumb",
     		//	"data": pptxThumbImg
     		//});
-            totalHtmlResult += pptxThumbImg;
+            //this.totalHtmlResult += pptxThumbImg;
         }
 
-	var filesInfo = this.getContentTypes(zip);
-	var slideSize = this.getSlideSize(zip);
-	themeContent = this.loadTheme(zip);
 
-    totalHtmlResult += filesInfo;
-    totalHtmlResult += slideSize;
-    totalHtmlResult += themeContent;
-    //console.log('test'+totalHtmlResult);
 
-	var numOfSlides = filesInfo["slides"].length;
+    this.totalHtmlResult += this.filesInfo;
+    this.totalHtmlResult += this.slideSize;
+    this.totalHtmlResult += this.themeContent;
+    //console.log('test' + this.totalHtmlResult);
+
+    this.slideHtml = '';//Dejan uncommented this to remove the first 'undefined'
+
+	var numOfSlides = this.filesInfo["slides"].length;
 	for (var i=0; i<numOfSlides; i++) {
-		var filename = filesInfo["slides"][i];
-		var slideHtml = this.processSingleSlide(zip, filename, i, slideSize);
+		var filename = this.filesInfo["slides"][i];
+		this.slideHtml += this.processSingleSlide(zip, filename, i, this.slideSize) +
+      this.processSingleSlideNotes(zip, filename, i, this.slideSize);//Dejan added this to process notes
 		//self.postMessage({
 		//	"type": "slide",
 		//	"data": slideHtml
@@ -93,8 +119,6 @@ module.exports = {
 		//	"data": (i + 1) * 100 / numOfSlides
 		//});
 	}
-    //console.log('slideHtml'+slideHtml);
-    return slideHtml;
 	var dateAfter = new Date();
 	//self.postMessage({
 	//	"type": "ExecutionTime",
@@ -102,8 +126,19 @@ module.exports = {
 	//});
     let ExecutionTime = dateAfter - dateBefore;
     console.log('execution time: '+ExecutionTime);
+    console.log('slideHtml', this.slideHtml);
 
-},
+    //console.log('slideHtml'+this.slideHtml);
+    //console.log('slideHtml'+slideHtml+'this.totalHtmlResult'+this.totalHtmlResult);
+    //this.totalHtmlResult += slideHtml;
+    return this.slideHtml;
+
+    /*TODO:
+    ALt tags (content placeholders) for images: located in p:sld, p:cSld, p:spTree, p:pic, p:nvPicPr, p:cNvPr, attrs, descr:
+    background-color, see step 3 below
+
+    */
+}
 
 readXmlFile(zip, filename) {
     let x = new tXml(zip.file(filename).asText());
@@ -112,11 +147,11 @@ readXmlFile(zip, filename) {
     //return x.getXML();
 	//return tXml.getXML(zip.file(filename).asText());
     //return tXml(zip.file(filename).asText());
-},
+}
 
 getContentTypes(zip) {
 	var ContentTypesJson = this.readXmlFile(zip, "[Content_Types].xml");
-    console.log('ContentTypesJson' + ContentTypesJson);
+    //console.log('ContentTypesJson' + ContentTypesJson);
 	var subObj = ContentTypesJson["Types"]["Override"];
 	var slidesLocArray = [];
 	var slideLayoutsLocArray = [];
@@ -135,7 +170,7 @@ getContentTypes(zip) {
 		"slides": slidesLocArray,
 		"slideLayouts": slideLayoutsLocArray
 	};
-},
+}
 
 getSlideSize(zip) {
 	// Pixel = EMUs * Resolution / 914400;  (Resolution = 96)
@@ -145,12 +180,12 @@ getSlideSize(zip) {
 		"width": parseInt(sldSzAttrs["cx"]) * 96 / 914400,
 		"height": parseInt(sldSzAttrs["cy"]) * 96 / 914400
 	};
-},
+}
 
 loadTheme(zip) {
 	var preResContent = this.readXmlFile(zip, "ppt/_rels/presentation.xml.rels");
 	var relationshipArray = preResContent["Relationships"]["Relationship"];
-    console.log(relationshipArray);
+    //console.log(relationshipArray);
 	var themeURI = undefined;
 	if (relationshipArray.constructor === Array) {
 		for (var i=0; i<relationshipArray.length; i++) {
@@ -168,7 +203,7 @@ loadTheme(zip) {
 	}
 
 	return this.readXmlFile(zip, "ppt/" + themeURI);
-},
+}
 
 processSingleSlide(zip, sldFileName, index, slideSize) {
 
@@ -241,9 +276,51 @@ processSingleSlide(zip, sldFileName, index, slideSize) {
 
 	// =====< Step 3 >=====
 	var content = this.readXmlFile(zip, sldFileName);
+    //console.log('bgcolor check, content = ' + content+ ', path = ' + ["p:sld", "p:cSld", "p:bg", "p:bgPr", "a:solidFill", "a:srgbClr", "attrs", "val"] );
+    //console.log(content);
 	var bgColor = this.getTextByPathList(content, ["p:sld", "p:cSld", "p:bg", "p:bgPr", "a:solidFill", "a:srgbClr", "attrs", "val"]);
 	if (bgColor === undefined) {
-		bgColor = "FFF";
+        //klaas: try scheme color == needs convertion to HEX RGB!!! e.g. accent2 is dark-red in default schemeClr
+        //this is an improvement over PPTX2HTML, however, the drawback is that the colors can be incorrect if a different scheme is assigned.
+        bgColor = this.getTextByPathList(content, ["p:sld", "p:cSld", "p:bg", "p:bgPr", "a:solidFill", "a:schemeClr", "attrs", "val"]);
+
+        //assign default scheme RGB color codes for powerpoint 2016 for mac
+        //this does not work well if people change the default color scheme, or if they apply a different theme
+        switch(bgColor){
+        case 'bg1':
+            bgColor = "FFFFFF";
+            break;
+        case 'tx1':
+            bgColor = "000000";
+            break;
+        case 'bg2':
+            bgColor = "E7E6E6";
+            break;
+        case 'tx2':
+            bgColor = "44546A";
+            break;
+        case 'accent1':
+            bgColor = "5B9BD5";
+            break;
+        case 'accent2':
+            bgColor = "ED7D31";
+            break;
+        case 'accent3':
+            bgColor = "A5A5A5";
+            break;
+        case 'accent4':
+            bgColor = "FFC000";
+            break;
+        case 'accent5':
+            bgColor = "4472C4";
+            break;
+        case 'accent6':
+            bgColor = "70AD47";
+            break;
+        }
+        if (bgColor === undefined) {
+		    bgColor = "FFFFFF";
+        }
 	}
 	var nodes = content["p:sld"]["p:cSld"]["p:spTree"];
 	var warpObj = {
@@ -254,20 +331,131 @@ processSingleSlide(zip, sldFileName, index, slideSize) {
 		"slideMasterTextStyles": slideMasterTextStyles
 	};
 
-	var result = "<section style='width:" + slideSize.width + "px; height:" + slideSize.height + "px; background-color: #" + bgColor + "'>"
+	//var result = "<section style='position: absolute;width:" + slideSize.width + "px; height:" + slideSize.height + "px; background-color: #" + bgColor + "'>"
+    //var result = "<div style='position: absolute;width:" + slideSize.width + "px; height:" + slideSize.height + "px; background-color: #" + bgColor + "'>"
+    //var result = "<div style='position: absolute;border-style: dotted; background-color: #" + bgColor + "' >"
+    //var result = "<div style='position: absolute;border-style: dotted; background-color: #" + bgColor + "' >"
+    var result = "<div class='pptx2html' style='position: relative;border-style: dotted;width:" + slideSize.width + "px; height:" + slideSize.height + "px; background-color: #" + bgColor + "'>"
+
 
 	for (var nodeKey in nodes) {
+        let that = this;
 		if (nodes[nodeKey].constructor === Array) {
 			for (var i=0; i<nodes[nodeKey].length; i++) {
-				result += this.processNodesInSlide(nodeKey, nodes[nodeKey][i], warpObj);
+                //console.log('nodeinslide' . nodes);
+				result += that.processNodesInSlide(nodeKey, nodes[nodeKey][i], warpObj);
 			}
 		} else {
-			result += this.processNodesInSlide(nodeKey, nodes[nodeKey], warpObj);
+			result += that.processNodesInSlide(nodeKey, nodes[nodeKey], warpObj);
+            //console.log('nodeinslide');
 		}
 	}
 
-	return result + "</section>";
-},
+	//return result + "</section>";
+    return result + "</div>";
+}
+
+processSingleSlideNotes(zip, sldFileName, index, slideSize) {
+
+	var resName = sldFileName.replace("slides/slide", "slides/_rels/slide") + ".rels";
+	var resContent = this.readXmlFile(zip, resName);
+	var RelationshipArray = resContent["Relationships"]["Relationship"];
+
+  var notesFilename = "";
+
+	if (RelationshipArray.constructor === Array) {
+		for (var i=0; i<RelationshipArray.length; i++) {
+			switch (RelationshipArray[i]["attrs"]["Type"]) {
+				case "http://schemas.openxmlformats.org/officeDocument/2006/relationships/notesSlide":
+					notesFilename = RelationshipArray[i]["attrs"]["Target"].replace("../", "ppt/");
+					break;
+				default:
+
+			}
+		}
+	}
+
+  var notesResult = "";
+  if (notesFilename !== "") {
+    // Open notesSlideXX.xml
+    var notesSlideContent = this.readXmlFile(zip, notesFilename);
+    var notesSlideTables = this.indexNodes(notesSlideContent);
+
+    //THIS IS LIKE STEP 2 FOR NOTES
+    var notesSlideResFilename = notesFilename.replace("notesSlides/notesSlide", "notesSlides/_rels/notesSlide") + ".rels";
+  	var notesSlideResContent = this.readXmlFile(zip, notesSlideResFilename);
+  	RelationshipArray = notesSlideResContent["Relationships"]["Relationship"];
+
+
+  	var notesMasterFilename = "";
+  	if (RelationshipArray.constructor === Array) {
+  		for (var i=0; i<RelationshipArray.length; i++) {
+  			switch (RelationshipArray[i]["attrs"]["Type"]) {
+  				case "http://schemas.openxmlformats.org/officeDocument/2006/relationships/notesMaster":
+  					notesMasterFilename = RelationshipArray[i]["attrs"]["Target"].replace("../", "ppt/");
+  					break;
+  				default:
+  			}
+  		}
+  	} else {
+  		notesMasterFilename = RelationshipArray["attrs"]["Target"].replace("../", "ppt/");
+  	}
+  	// Open notesMasterXX.xml
+  	var notesMasterContent = this.readXmlFile(zip, notesMasterFilename);
+    //THERE ARE NO TXSTYLES IN THE FILE
+  	// var notesMasterTextStyles = this.getTextByPathList(notesMasterContent, ["p:sldMaster", "p:txStyles"]);
+  	var notesMasterTables = this.indexNodes(notesMasterContent);
+
+    //THIS IS LIKE STEP 3 FOR NOTES
+    var notesContent = this.readXmlFile(zip, notesFilename);
+    var notesNodes = notesContent["p:notes"]["p:cSld"]["p:spTree"];
+    // console.log(notesNodes);
+
+    var notesWarpObj = {
+      "zip": zip//,
+      //"slideMasterTables": notesMasterTables// Don't use notes master settings - we probably won't display it as in the PowerPoint Notes Page (with slide image, slide number, date,...)
+    };
+
+    var notesHeight = slideSize.height * 1.5;
+
+    var notes = "";
+
+    for (var nodeKey in notesNodes) {
+      let that = this;
+      if (notesNodes[nodeKey].constructor === Array) {
+        for (var i=0; i<notesNodes[nodeKey].length; i++) {
+          // Extract only nodes with notes (disregard Slide Image, Slide Number,... )
+        	if (that.isNodeNotesPlaceholder(notesNodes[nodeKey][i])) {
+            notes += that.processNodesInSlide(nodeKey, notesNodes[nodeKey][i], notesWarpObj);
+          }
+        }
+      } else {
+        if (that.isNodeNotesPlaceholder(notesNodes[nodeKey])) {
+          notes += that.processNodesInSlide(nodeKey, notesNodes[nodeKey], notesWarpObj);
+        }
+      }
+    }
+
+    if (notes !== "") {
+      notesResult = "<div class='pptx2html' style='position: relative;left:" + (slideSize.width + 5) + "px;top:-" + slideSize.height + "px;'>" +
+      notes +
+      "</div>";
+    }
+    // console.log('notes', notesResult);
+  }
+
+  return notesResult;
+}
+
+isNodeNotesPlaceholder(node) {//test if the node is a notes placeholder
+  var name;
+  if ((node["p:nvSpPr"] !== undefined) &&
+    (node["p:nvSpPr"]["p:cNvPr"] !== undefined) &&
+    (node["p:nvSpPr"]["p:cNvPr"]["attrs"] !== undefined)) {
+      name = node["p:nvSpPr"]["p:cNvPr"]["attrs"]["name"];
+  }
+  return (name !== undefined && name.startsWith("Notes Placeholder"));
+}
 
 indexNodes(content) {
 
@@ -287,11 +475,12 @@ indexNodes(content) {
 		var targetNode = spTreeNode[key];
 
 		if (targetNode.constructor === Array) {
+            let that = this;
 			for (var i=0; i<targetNode.length; i++) {
 				var nvSpPrNode = targetNode[i]["p:nvSpPr"];
-				var id = this.getTextByPathList(nvSpPrNode, ["p:cNvPr", "attrs", "id"]);
-				var idx = this.getTextByPathList(nvSpPrNode, ["p:nvPr", "p:ph", "attrs", "idx"]);
-				var type = this.getTextByPathList(nvSpPrNode, ["p:nvPr", "p:ph", "attrs", "type"]);
+				var id = that.getTextByPathList(nvSpPrNode, ["p:cNvPr", "attrs", "id"]);
+				var idx = that.getTextByPathList(nvSpPrNode, ["p:nvPr", "p:ph", "attrs", "idx"]);
+				var type = that.getTextByPathList(nvSpPrNode, ["p:nvPr", "p:ph", "attrs", "type"]);
 
 				if (id !== undefined) {
 					idTable[id] = targetNode[i];
@@ -323,7 +512,7 @@ indexNodes(content) {
 	}
 
 	return {"idTable": idTable, "idxTable": idxTable, "typeTable": typeTable};
-},
+}
 
 processNodesInSlide(nodeKey, nodeValue, warpObj) {
 
@@ -350,7 +539,7 @@ processNodesInSlide(nodeKey, nodeValue, warpObj) {
 
 	return result;
 
-},
+}
 
 processGroupSpNode(node, warpObj) {
 
@@ -368,7 +557,7 @@ processGroupSpNode(node, warpObj) {
 
 	var order = node["attrs"]["order"];
 
-	var result = "<div class='block group' style='z-index: " + order + "; top: " + (y - chy) + "px; left: " + (x - chx) + "px; width: " + (cx - chcx) + "px; height: " + (cy - chcy) + "px;'>";
+	var result = "<div class='block group' style='position: absolute;z-index: " + order + "; top: " + (y - chy) + "px; left: " + (x - chx) + "px; width: " + (cx - chcx) + "px; height: " + (cy - chcy) + "px;'>";
 
 	// Procsee all child nodes
 	for (var nodeKey in node) {
@@ -384,7 +573,7 @@ processGroupSpNode(node, warpObj) {
 	result += "</div>";
 
 	return result;
-},
+}
 
 processSpNode(node, warpObj) {
 
@@ -410,17 +599,29 @@ processSpNode(node, warpObj) {
 	var slideMasterSpNode = undefined;
 
 	if (type !== undefined) {
-		if (idx !== undefined) {
-			slideLayoutSpNode = warpObj["slideLayoutTables"]["typeTable"][type];
-			slideMasterSpNode = warpObj["slideMasterTables"]["typeTable"][type];
+		if (idx !== undefined) {//Dejan thinks there might be something wrong with this below (same assignment in both cases)
+      if (warpObj["slideLayoutTables"] !== undefined) {//Dejan added these ifs to enable processing of notes
+			  slideLayoutSpNode = warpObj["slideLayoutTables"]["typeTable"][type];
+      }
+      if (warpObj["slideMasterTables"] !== undefined) {
+	      slideMasterSpNode = warpObj["slideMasterTables"]["typeTable"][type];
+      }
 		} else {
-			slideLayoutSpNode = warpObj["slideLayoutTables"]["typeTable"][type];
-			slideMasterSpNode = warpObj["slideMasterTables"]["typeTable"][type];
+      if (warpObj["slideLayoutTables"] !== undefined) {
+			  slideLayoutSpNode = warpObj["slideLayoutTables"]["typeTable"][type];
+      }
+      if (warpObj["slideMasterTables"] !== undefined) {
+        slideMasterSpNode = warpObj["slideMasterTables"]["typeTable"][type];
+      }
 		}
 	} else {
 		if (idx !== undefined) {
-			slideLayoutSpNode = warpObj["slideLayoutTables"]["idxTable"][idx];
-			slideMasterSpNode = warpObj["slideMasterTables"]["idxTable"][idx];
+      if (warpObj["slideLayoutTables"] !== undefined) {
+			  slideLayoutSpNode = warpObj["slideLayoutTables"]["idxTable"][idx];
+      }
+      if (warpObj["slideMasterTables"] !== undefined) {
+        slideMasterSpNode = warpObj["slideMasterTables"]["idxTable"][idx];
+      }
 		} else {
 			// Nothing
 		}
@@ -437,7 +638,7 @@ processSpNode(node, warpObj) {
 	//debug( JSON.stringify( node ) );
 
 	return this.genShape(node, slideLayoutSpNode, slideMasterSpNode, id, name, idx, type, order, warpObj["slideMasterTextStyles"]);
-},
+}
 
 processCxnSpNode(node, warpObj) {
 
@@ -451,7 +652,7 @@ processCxnSpNode(node, warpObj) {
 	this.debug( {"id": id, "name": name, "order": order} );
 
 	return this.genShape(node, undefined, undefined, id, name, undefined, undefined, order, warpObj["slideMasterTextStyles"]);
-},
+}
 
 genShape(node, slideLayoutSpNode, slideMasterSpNode, id, name, idx, type, order, slideMasterTextStyles) {
 
@@ -479,7 +680,7 @@ genShape(node, slideLayoutSpNode, slideMasterSpNode, id, name, idx, type, order,
 		var h = parseInt(ext["cy"]) * 96 / 914400;
 
 		result += "<svg class='drawing' _id='" + id + "' _idx='" + idx + "' _type='" + type + "' _name='" + name +
-				"' style='" +
+				"' style='position: absolute;" +
 					this.getPosition(slideXfrmNode, undefined, undefined) +
 					this.getSize(slideXfrmNode, undefined, undefined) +
 					" z-index: " + order + ";" +
@@ -751,7 +952,7 @@ genShape(node, slideLayoutSpNode, slideMasterSpNode, id, name, idx, type, order,
 
 		result += "<div class='block content " + this.getVerticalAlign(node, slideLayoutSpNode, slideMasterSpNode, type) +
 				"' _id='" + id + "' _idx='" + idx + "' _type='" + type + "' _name='" + name +
-				"' style='" +
+				"' style='position: absolute;" +
 					this.getPosition(slideXfrmNode, slideLayoutXfrmNode, slideMasterXfrmNode) +
 					this.getSize(slideXfrmNode, slideLayoutXfrmNode, slideMasterXfrmNode) +
 					" z-index: " + order + ";" +
@@ -765,26 +966,29 @@ genShape(node, slideLayoutSpNode, slideMasterSpNode, id, name, idx, type, order,
 
 	} else {
 
-		result += "<div class='block content " + this.getVerticalAlign(node, slideLayoutSpNode, slideMasterSpNode, type) +
-				"' _id='" + id + "' _idx='" + idx + "' _type='" + type + "' _name='" + name +
-				"' style='" +
-					this.getPosition(slideXfrmNode, slideLayoutXfrmNode, slideMasterXfrmNode) +
-					this.getSize(slideXfrmNode, slideLayoutXfrmNode, slideMasterXfrmNode) +
-					this.getBorder(node, false) +
-					this.getFill(node, false) +
-					" z-index: " + order + ";" +
-				"'>";
-
-		// TextBody
-		if (node["p:txBody"] !== undefined) {
-			result += this.genTextBody(node["p:txBody"], slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles);
-		}
-		result += "</div>";
+    var textBody = "";
+    // TextBody
+    if (node["p:txBody"] !== undefined) {
+      textBody = this.genTextBody(node["p:txBody"], slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles);
+    }
+    if (textBody !== undefined && textBody !== "") {//Dejan added this to prevent creation of some undefined and empty elements (sldImg in NotesPage)
+    		result += "<div class='block content " + this.getVerticalAlign(node, slideLayoutSpNode, slideMasterSpNode, type) +
+    				"' _id='" + id + "' _idx='" + idx + "' _type='" + type + "' _name='" + name +
+    				"' style='position: absolute;" +
+    					this.getPosition(slideXfrmNode, slideLayoutXfrmNode, slideMasterXfrmNode) +
+    					this.getSize(slideXfrmNode, slideLayoutXfrmNode, slideMasterXfrmNode) +
+    					this.getBorder(node, false) +
+    					this.getFill(node, false) +
+    					" z-index: " + order + ";" +
+    				"'>" +
+            textBody +
+            "</div>";
+    }
 
 	}
 
 	return result;
-},
+}
 
 processPicNode(node, warpObj) {
 
@@ -819,10 +1023,20 @@ processPicNode(node, warpObj) {
 		default:
 			mimeType = "image/*";
 	}
-	return "<div class='block content' style='" + this.getPosition(xfrmNode, undefined, undefined) + this.getSize(xfrmNode, undefined, undefined) +
+
+  //Dejan added this to create the img alt tag
+  var descr = node["p:nvPicPr"]["p:cNvPr"]["attrs"]["descr"];
+  var altTag = "";
+  if (descr !== undefined) {
+    altTag = " alt=\"" + descr + "\"";
+  }
+
+	return "<div class='block content' style='position: absolute;" + this.getPosition(xfrmNode, undefined, undefined) + this.getSize(xfrmNode, undefined, undefined) +
 			" z-index: " + order + ";" +
-			"'><img src=\"data:" + mimeType + ";base64," + functions.base64ArrayBuffer(imgArrayBuffer) + "\" style='width: 100%; height: 100%'/></div>";
-},
+			"'><img src=\"data:" + mimeType + ";base64," + functions.base64ArrayBuffer(imgArrayBuffer) + "\" style='position: absolute;width: 100%; height: 100%'" +
+          altTag +
+          "/></div>";
+}
 
 processGraphicFrameNode(node, warpObj) {
 
@@ -843,7 +1057,7 @@ processGraphicFrameNode(node, warpObj) {
 	}
 
 	return result;
-},
+}
 
 processSpPrNode(node, warpObj) {
 
@@ -864,7 +1078,7 @@ processSpPrNode(node, warpObj) {
 	 */
 
 	// TODO:
-},
+}
 
 genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles) {
 
@@ -917,7 +1131,7 @@ genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, slideMaste
 	}
 
 	return text;
-},
+}
 
 genBuChar(node) {
 
@@ -955,18 +1169,61 @@ genBuChar(node) {
 	}
 
 	return "";
-},
+}
 
 genSpanElement(node, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles) {
 
-	var text = node["a:t"];
+	let text = node["a:t"]; //Klaas: makes object out of text this while it might need to be string...? (since this is about getSpanElement)
+    //text = text[0]; //does not always return array
+    /*["History of copied items is shared between branches", attrs: Object]
+0:"History of copied items is shared between branches"
+attrs:Object
+length:1
+__proto__: Array[0]
+*/
+    //console.log('genSpanElement() text = ');
+//TODO THIS LOG    console.log(text);
+    //console.log('genSpanElement() type of text = ' + typeof text);
+    //console.log('genSpanElement() node = ');
+    ///console.log(node);
 	if (typeof text !== 'string') {
-		text = this.getTextByPathList(node, ["a:fld", "a:t"]);
+        //Klaas: getTextByPathList() gets undefefined node if it contains text...
+		//text = this.getTextByPathList(node, ["a:fld", "a:t"]);
+        text = this.getTextByPathList(node, ["a:t"]);
+        //console.log('genSpanElement() type of text, AFTER = ' + typeof text);
+
+        //if (typeof text !== undefined && typeof text !== 'string') { //klaas test
+        //    if (typeof text[0] === 'string') { //klaas test
+        //        text = text[0]; //klaas test
+        //    } //klaas test
+        //} //klaas test
 		if (typeof text !== 'string') {
-			text = "&nbsp;";
-			//debug("XXX: " + JSON.stringify(node));
+			//text = "&nbsp;";
+            if (typeof text !== 'undefined') { //klaas test
+                text = text[0]; //klaas test
+            } //klaas test
+			this.debug("XXX: " + JSON.stringify(node));
 		}
 	}
+
+  //Dejan added this to handle slide numbers
+  if (typeof text !== 'string' && type === 'sldNum') {
+    text = this.getTextByPathList(node, ["a:fld", "a:t"]);
+    if (typeof text !== 'string') {
+			//text = "&nbsp;";
+            if (typeof text !== 'undefined') { //klaas test
+                text = text[0]; //klaas test
+            } //klaas test
+			this.debug("XXX: " + JSON.stringify(node));
+		}
+  }
+    //console.log('text = ' + text);
+    //Dejan added this to prevent creation of some undefined elements - is this the right way to do it, perhaps sometimes there is some element in this node?
+  if (text === undefined) {
+    // console.log(node);
+    return "";
+  }
+
 
 	return "<span class='text-block' style='color: " + this.getFontColor(node, type, slideMasterTextStyles) +
 				"; font-size: " + this.getFontSize(node, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles) +
@@ -975,15 +1232,16 @@ genSpanElement(node, slideLayoutSpNode, slideMasterSpNode, type, slideMasterText
 				"; font-style: " + this.getFontItalic(node, type, slideMasterTextStyles) +
 				"; text-decoration: " + this.getFontDecoration(node, type, slideMasterTextStyles) +
 				"; vertical-align: " + this.getTextVerticalAlign(node, type, slideMasterTextStyles) +
-				";'>" + text.replace(/\s/i, "&nbsp;") + "</span>";
-},
+                ";'>" + text + "</span>";
+				//";'>" + text.replace(/\s/i, "&nbsp;") + "</span>";
+}
 
 genTable(node, warpObj) {
 
 	var order = node["attrs"]["order"];
 	var tableNode = this.getTextByPathList(node, ["a:graphic", "a:graphicData", "a:tbl"]);
 	var xfrmNode = this.getTextByPathList(node, ["p:xfrm"]);
-	var tableHtml = "<table style='" + this.getPosition(xfrmNode, undefined, undefined) + this.getSize(xfrmNode, undefined, undefined) + " z-index: " + order + ";'>";
+	var tableHtml = "<table style='position: absolute;" + this.getPosition(xfrmNode, undefined, undefined) + this.getSize(xfrmNode, undefined, undefined) + " z-index: " + order + ";'>";
 
 	var trNodes = tableNode["a:tr"];
 	if (trNodes.constructor === Array) {
@@ -1028,13 +1286,13 @@ genTable(node, warpObj) {
 	}
 
 	return tableHtml;
-},
+}
 
 genChart(node, warpObj) {
 
 	var order = node["attrs"]["order"];
 	var xfrmNode = this.getTextByPathList(node, ["p:xfrm"]);
-	var result = "<div id='chart" + chartID + "' class='block content' style='" +
+	var result = "<div id='chart" + this.chartID + "' class='block content' style='position: absolute;" +
 					this.getPosition(xfrmNode, undefined, undefined) + this.getSize(xfrmNode, undefined, undefined) +
 					" z-index: " + order + ";'></div>";
 
@@ -1050,7 +1308,7 @@ genChart(node, warpObj) {
 				chartData = {
 					"type": "createChart",
 					"data": {
-						"chartID": "chart" + chartID,
+						"this.chartID": "chart" + this.chartID,
 						"chartType": "lineChart",
 						"chartData": this.extractChartData(plotArea[key]["c:ser"])
 					}
@@ -1060,7 +1318,7 @@ genChart(node, warpObj) {
 				chartData = {
 					"type": "createChart",
 					"data": {
-						"chartID": "chart" + chartID,
+						"this.chartID": "chart" + this.chartID,
 						"chartType": "barChart",
 						"chartData": this.extractChartData(plotArea[key]["c:ser"])
 					}
@@ -1070,7 +1328,7 @@ genChart(node, warpObj) {
 				chartData = {
 					"type": "createChart",
 					"data": {
-						"chartID": "chart" + chartID,
+						"this.chartID": "chart" + this.chartID,
 						"chartType": "pieChart",
 						"chartData": this.extractChartData(plotArea[key]["c:ser"])
 					}
@@ -1080,7 +1338,7 @@ genChart(node, warpObj) {
 				chartData = {
 					"type": "createChart",
 					"data": {
-						"chartID": "chart" + chartID,
+						"this.chartID": "chart" + this.chartID,
 						"chartType": "pie3DChart",
 						"chartData": this.extractChartData(plotArea[key]["c:ser"])
 					}
@@ -1090,7 +1348,7 @@ genChart(node, warpObj) {
 				chartData = {
 					"type": "createChart",
 					"data": {
-						"chartID": "chart" + chartID,
+						"this.chartID": "chart" + this.chartID,
 						"chartType": "areaChart",
 						"chartData": this.extractChartData(plotArea[key]["c:ser"])
 					}
@@ -1100,7 +1358,7 @@ genChart(node, warpObj) {
 				chartData = {
 					"type": "createChart",
 					"data": {
-						"chartID": "chart" + chartID,
+						"this.chartID": "chart" + this.chartID,
 						"chartType": "scatterChart",
 						"chartData": this.extractChartData(plotArea[key]["c:ser"])
 					}
@@ -1114,21 +1372,21 @@ genChart(node, warpObj) {
 		}
 	}
 
-	if (chartData !== null) {
-		MsgQueue.push(chartData);
-	}
+	//if (chartData !== null) {
+//		MsgQueue.push(chartData);
+//	}
 
-	chartID++;
+	this.chartID++;
 	return result;
-},
+}
 
 genDiagram(node, warpObj) {
 	var order = node["attrs"]["order"];
 	var xfrmNode = this.getTextByPathList(node, ["p:xfrm"]);
-	return "<div class='block content' style='border: 1px dotted;" +
+	return "<div class='block content' style='position: absolute;border: 1px dotted;" +
 				this.getPosition(xfrmNode, undefined, undefined) + this.getSize(xfrmNode, undefined, undefined) +
 			"'>TODO: diagram</div>";
-},
+}
 
 getPosition(slideSpNode, slideLayoutSpNode, slideMasterSpNode) {
 
@@ -1154,7 +1412,7 @@ getPosition(slideSpNode, slideLayoutSpNode, slideMasterSpNode) {
 		return (isNaN(x) || isNaN(y)) ? "" : "top:" + y + "px; left:" + x + "px;";
 	}
 
-},
+}
 
 getSize(slideSpNode, slideLayoutSpNode, slideMasterSpNode) {
 
@@ -1180,7 +1438,7 @@ getSize(slideSpNode, slideLayoutSpNode, slideMasterSpNode) {
 		return (isNaN(w) || isNaN(h)) ? "" : "width:" + w + "px; height:" + h + "px;";
 	}
 
-},
+}
 
 getHorizontalAlign(node, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles) {
 	//debug(node);
@@ -1211,7 +1469,7 @@ getHorizontalAlign(node, slideLayoutSpNode, slideMasterSpNode, type, slideMaster
 		}
 	}
 	return algn === "ctr" ? "h-mid" : algn === "r" ? "h-right" : "h-left";
-},
+}
 
 getVerticalAlign(node, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles) {
 
@@ -1225,13 +1483,13 @@ getVerticalAlign(node, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTe
 	}
 
 	return anchor === "ctr" ? "v-mid" : anchor === "b" ?  "v-down" : "v-up";
-},
+}
 
 getFontType(node, type, slideMasterTextStyles) {
 	var typeface = this.getTextByPathList(node, ["a:rPr", "a:latin", "attrs", "typeface"]);
 
 	if (typeface === undefined) {
-		var fontSchemeNode = this.getTextByPathList(themeContent, ["a:theme", "a:themeElements", "a:fontScheme"]);
+		var fontSchemeNode = this.getTextByPathList(this.themeContent, ["a:theme", "a:themeElements", "a:fontScheme"]);
 		if (type == "title" || type == "subTitle" || type == "ctrTitle") {
 			typeface = this.getTextByPathList(fontSchemeNode, ["a:majorFont", "a:latin", "attrs", "typeface"]);
 		} else if (type == "body") {
@@ -1242,12 +1500,12 @@ getFontType(node, type, slideMasterTextStyles) {
 	}
 
 	return (typeface === undefined) ? "inherit" : typeface;
-},
+}
 
 getFontColor(node, type, slideMasterTextStyles) {
 	var color = this.getTextByPathStr(node, "a:rPr a:solidFill a:srgbClr attrs val");
 	return (color === undefined) ? "#000" : "#" + color;
-},
+}
 
 getFontSize(node, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles) {
 	var fontSize = undefined;
@@ -1279,19 +1537,19 @@ getFontSize(node, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextSty
 	}
 
 	return isNaN(fontSize) ? "inherit" : (fontSize + "pt");
-},
+}
 
 getFontBold(node, type, slideMasterTextStyles) {
 	return (node["a:rPr"] !== undefined && node["a:rPr"]["attrs"]["b"] === "1") ? "bold" : "initial";
-},
+}
 
 getFontItalic(node, type, slideMasterTextStyles) {
 	return (node["a:rPr"] !== undefined && node["a:rPr"]["attrs"]["i"] === "1") ? "italic" : "normal";
-},
+}
 
 getFontDecoration(node, type, slideMasterTextStyles) {
 	return (node["a:rPr"] !== undefined && node["a:rPr"]["attrs"]["u"] === "sng") ? "underline" : "initial";
-},
+}
 
 getTextVerticalAlign(node, type, slideMasterTextStyles) {
 	var baseline = this.getTextByPathList(node, ["a:rPr", "attrs", "baseline"]);
@@ -1301,7 +1559,7 @@ getTextVerticalAlign(node, type, slideMasterTextStyles) {
 		baseline = parseInt(baseline) / 1000;
 		return baseline + "%";
 	}
-},
+}
 
 getBorder(node, isSvgMode) {
 
@@ -1414,7 +1672,7 @@ getBorder(node, isSvgMode) {
 	} else {
 		return cssText + ";";
 	}
-},
+}
 
 getFill(node, isSvgMode) {
 
@@ -1457,7 +1715,7 @@ getFill(node, isSvgMode) {
 			lumOff = 0;
 		}
 		//console.log([lumMod, lumOff]);
-		fillColor = applyLumModify(fillColor, lumMod, lumOff);
+		fillColor = this.applyLumModify(fillColor, lumMod, lumOff);
 
 		if (isSvgMode) {
 			return fillColor;
@@ -1473,7 +1731,7 @@ getFill(node, isSvgMode) {
 
 	}
 
-},
+}
 
 getSchemeColorFromTheme(schemeClr) {
 	// TODO: <p:clrMap ...> in slide master
@@ -1484,18 +1742,18 @@ getSchemeColorFromTheme(schemeClr) {
 		case "a:bg1": schemeClr = "a:lt1"; break;
 		case "a:bg2": schemeClr = "a:lt2"; break;
 	}
-	var refNode = this.getTextByPathList(themeContent, ["a:theme", "a:themeElements", "a:clrScheme", schemeClr]);
+	var refNode = this.getTextByPathList(this.themeContent, ["a:theme", "a:themeElements", "a:clrScheme", schemeClr]);
 	var color = this.getTextByPathList(refNode, ["a:srgbClr", "attrs", "val"]);
 	if (color === undefined) {
 		color = this.getTextByPathList(refNode, ["a:sysClr", "attrs", "lastClr"]);
 	}
 	return color;
-},
+}
 
 extractChartData(serNode) {
 
 	var dataMat = new Array();
-
+    let that = this; //Klaas - FIXED
 	if (serNode["c:xVal"] !== undefined) {
 		var dataRow = new Array();
 		this.eachElement(serNode["c:xVal"]["c:numRef"]["c:numCache"]["c:pt"], function(innerNode, index) {
@@ -1510,21 +1768,26 @@ extractChartData(serNode) {
 		});
 		dataMat.push(dataRow);
 	} else if (serNode["c:val"] !== undefined) {
+
 		this.eachElement(serNode, function(innerNode, index) {
 			var dataRow = new Array();
-			var colName = this.getTextByPathList(innerNode, ["c:tx", "c:strRef", "c:strCache", "c:pt", "c:v"]) || index;
+            //Klaas: Typeerrorconvertor.js:1538 Uncaught TypeError: Cannot read property 'getTextByPathList' of undefined
+            //Klaas: is problem with scoping? it should work, unless there is recursion. then we need
+            //Klaas: ES7 => fat arrow, .bind(this) or that = this to keep track of lexical/dynamic scope
+			//var colName = this.getTextByPathList(innerNode, ["c:tx", "c:strRef", "c:strCache", "c:pt", "c:v"]) || index;
+            var colName = that.getTextByPathList(innerNode, ["c:tx", "c:strRef", "c:strCache", "c:pt", "c:v"]) || index;
 
 			// Category
 			var rowNames = {};
-			if (this.getTextByPathList(innerNode, ["c:cat", "c:strRef", "c:strCache", "c:pt"]) !== undefined) {
-				this.eachElement(innerNode["c:cat"]["c:strRef"]["c:strCache"]["c:pt"], function(innerNode, index) {
+			if (that.getTextByPathList(innerNode, ["c:cat", "c:strRef", "c:strCache", "c:pt"]) !== undefined) {
+				that.eachElement(innerNode["c:cat"]["c:strRef"]["c:strCache"]["c:pt"], function(innerNode, index) {
 					rowNames[innerNode["attrs"]["idx"]] = innerNode["c:v"];
 					return "";
 				});
 			}
 
 			// Value
-			this.eachElement(innerNode["c:val"]["c:numRef"]["c:numCache"]["c:pt"], function(innerNode, index) {
+			that.eachElement(innerNode["c:val"]["c:numRef"]["c:numCache"]["c:pt"], function(innerNode, index) {
 				dataRow.push({x: innerNode["attrs"]["idx"], y: parseFloat(innerNode["c:v"])});
 				return "";
 			});
@@ -1537,7 +1800,7 @@ extractChartData(serNode) {
 	}
 
 	return dataMat;
-},
+}
 
 // ===== Node functions =====
 /**
@@ -1547,7 +1810,9 @@ extractChartData(serNode) {
  */
 getTextByPathStr(node, pathStr) {
 	return this.getTextByPathList(node, pathStr.trim().split(/\s+/));
-},
+    //http://www.w3schools.com/jsref/jsref_split.asp
+    //return this.getTextByPathList(node, pathStr.trim().split(","));
+}
 
 /**
  * getTextByPathList
@@ -1566,14 +1831,20 @@ getTextByPathList(node, path) {
 
 	var l = path.length;
 	for (var i=0; i<l; i++) {
-		node = node[path[i]];
+        //klaas: this might be something that goes wrong...
+//TODO THIS LOG        console.log('node = ' + node + 'path = ' +  path[i]);
+        //console.log('node = ' + node + 'path = ' +  path);
+        //console.log('node = ' + node + 'path.lenght = ' +  l);
+//TODO THIS LOG        console.log(node);
+		node = node[path[i]]; //!!!
+
 		if (node === undefined) {
 			return undefined;
 		}
 	}
 
 	return node;
-},
+}
 
 /**
  * eachElement
@@ -1594,7 +1865,7 @@ eachElement(node, doFunction) {
 		result += doFunction(node, 0);
 	}
 	return result;
-},
+}
 
 // ===== Color functions =====
 /**
@@ -1606,7 +1877,7 @@ applyShade(rgbStr, shadeValue) {
 	var color = new colz.Color(rgbStr);
 	color.setLum(color.hsl.l * shadeValue);
 	return color.rgb.toString();
-},
+}
 
 /**
  * applyTint
@@ -1617,7 +1888,7 @@ applyTint(rgbStr, tintValue) {
 	var color = new colz.Color(rgbStr);
 	color.setLum(color.hsl.l * tintValue + (1 - tintValue));
 	return color.rgb.toString();
-},
+}
 
 /**
  * applyLumModify
@@ -1630,7 +1901,7 @@ applyLumModify(rgbStr, factor, offset) {
 	//color.setLum(color.hsl.l * factor);
 	color.setLum(color.hsl.l * (1 + offset));
 	return color.rgb.toString();
-},
+}
 
 // ===== Debug functions =====
 /**
@@ -1639,6 +1910,10 @@ applyLumModify(rgbStr, factor, offset) {
  */
 debug(data) {
 	//self.postMessage({"type": "DEBUG", "data": data});
-    console.log(data);
+    //console.log(data);
 }
+}
+// export default Convertor;
+module.exports = {
+  Convertor
 };

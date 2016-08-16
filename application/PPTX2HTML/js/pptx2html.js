@@ -2,11 +2,22 @@
 //require ('worker');
 //import worker from 'worker';
 //let worker = require('worker');
-//import worker from './worker';
-let worker = require('./worker');
+// import Convertor from './convertor';
+let Convertor = require('./convertor.js');
+//let worker = require('./worker');
+//import fs from 'fs';
 //var FileReader = require('filereader');
-var FileReader = require('filereader');
+//import React from 'react';
+//import {connectToStores} from 'fluxible-addons-react';
+//import {NavLink, navigateAction} from 'fluxible-router';
+//var FileReader = require('filereader');
+//var fs = require('fs');
 //import FileReader from 'filereader';
+//const fs = require('fs');
+//var FileReader = require('filereader')
+ // , fileReader = new FileReader()
+//  ;
+//import importFrontEnd from '../../../../actions/importFrontEnd';
 
 module.exports = {
 //$(document).ready(function() {
@@ -33,7 +44,9 @@ module.exports = {
             //let fileName = file;
 
 			// Read the file
-            let reader = new FileReader();
+      let convertor = new Convertor.Convertor();
+      let test = convertor.processPPTX(file);
+            // let reader = new FileReader();
             /*
             reader.onload = (function(theFile) {
                 return function(e) {
@@ -104,18 +117,23 @@ module.exports = {
                 };
             })(file);
             */
-            reader.onload = function(e) {
-                //let arrayBuffer = reader.result;
-                //e.target.result
-                //worker.processPPTX(arrayBuffer);
-                //console.log('reader result' + reader.result)
-                let test = worker.processPPTX(reader.result);
-                //console.log(test);
-                return test;
-                //return worker.processPPTX(reader.result);
-            };
-            //worker.processPPTX(arrayBuffer);
-            reader.readAsArrayBuffer(file);
+            // reader.onload = function(e) {
+            //     //let arrayBuffer = reader.result;
+            //     //e.target.result
+            //     //worker.processPPTX(arrayBuffer);
+            //     //console.log('reader result' + reader.result)
+            //     //let worker = new Worker('test');
+            //     //let convertor = new Convertor(reader.result);
+            //     let convertor = new Convertor();
+            //     let test = convertor.processPPTX(reader.result);
+            //     //console.log(test);
+            //     $('#test').html(test);
+            //     //return test;
+            //     //this.context.executeAction(loadImportFile, {file: htmlConvert});
+            //     //return worker.processPPTX(reader.result);
+            // };
+            // //worker.processPPTX(arrayBuffer);
+            // reader.readAsArrayBuffer(file);
 
 
 		//});
