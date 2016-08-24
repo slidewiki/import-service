@@ -104,10 +104,10 @@ module.exports = {
     //console.log(pptx2html.convert(request.payload.file.files[0])); Uncaught error: Cannot read property '0' of undefined
     //console.log(pptx2html.convert(request.payload.files.files)); Cannot read property 'files' of undefined
 
-    let saveTo = './testingtests.pptx';
+    let saveTo = './' + request.payload.filename;
     let fileStream = fs.createWriteStream(saveTo);
     //fileStream.write(request.payload.file.data);
-    fileStream.write(request.payload.file);
+    fileStream.write(request.payload.file, "binary");
     fileStream.end();
     fileStream.on('error', (err) => {
       reply('error in upload!');
