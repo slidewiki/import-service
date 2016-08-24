@@ -107,7 +107,7 @@ module.exports = {
     let saveTo = './' + request.payload.filename;
     let fileStream = fs.createWriteStream(saveTo);
     //fileStream.write(request.payload.file.data);
-    fileStream.write(request.payload.file, "binary");
+    fileStream.write(request.payload.file, 'binary');
     fileStream.end();
     fileStream.on('error', (err) => {
       reply('error in upload!');
