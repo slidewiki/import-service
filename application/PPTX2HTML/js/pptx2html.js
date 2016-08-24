@@ -45,7 +45,7 @@ module.exports = {
 
 			// Read the file
       let convertor = new Convertor.Convertor();
-      let test = convertor.processPPTX(file);
+      return convertor.processPPTX(file);
             // let reader = new FileReader();
             /*
             reader.onload = (function(theFile) {

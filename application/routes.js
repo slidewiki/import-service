@@ -56,7 +56,7 @@ module.exports = function(server) {
     //    },
      // },
       tags: ['api'],
-      description: 'Test PPTX2HTML library (read local pptx file)'
+      description: 'Test PPTX2HTML library (read a local pptx file)'
     }
   });
   /*

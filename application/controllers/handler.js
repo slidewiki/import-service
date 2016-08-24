@@ -114,7 +114,9 @@ module.exports = {
       console.log('error', err);
     });
     fileStream.on('finish', (res) => {
-      reply('upload completed!');
+      // reply('upload completed!');
+      reply pptx2html.convert(request.payload.file);
+
       console.log('upload completed');
     });
 
