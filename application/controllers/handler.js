@@ -281,7 +281,7 @@ function createSlide(user, license, deckId, slide) {
     root_deck: String(deckId),
     parent_deck: {
       id: String(deckId),
-      revision: "1"
+      revision: '1'
     },
     license: license
   };
