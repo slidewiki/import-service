@@ -21,7 +21,7 @@ let Convertor = require('./convertor.js');
 
 module.exports = {
 //$(document).ready(function() {
-    convert(file)
+    convert(file, callback)
     {
         //TODO remove dependency on worker (worker runs in separate thread. Perhaps use node.js worker for performance?)
         //if (window.Worker) {
@@ -45,7 +45,7 @@ module.exports = {
 
 			// Read the file
       let convertor = new Convertor.Convertor();
-      return convertor.processPPTX(file);
+      return convertor.processPPTX(file, callback);
             // let reader = new FileReader();
             /*
             reader.onload = (function(theFile) {

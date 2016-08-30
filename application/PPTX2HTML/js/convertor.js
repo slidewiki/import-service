@@ -64,10 +64,11 @@ class Convertor {
 
         this.eachElement;
 
-
-
-
-
+        this.currentSlide = {
+          title: '',
+          content: '',
+          notes: ''
+        };
         //return this.processPPTX(data);
 
     }
@@ -76,7 +77,7 @@ class Convertor {
 
     //var themeContent = null;
 
-    processPPTX(data) {
+    processPPTX(data, callback) {
 
         let dateBefore = new Date();
 
@@ -108,8 +109,11 @@ class Convertor {
 	var numOfSlides = this.filesInfo["slides"].length;
 	for (var i=0; i<numOfSlides; i++) {
 		var filename = this.filesInfo["slides"][i];
-		this.slideHtml += this.processSingleSlide(zip, filename, i, this.slideSize) +
-      this.processSingleSlideNotes(zip, filename, i, this.slideSize);//Dejan added this to process notes
+
+    this.currentSlide.content = this.processSingleSlide(zip, filename, i, this.slideSize);
+    this.currentSlide.notes = this.processSingleSlideNotes(zip, filename, i, this.slideSize);//Dejan added this to process notes
+
+    this.slideHtml += this.currentSlide.content + this.currentSlide.notes;
 		//self.postMessage({
 		//	"type": "slide",
 		//	"data": slideHtml
@@ -118,6 +122,13 @@ class Convertor {
 		//	"type": "progress-update",
 		//	"data": (i + 1) * 100 / numOfSlides
 		//});
+
+    callback(this.currentSlide);
+    this.currentSlide = {
+      title: '',
+      content: '',
+      notes: ''
+    };
 	}
 	var dateAfter = new Date();
 	//self.postMessage({
@@ -126,7 +137,7 @@ class Convertor {
 	//});
     let ExecutionTime = dateAfter - dateBefore;
     console.log('execution time: '+ExecutionTime);
-    console.log('slideHtml', this.slideHtml);
+    // console.log('slideHtml', this.slideHtml);
 
     //console.log('slideHtml'+this.slideHtml);
     //console.log('slideHtml'+slideHtml+'this.totalHtmlResult'+this.totalHtmlResult);
@@ -1024,6 +1035,14 @@ processPicNode(node, warpObj) {
 			mimeType = "image/*";
 	}
 
+
+
+
+  // this.saveImageToFile(imgName, zip);//Uncomment to save image to file
+
+
+
+
   //Dejan added this to create the img alt tag
   var descr = node["p:nvPicPr"]["p:cNvPr"]["attrs"]["descr"];
   var altTag = "";
@@ -1036,6 +1055,23 @@ processPicNode(node, warpObj) {
 			"'><img src=\"data:" + mimeType + ";base64," + functions.base64ArrayBuffer(imgArrayBuffer) + "\" style='position: absolute;width: 100%; height: 100%'" +
           altTag +
           "/></div>";
+}
+
+saveImageToFile(imgName, zip) {
+  let fs = require('fs');
+  const imgNameArray = imgName.split('/');
+  const simpleImgName = imgNameArray[imgNameArray.length - 1];
+  // let saveTo = './' + imgName;
+  const saveTo = './' + simpleImgName;
+  let fileStream = fs.createWriteStream(saveTo);
+  fileStream.write(zip.file(imgName).asBinary(), 'binary');
+  fileStream.end();
+  fileStream.on('error', (err) => {
+    console.log('error', err);
+  });
+  fileStream.on('finish', (res) => {
+    console.log('save completed: ', simpleImgName);
+  });
 }
 
 processGraphicFrameNode(node, warpObj) {
@@ -1098,14 +1134,23 @@ genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, slideMaste
 			if (rNode === undefined) {
 				// without r
 				text += this.genSpanElement(pNode, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles);
+        if (type == "title" || type == "subTitle" || type == "ctrTitle") {
+          this.currentSlide.title += this.getText(pNode);
+        }
 			} else if (rNode.constructor === Array) {
 				// with multi r
 				for (var j=0; j<rNode.length; j++) {
 					text += this.genSpanElement(rNode[j], slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles);
+          if (type == "title" || type == "subTitle" || type == "ctrTitle") {
+            this.currentSlide.title += this.getText(rNode[j]);
+          }
 				}
 			} else {
 				// with one r
 				text += this.genSpanElement(rNode, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles);
+        if (type == "title" || type == "subTitle" || type == "ctrTitle") {
+          this.currentSlide.title += this.getText(rNode);
+        }
 			}
 			text += "</div>";
 		}
@@ -1118,19 +1163,41 @@ genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, slideMaste
 		if (rNode === undefined) {
 			// without r
 			text += this.genSpanElement(pNode, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles);
+      if (type == "title" || type == "subTitle" || type == "ctrTitle") {
+        this.currentSlide.title += this.getText(pNode);
+      }
 		} else if (rNode.constructor === Array) {
 			// with multi r
 			for (var j=0; j<rNode.length; j++) {
 				text += this.genSpanElement(rNode[j], slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles);
+        if (type == "title" || type == "subTitle" || type == "ctrTitle") {
+          this.currentSlide.title += this.getText(rNode[j]);
+        }
 			}
 		} else {
 			// with one r
 			text += this.genSpanElement(rNode, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles);
+      if (type == "title" || type == "subTitle" || type == "ctrTitle") {
+        this.currentSlide.title += this.getText(rNode);
+      }
 		}
 		text += "</div>";
 	}
 
 	return text;
+}
+
+getText(node) {//Get raw text from a:r (a:p) node - for the slide title
+  let text = node["a:t"];
+	if (typeof text !== 'string') {
+    text = this.getTextByPathList(node, ["a:t"]);
+		if (typeof text !== 'string') {
+      if (typeof text !== 'undefined') {
+          text = text[0];
+      }
+		}
+	}
+  return text;
 }
 
 genBuChar(node) {

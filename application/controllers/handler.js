@@ -41,7 +41,7 @@ module.exports = {
 
     //console.log(request.payload.file); //<Buffer 50 4b 03 04
     //console.log(request.payload); //{ file: <Buffer 50 4b 0
-    console.log(request.params); // {}
+    // console.log(request.params); // {}
     //console.log('file sent to service: request.payload' + request.payload); [object object]
     //console.log('file sent to service: request.params' + request.params);
     //console.log('file sent to service: request.file' + request.file);
@@ -52,9 +52,9 @@ module.exports = {
     //console.log('file sent to service: request.files.file.size' + request.files.file.data);
     //console.log('file sent to service: request.params.files.file.size' + request.files.file.size);
     //console.log(util.inspect(request.params, {showHidden: true, depth: 100}));
-    console.log(util.inspect(request.payload.file.data, {showHidden: true, depth: 100})); //undefined
-    console.log(util.inspect(request.payload.file, {showHidden: true, depth: 100})); ////<Buffer 50 4b 03 04
-    console.log(util.inspect(request.payload, {showHidden: true, depth: 100}));//{ file: <Buffer 50 4b 0
+    // console.log(util.inspect(request.payload.file.data, {showHidden: true, depth: 100})); //undefined
+    // console.log(util.inspect(request.payload.file, {showHidden: true, depth: 100})); ////<Buffer 50 4b 03 04
+    // console.log(util.inspect(request.payload, {showHidden: true, depth: 100}));//{ file: <Buffer 50 4b 0
 
     //req.params.name
     //console.log('file sent to service: request.payload.size: ' + request.payload.size);
@@ -104,7 +104,12 @@ module.exports = {
     //console.log(pptx2html.convert(request.payload.file.files[0])); Uncaught error: Cannot read property '0' of undefined
     //console.log(pptx2html.convert(request.payload.files.files)); Cannot read property 'files' of undefined
 
-    let saveTo = './' + request.payload.filename;
+    const user = request.payload.user;
+    const license = request.payload.license;
+    const fileName = request.payload.filename;
+    const deckName = fileName.split('.')[0];
+
+    let saveTo = './' + fileName;
     let fileStream = fs.createWriteStream(saveTo);
     //fileStream.write(request.payload.file.data);
     fileStream.write(request.payload.file, 'binary');
@@ -115,10 +120,29 @@ module.exports = {
     });
     fileStream.on('finish', (res) => {
       // reply('upload completed!');
-      reply (pptx2html.convert(request.payload.file));
-
       console.log('upload completed');
     });
+
+
+
+    return createDeck(user, license, deckName).then((deck) => {
+      pptx2html.convert(request.payload.file, (slide) => {
+        // console.log('user', user);
+        // console.log('license', license);
+        // console.log('id', id);
+        //   console.log('slide', slide);
+        createSlide(user, license, deck.id, slide);
+      });
+
+      reply('import completed').header('deckId', deck.id);
+
+    }).catch((error) => {
+      request.log('error', error);
+      reply(boom.badImplementation());
+    });
+
+
+
 
     //console.log(result);
 
@@ -192,3 +216,106 @@ module.exports = {
     reply('test completed, look at the console');
   }
 };
+
+//Send a request to insert new deck
+function createDeck(user, license, deckName) {
+  // console.log('deck', user, license, deckName);
+  let myPromise = new Promise((resolve, reject) => {
+    let http = require('http');
+
+    let data = JSON.stringify({
+      user: user,
+      license: license,
+      title: deckName
+    });
+
+    const Microservices = require('../configs/microservices');
+    let options = {
+      host: Microservices.deck.uri,
+      port: 80,
+      path: '/deck/new',
+      method: 'POST',
+      headers : {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-cache',
+        'Content-Length': data.length
+      }
+    };
+
+    let req = http.request(options, (res) => {
+      // console.log('STATUS: ' + res.statusCode);
+      // console.log('HEADERS: ' + JSON.stringify(res.headers));
+      res.setEncoding('utf8');
+      res.on('data', (chunk) => {
+        // console.log('Response: ', chunk);
+        let newDeckId = JSON.parse(chunk);
+
+        resolve(newDeckId);
+      });
+    });
+    req.on('error', (e) => {
+      console.log('problem with request: ' + e.message);
+      reject(e);
+    });
+    req.write(data);
+    req.end();
+  });
+
+  return myPromise;
+}
+
+//Send a request to insert new slide
+function createSlide(user, license, deckId, slide) {
+  let http = require('http');
+  let he = require('he');
+
+  //Encode special characters (e.g. bullets)
+  let encodedContent = he.encode(slide.content, {allowUnsafeSymbols: true});
+  let encodedNotes = he.encode(slide.notes, {allowUnsafeSymbols: true});
+
+  let jsonData = {
+    title: (slide.title !== '') ? slide.title : 'New slide',//It is not allowed to be empty
+    content: encodedContent,
+    speakernotes:encodedNotes,
+    user: user,
+    root_deck: String(deckId),
+    parent_deck: {
+      id: String(deckId),
+      revision: "1"
+    },
+    license: license
+  };
+
+  if (slide.notes === '') {//It is not allowed for speakernotes to be empty
+    delete jsonData.speakernotes;
+  }
+  let data = JSON.stringify(jsonData);
+  console.log('slidedata',data);
+  const Microservices = require('../configs/microservices');
+  let options = {
+    host: Microservices.deck.uri,
+    port: 80,
+    path: '/slide/new',
+    method: 'POST',
+    headers : {
+      'Content-Type': 'application/json',
+      'Cache-Control': 'no-cache',
+      'Content-Length': data.length
+    }
+  };
+
+  let req = http.request(options, (res) => {
+    // console.log('STATUS: ' + res.statusCode);
+    // console.log('HEADERS: ' + JSON.stringify(res.headers));
+    res.setEncoding('utf8');
+    res.on('data', (chunk) => {
+      // console.log('Response: ', chunk);
+
+    });
+  });
+  req.on('error', (e) => {
+    console.log('problem with request: ' + e.message);
+  });
+  req.write(data);
+  req.end();
+}
