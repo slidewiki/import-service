@@ -64,6 +64,8 @@ class Convertor {
 
         this.eachElement;
 
+        this.slides = [];
+
         this.currentSlide = {
           title: '',
           content: '',
@@ -77,7 +79,7 @@ class Convertor {
 
     //var themeContent = null;
 
-    processPPTX(data, callback) {
+    processPPTX(data) {
 
         let dateBefore = new Date();
 
@@ -123,7 +125,7 @@ class Convertor {
 		//	"data": (i + 1) * 100 / numOfSlides
 		//});
 
-    callback(this.currentSlide);
+    this.slides.push(this.currentSlide);
     this.currentSlide = {
       title: '',
       content: '',
@@ -142,7 +144,8 @@ class Convertor {
     //console.log('slideHtml'+this.slideHtml);
     //console.log('slideHtml'+slideHtml+'this.totalHtmlResult'+this.totalHtmlResult);
     //this.totalHtmlResult += slideHtml;
-    return this.slideHtml;
+    // return this.slideHtml;
+    return this.slides;
 
     /*TODO:
     ALt tags (content placeholders) for images: located in p:sld, p:cSld, p:spTree, p:pic, p:nvPicPr, p:cNvPr, attrs, descr:
