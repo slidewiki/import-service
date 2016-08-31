@@ -232,7 +232,7 @@ function createDeck(user, license, deckName) {
     const Microservices = require('../configs/microservices');
     let options = {
       host: Microservices.deck.uri,
-      port: 80,
+      port: Microservices.deck.port,
       path: '/deck/new',
       method: 'POST',
       headers : {
@@ -294,7 +294,7 @@ function createSlide(user, license, deckId, slide) {
   const Microservices = require('../configs/microservices');
   let options = {
     host: Microservices.deck.uri,
-    port: 80,
+    port: Microservices.deck.port,
     path: '/slide/new',
     method: 'POST',
     headers : {
