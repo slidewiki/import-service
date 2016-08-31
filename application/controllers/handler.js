@@ -150,28 +150,6 @@ module.exports = {
     });
 
 
-function createNodesRecursive(user, license, deckId, previousSlideId, slides, index) {
-  let selector = {
-    'id': String(deckId) + '-1',
-    'spath': String(previousSlideId) + '-1:' + String(index + 1),
-    'sid': String(previousSlideId) + '-1',
-    'stype': 'slide'
-  };
-  let nodeSpec = {
-    'id': '0',
-    'type': 'slide'
-  };
-  createDeckTreeNode(selector, nodeSpec, user).then((node) => {
-    console.log('node', node);
-    updateSlide(node.id, user, license, deckId, slides[index]);
-
-    if (index >= slides.length - 1) {//Last one
-      return;
-    } else {
-      createNodesRecursive(deckId, node.id, slides, index + 1);
-    }
-  });
-}
 
     //console.log(result);
 
@@ -245,6 +223,30 @@ function createNodesRecursive(user, license, deckId, previousSlideId, slides, in
     reply('test completed, look at the console');
   }
 };
+
+function createNodesRecursive(user, license, deckId, previousSlideId, slides, index) {
+  let selector = {
+    'id': String(deckId) + '-1',
+    'spath': String(previousSlideId) + '-1:' + String(index + 1),
+    'sid': String(previousSlideId) + '-1',
+    'stype': 'slide'
+  };
+  let nodeSpec = {
+    'id': '0',
+    'type': 'slide'
+  };
+  createDeckTreeNode(selector, nodeSpec, user).then((node) => {
+    console.log('node', node);
+    updateSlide(node.id, user, license, deckId, slides[index]);
+
+    if (index >= slides.length - 1) {//Last one
+      return;
+    } else {
+      createNodesRecursive(deckId, node.id, slides, index + 1);
+    }
+  });
+}
+
 
 //Send a request to insert new deck
 function createDeck(user, license, deckName) {
@@ -380,7 +382,6 @@ function updateSlide(slideId, user, license, deckId, slide) {
   let http = require('http');
   let he = require('he');
 
-      console.log('user', user);
   //Encode special characters (e.g. bullets)
   let encodedContent = he.encode(slide.content, {allowUnsafeSymbols: true});
   let encodedNotes = he.encode(slide.notes, {allowUnsafeSymbols: true});
