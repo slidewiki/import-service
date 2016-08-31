@@ -235,14 +235,14 @@ function createNodesRecursive(user, license, deckId, previousSlideId, slides, in
     'id': '0',
     'type': 'slide'
   };
+
   createDeckTreeNode(selector, nodeSpec, user).then((node) => {
-    console.log('node', node);
     updateSlide(node.id, user, license, deckId, slides[index]);
 
     if (index >= slides.length - 1) {//Last one
       return;
     } else {
-      createNodesRecursive(deckId, node.id, slides, index + 1);
+      createNodesRecursive(user, license, deckId, node.id, slides, (index + 1));
     }
   });
 }
