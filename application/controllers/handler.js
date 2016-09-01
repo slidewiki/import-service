@@ -139,6 +139,9 @@ module.exports = {
         // }
         createNodesRecursive(user, license, deck.id, slideId, slides, 1);
 
+      }).catch((error) => {
+        request.log('error', error);
+        reply(boom.badImplementation());
       });
 
 
@@ -244,6 +247,9 @@ function createNodesRecursive(user, license, deckId, previousSlideId, slides, in
     } else {
       createNodesRecursive(user, license, deckId, node.id, slides, (index + 1));
     }
+  }).catch((error) => {
+    request.log('error', error);
+    reply(boom.badImplementation());
   });
 }
 
