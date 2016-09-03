@@ -6,6 +6,8 @@ Handles the requests by executing stuff and replying to the client. Uses promise
 let util = require('util');
 let fs = require('fs');
 
+const Microservices = require('../configs/microservices');
+
 //const boom = require('boom'), //Boom gives us some predefined http codes and proper responses
   //slideDB = require('../database/slideDatabase'), //Database functions specific for slides
   //co = require('../common');
@@ -109,21 +111,35 @@ module.exports = {
     const fileName = request.payload.filename;
     const deckName = fileName.split('.')[0];
 
-    let saveTo = './' + fileName;
-    let fileStream = fs.createWriteStream(saveTo);
-    //fileStream.write(request.payload.file.data);
-    fileStream.write(request.payload.file, 'binary');
-    fileStream.end();
-    fileStream.on('error', (err) => {
-      reply('error in upload!');
-      console.log('error', err);
-    });
-    fileStream.on('finish', (res) => {
-      // reply('upload completed!');
-      console.log('upload completed');
+    let data_url = request.payload.file;
+    let buffer = new Buffer(data_url.split(',')[1], 'base64');
+
+    fs.writeFile('./' + fileName, buffer, (err) => {
+      if (err) {
+        reply('error in upload!');
+        console.log('error', err);
+      } else {
+        console.log('upload completed');
+      }
     });
 
-    let slides = pptx2html.convert(request.payload.file);
+
+    //
+    // let saveTo = './' + fileName;
+    // let fileStream = fs.createWriteStream(saveTo);
+    // //fileStream.write(request.payload.file.data);
+    // fileStream.write(request.payload.file, 'binary');
+    // fileStream.end();
+    // fileStream.on('error', (err) => {
+    //   reply('error in upload!');
+    //   console.log('error', err);
+    // });
+    // fileStream.on('finish', (res) => {
+    //   // reply('upload completed!');
+    //   console.log('upload completed');
+    // });
+
+    let slides = pptx2html.convert(buffer);
 
     return createDeck(user, license, deckName).then((deck) => {
       updateFirstSlideOfADeck(user, license, deck.id, slides[0]).then((slideId) => {
@@ -266,7 +282,6 @@ function createDeck(user, license, deckName) {
       title: deckName
     });
 
-    const Microservices = require('../configs/microservices');
     let options = {
       host: Microservices.deck.uri,
       port: Microservices.deck.port,
@@ -311,7 +326,6 @@ function createDeckTreeNode(selector, nodeSpec, user) {
       user: String(user)
     });
 
-    const Microservices = require('../configs/microservices');
     let options = {
       host: Microservices.deck.uri,
       port: Microservices.deck.port,
@@ -351,7 +365,6 @@ function updateFirstSlideOfADeck(user, license, deckId, slide) {
   let myPromise = new Promise((resolve, reject) => {
     let http = require('http');
 
-    const Microservices = require('../configs/microservices');
     let options = {
       host: Microservices.deck.uri,
       port: Microservices.deck.port,
@@ -410,7 +423,6 @@ function updateSlide(slideId, user, license, deckId, slide) {
   }
   let data = JSON.stringify(jsonData);
 
-  const Microservices = require('../configs/microservices');
   let options = {
     host: Microservices.deck.uri,
     port: Microservices.deck.port,
@@ -440,56 +452,55 @@ function updateSlide(slideId, user, license, deckId, slide) {
 }
 
 //Send a request to insert new slide
-function createSlide(user, license, deckId, slide) {
-  let http = require('http');
-  let he = require('he');
-
-  //Encode special characters (e.g. bullets)
-  let encodedContent = he.encode(slide.content, {allowUnsafeSymbols: true});
-  let encodedNotes = he.encode(slide.notes, {allowUnsafeSymbols: true});
-
-  let jsonData = {
-    title: (slide.title !== '') ? slide.title : 'New slide',//It is not allowed to be empty
-    content: encodedContent,
-    speakernotes:encodedNotes,
-    user: user,
-    root_deck: String(deckId),
-    parent_deck: {
-      id: String(deckId),
-      revision: '1'
-    },
-    license: license
-  };
-
-  if (slide.notes === '') {//It is not allowed for speakernotes to be empty
-    delete jsonData.speakernotes;
-  }
-  let data = JSON.stringify(jsonData);
-  const Microservices = require('../configs/microservices');
-  let options = {
-    host: Microservices.deck.uri,
-    port: Microservices.deck.port,
-    path: '/slide/new',
-    method: 'POST',
-    headers : {
-      'Content-Type': 'application/json',
-      'Cache-Control': 'no-cache',
-      'Content-Length': data.length
-    }
-  };
-
-  let req = http.request(options, (res) => {
-    // console.log('STATUS: ' + res.statusCode);
-    // console.log('HEADERS: ' + JSON.stringify(res.headers));
-    res.setEncoding('utf8');
-    res.on('data', (chunk) => {
-      // console.log('Response: ', chunk);
-
-    });
-  });
-  req.on('error', (e) => {
-    console.log('problem with request: ' + e.message);
-  });
-  req.write(data);
-  req.end();
-}
+// function createSlide(user, license, deckId, slide) {
+//   let http = require('http');
+//   let he = require('he');
+//
+//   //Encode special characters (e.g. bullets)
+//   let encodedContent = he.encode(slide.content, {allowUnsafeSymbols: true});
+//   let encodedNotes = he.encode(slide.notes, {allowUnsafeSymbols: true});
+//
+//   let jsonData = {
+//     title: (slide.title !== '') ? slide.title : 'New slide',//It is not allowed to be empty
+//     content: encodedContent,
+//     speakernotes:encodedNotes,
+//     user: user,
+//     root_deck: String(deckId),
+//     parent_deck: {
+//       id: String(deckId),
+//       revision: '1'
+//     },
+//     license: license
+//   };
+//
+//   if (slide.notes === '') {//It is not allowed for speakernotes to be empty
+//     delete jsonData.speakernotes;
+//   }
+//   let data = JSON.stringify(jsonData);
+//   let options = {
+//     host: Microservices.deck.uri,
+//     port: Microservices.deck.port,
+//     path: '/slide/new',
+//     method: 'POST',
+//     headers : {
+//       'Content-Type': 'application/json',
+//       'Cache-Control': 'no-cache',
+//       'Content-Length': data.length
+//     }
+//   };
+//
+//   let req = http.request(options, (res) => {
+//     // console.log('STATUS: ' + res.statusCode);
+//     // console.log('HEADERS: ' + JSON.stringify(res.headers));
+//     res.setEncoding('utf8');
+//     res.on('data', (chunk) => {
+//       // console.log('Response: ', chunk);
+//
+//     });
+//   });
+//   req.on('error', (e) => {
+//     console.log('problem with request: ' + e.message);
+//   });
+//   req.write(data);
+//   req.end();
+// }

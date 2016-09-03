@@ -7,6 +7,8 @@ Each route implementes a basic parameter/payload validation and a swagger API do
 const Joi = require('joi'),
   handlers = require('./controllers/handler');
 
+const MAX_FILESIZE = 300 * 1024 * 1024;
+
 module.exports = function(server) {
 
     //TODO: try multipart multipart/form-data?
@@ -21,6 +23,7 @@ module.exports = function(server) {
     config: {
       cors: true,
       payload: {
+        maxBytes: MAX_FILESIZE,
         parse: true,
         //allow: 'application/vnd.openxmlformats-officedocument.presentationml.presentation' - works!
         //allow: 'application/x-www-form-urlencoded'
