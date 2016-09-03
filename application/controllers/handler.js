@@ -401,12 +401,14 @@ function updateSlide(slideId, user, license, deckId, slide) {
   let http = require('http');
   let he = require('he');
 
+  let slideTitle = replaceSpecialSymbols(slide.title);//deck tree does not display some encoded symbols properly
+  slideTitle = he.encode(slideTitle, {allowUnsafeSymbols: true});//encode some symbols which were not replaced
   //Encode special characters (e.g. bullets)
   let encodedContent = he.encode(slide.content, {allowUnsafeSymbols: true});
   let encodedNotes = he.encode(slide.notes, {allowUnsafeSymbols: true});
 
   let jsonData = {
-    title: (slide.title !== '') ? slide.title : 'New slide',//It is not allowed to be empty
+    title: (slideTitle !== '') ? slideTitle : 'New slide',//It is not allowed to be empty
     content: encodedContent,
     speakernotes:encodedNotes,
     user: String(user),
@@ -449,6 +451,19 @@ function updateSlide(slideId, user, license, deckId, slide) {
   });
   req.write(data);
   req.end();
+}
+
+function replaceSpecialSymbols(string) {
+  let newString = string.replace('’', '\'');
+  newString = newString.replace('‘', '\'');
+  newString = newString.replace('“', '"');
+  newString = newString.replace('”', '"');
+  newString = newString.replace('„', '"');
+  newString = newString.replace('…', '...');
+  newString = newString.replace('—', '-');
+  newString = newString.replace('–', '-');//not the same as previous
+  newString = newString.replace('&amp;', '&');
+  return newString;
 }
 
 //Send a request to insert new slide
