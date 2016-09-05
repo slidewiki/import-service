@@ -1127,6 +1127,10 @@ genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, slideMaste
 		return text;
 	}
 
+  let title = '';
+  let subTitle = '';
+  let ctrTitle = '';
+
 	if (textBodyNode["a:p"].constructor === Array) {
 		// multi p
 		for (var i=0; i<textBodyNode["a:p"].length; i++) {
@@ -1137,22 +1141,37 @@ genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, slideMaste
 			if (rNode === undefined) {
 				// without r
 				text += this.genSpanElement(pNode, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles);
-        if (type == "title" || type == "subTitle" || type == "ctrTitle") {
-          this.currentSlide.title += this.getText(pNode);
+
+        if (type === 'title' ) {
+          title += this.getText(pNode);
+        } else if (type === 'subTitle') {
+          subTitle += this.getText(pNode);
+        } else if (type === 'ctrTitle') {
+          ctrTitle += this.getText(pNode);
         }
 			} else if (rNode.constructor === Array) {
 				// with multi r
 				for (var j=0; j<rNode.length; j++) {
 					text += this.genSpanElement(rNode[j], slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles);
-          if (type == "title" || type == "subTitle" || type == "ctrTitle") {
-            this.currentSlide.title += this.getText(rNode[j]);
+
+          if (type === 'title' ) {
+            title += this.getText(rNode[j]);
+          } else if (type === 'subTitle') {
+            subTitle += this.getText(rNode[j]);
+          } else if (type === 'ctrTitle') {
+            ctrTitle += this.getText(rNode[j]);
           }
 				}
 			} else {
 				// with one r
 				text += this.genSpanElement(rNode, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles);
-        if (type == "title" || type == "subTitle" || type == "ctrTitle") {
-          this.currentSlide.title += this.getText(rNode);
+
+        if (type === 'title' ) {
+          title += this.getText(rNode);
+        } else if (type === 'subTitle') {
+          subTitle += this.getText(rNode);
+        } else if (type === 'ctrTitle') {
+          ctrTitle += this.getText(rNode);
         }
 			}
 			text += "</div>";
@@ -1166,26 +1185,44 @@ genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, slideMaste
 		if (rNode === undefined) {
 			// without r
 			text += this.genSpanElement(pNode, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles);
-      if (type == "title" || type == "subTitle" || type == "ctrTitle") {
-        this.currentSlide.title += this.getText(pNode);
+
+      if (type === 'title' ) {
+        title += this.getText(pNode);
+      } else if (type === 'subTitle') {
+        subTitle += this.getText(pNode);
+      } else if (type === 'ctrTitle') {
+        ctrTitle += this.getText(pNode);
       }
 		} else if (rNode.constructor === Array) {
 			// with multi r
 			for (var j=0; j<rNode.length; j++) {
 				text += this.genSpanElement(rNode[j], slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles);
-        if (type == "title" || type == "subTitle" || type == "ctrTitle") {
-          this.currentSlide.title += this.getText(rNode[j]);
+
+        if (type === 'title' ) {
+          title += this.getText(rNode[j]);
+        } else if (type === 'subTitle') {
+          subTitle += this.getText(rNode[j]);
+        } else if (type === 'ctrTitle') {
+          ctrTitle += this.getText(rNode[j]);
         }
 			}
 		} else {
 			// with one r
 			text += this.genSpanElement(rNode, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles);
-      if (type == "title" || type == "subTitle" || type == "ctrTitle") {
-        this.currentSlide.title += this.getText(rNode);
+
+      if (type === 'title' ) {
+        title += this.getText(rNode);
+      } else if (type === 'subTitle') {
+        subTitle += this.getText(rNode);
+      } else if (type === 'ctrTitle') {
+        ctrTitle += this.getText(rNode);
       }
 		}
 		text += "</div>";
 	}
+  if (type === 'title' || type === 'subTitle' || type === 'ctrTitle') {
+    this.currentSlide.title = (title !== '') ? title : (ctrTitle !== '') ? ctrTitle : subTitle;
+  }
 
 	return text;
 }
