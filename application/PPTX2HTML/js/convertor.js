@@ -115,7 +115,10 @@ class Convertor {
     this.currentSlide.content = this.processSingleSlide(zip, filename, i, this.slideSize);
     this.currentSlide.notes = this.processSingleSlideNotes(zip, filename, i, this.slideSize);//Dejan added this to process notes
 
-    this.slideHtml += this.currentSlide.content + this.currentSlide.notes;
+    this.slideHtml += this.currentSlide.content +
+    "<div class='pptx2html' style='position: relative;left:" + (this.slideSize.width + 5) + "px;top:-" + this.slideSize.height + "px;'>" +
+    this.currentSlide.notes +
+    "</div>";
 		//self.postMessage({
 		//	"type": "slide",
 		//	"data": slideHtml
@@ -389,36 +392,36 @@ processSingleSlideNotes(zip, sldFileName, index, slideSize) {
 		}
 	}
 
-  var notesResult = "";
+  var notes = "";
   if (notesFilename !== "") {
     // Open notesSlideXX.xml
-    var notesSlideContent = this.readXmlFile(zip, notesFilename);
-    var notesSlideTables = this.indexNodes(notesSlideContent);
+    // var notesSlideContent = this.readXmlFile(zip, notesFilename);
+    // var notesSlideTables = this.indexNodes(notesSlideContent);
 
     //THIS IS LIKE STEP 2 FOR NOTES
-    var notesSlideResFilename = notesFilename.replace("notesSlides/notesSlide", "notesSlides/_rels/notesSlide") + ".rels";
-  	var notesSlideResContent = this.readXmlFile(zip, notesSlideResFilename);
-  	RelationshipArray = notesSlideResContent["Relationships"]["Relationship"];
+    // var notesSlideResFilename = notesFilename.replace("notesSlides/notesSlide", "notesSlides/_rels/notesSlide") + ".rels";
+  	// var notesSlideResContent = this.readXmlFile(zip, notesSlideResFilename);
+  	// RelationshipArray = notesSlideResContent["Relationships"]["Relationship"];
 
 
-  	var notesMasterFilename = "";
-  	if (RelationshipArray.constructor === Array) {
-  		for (var i=0; i<RelationshipArray.length; i++) {
-  			switch (RelationshipArray[i]["attrs"]["Type"]) {
-  				case "http://schemas.openxmlformats.org/officeDocument/2006/relationships/notesMaster":
-  					notesMasterFilename = RelationshipArray[i]["attrs"]["Target"].replace("../", "ppt/");
-  					break;
-  				default:
-  			}
-  		}
-  	} else {
-  		notesMasterFilename = RelationshipArray["attrs"]["Target"].replace("../", "ppt/");
-  	}
+  	// var notesMasterFilename = "";
+  	// if (RelationshipArray.constructor === Array) {
+  	// 	for (var i=0; i<RelationshipArray.length; i++) {
+  	// 		switch (RelationshipArray[i]["attrs"]["Type"]) {
+  	// 			case "http://schemas.openxmlformats.org/officeDocument/2006/relationships/notesMaster":
+  	// 				notesMasterFilename = RelationshipArray[i]["attrs"]["Target"].replace("../", "ppt/");
+  	// 				break;
+  	// 			default:
+  	// 		}
+  	// 	}
+  	// } else {
+  	// 	notesMasterFilename = RelationshipArray["attrs"]["Target"].replace("../", "ppt/");
+  	// }
   	// Open notesMasterXX.xml
-  	var notesMasterContent = this.readXmlFile(zip, notesMasterFilename);
+  	// var notesMasterContent = this.readXmlFile(zip, notesMasterFilename);
     //THERE ARE NO TXSTYLES IN THE FILE
   	// var notesMasterTextStyles = this.getTextByPathList(notesMasterContent, ["p:sldMaster", "p:txStyles"]);
-  	var notesMasterTables = this.indexNodes(notesMasterContent);
+  	// var notesMasterTables = this.indexNodes(notesMasterContent);
 
     //THIS IS LIKE STEP 3 FOR NOTES
     var notesContent = this.readXmlFile(zip, notesFilename);
@@ -429,10 +432,6 @@ processSingleSlideNotes(zip, sldFileName, index, slideSize) {
       "zip": zip//,
       //"slideMasterTables": notesMasterTables// Don't use notes master settings - we probably won't display it as in the PowerPoint Notes Page (with slide image, slide number, date,...)
     };
-
-    var notesHeight = slideSize.height * 1.5;
-
-    var notes = "";
 
     for (var nodeKey in notesNodes) {
       let that = this;
@@ -449,16 +448,9 @@ processSingleSlideNotes(zip, sldFileName, index, slideSize) {
         }
       }
     }
-
-    if (notes !== "") {
-      notesResult = "<div class='pptx2html' style='position: relative;left:" + (slideSize.width + 5) + "px;top:-" + slideSize.height + "px;'>" +
-      notes +
-      "</div>";
-    }
-    // console.log('notes', notesResult);
   }
 
-  return notesResult;
+  return notes;
 }
 
 isNodeNotesPlaceholder(node) {//test if the node is a notes placeholder
