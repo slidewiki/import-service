@@ -142,6 +142,7 @@ module.exports = {
     let slides = pptx2html.convert(buffer);
 
     return createDeck(user, license, deckName).then((deck) => {
+      //update the first slide which was created with new deck
       updateFirstSlideOfADeck(user, license, deck.id, slides[0]).then((slideId) => {
         // let previousSlideId = slideId;
         // for (let i = 1; i < slides.length; i++) {
@@ -153,7 +154,10 @@ module.exports = {
         //   });
         //
         // }
-        createNodesRecursive(user, license, deck.id, slideId, slides, 1);
+        if (slides.length > 1) {
+          //create and update the rest of slides
+          createNodesRecursive(user, license, deck.id, slideId, slides, 1);
+        }
 
       }).catch((error) => {
         request.log('error', error);
