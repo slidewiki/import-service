@@ -75,6 +75,11 @@ class Convertor {
 
     }
 
+    getNoOfSlides(data) {
+        let zip = new JSZip(data);
+        this.filesInfo = this.getContentTypes(zip);
+        return this.filesInfo["slides"].length;
+    }
     //var MsgQueue = new Array();
 
     //var themeContent = null;
@@ -84,7 +89,9 @@ class Convertor {
         let dateBefore = new Date();
 
         let zip = new JSZip(data);
-        this.filesInfo = this.getContentTypes(zip);
+        if (this.filesInfo === null) {//if getNoOfSlides was not called
+            this.filesInfo = this.getContentTypes(zip);
+        }
         this.slideSize = this.getSlideSize(zip);
         this.themeContent = this.loadTheme(zip);
 

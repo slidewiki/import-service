@@ -7,6 +7,7 @@ let util = require('util');
 let fs = require('fs');
 
 const Microservices = require('../configs/microservices');
+let Convertor = require('../PPTX2HTML/js/convertor.js');
 
 //const boom = require('boom'), //Boom gives us some predefined http codes and proper responses
   //slideDB = require('../database/slideDatabase'), //Database functions specific for slides
@@ -14,7 +15,6 @@ const Microservices = require('../configs/microservices');
 //pptx2html =
 //require('../PPTX2HTML/js/pptx2html');
 
-let pptx2html = require('../PPTX2HTML/js/pptx2html');
 //import pptx2html from '../PPTX2HTML/js/pptx2html';
 
 module.exports = {
@@ -111,17 +111,7 @@ module.exports = {
     const fileName = request.payload.filename;
     const deckName = fileName.split('.')[0];
 
-    let data_url = request.payload.file;
-    let buffer = new Buffer(data_url.split(',')[1], 'base64');
 
-    fs.writeFile('./' + fileName, buffer, (err) => {
-      if (err) {
-        reply('error in upload!');
-        console.log('error', err);
-      } else {
-        console.log('upload completed');
-      }
-    });
 
 
     //
@@ -139,9 +129,29 @@ module.exports = {
     //   console.log('upload completed');
     // });
 
-    let slides = pptx2html.convert(buffer);
+
+    // let pptx2html = require('../PPTX2HTML/js/pptx2html');
 
     return createDeck(user, license, deckName).then((deck) => {
+
+      let data_url = request.payload.file;
+      let buffer = new Buffer(data_url.split(',')[1], 'base64');
+      let convertor = new Convertor.Convertor();
+      let noOfSlides = convertor.getNoOfSlides(buffer);
+      reply('import completed').header('deckId', deck.id).header('noOfSlides', noOfSlides);
+
+      //Save file
+      fs.writeFile('./' + fileName, buffer, (err) => {
+        if (err) {
+          reply('error in upload!');
+          console.log('error', err);
+        } else {
+          console.log('upload completed');
+        }
+      });
+
+      let slides = convertor.processPPTX(buffer);
+
       //update the first slide which was created with new deck
       updateFirstSlideOfADeck(user, license, deck.id, slides[0]).then((slideId) => {
         // let previousSlideId = slideId;
@@ -163,10 +173,6 @@ module.exports = {
         request.log('error', error);
         reply(boom.badImplementation());
       });
-
-
-      reply('import completed').header('deckId', deck.id);
-
     }).catch((error) => {
       request.log('error', error);
       reply(boom.badImplementation());
