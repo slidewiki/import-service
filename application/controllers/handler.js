@@ -141,14 +141,14 @@ module.exports = {
       reply('import completed').header('deckId', deck.id).header('noOfSlides', noOfSlides);
 
       //Save file
-      fs.writeFile('./' + fileName, buffer, (err) => {
-        if (err) {
-          reply('error in upload!');
-          console.log('error', err);
-        } else {
-          console.log('upload completed');
-        }
-      });
+      // fs.writeFile('./' + fileName, buffer, (err) => {
+      //   if (err) {
+      //     reply('error in upload!');
+      //     console.log('error', err);
+      //   } else {
+      //     console.log('upload completed');
+      //   }
+      // });
 
       let slides = convertor.processPPTX(buffer);
 

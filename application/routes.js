@@ -7,7 +7,8 @@ Each route implementes a basic parameter/payload validation and a swagger API do
 const Joi = require('joi'),
   handlers = require('./controllers/handler');
 
-const MAX_FILESIZE = 300 * 1024 * 1024;
+const MAX_FILESIZE_MB = 300;
+const MAX_FILESIZE = MAX_FILESIZE_MB * 1024 * 1024;
 
 module.exports = function(server) {
 
