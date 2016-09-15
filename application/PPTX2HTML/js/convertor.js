@@ -973,7 +973,7 @@ genShape(node, slideLayoutSpNode, slideMasterSpNode, id, name, idx, type, order,
 
 		// TextBody
 		if (node["p:txBody"] !== undefined) {
-			result += this.genTextBody(node["p:txBody"], slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles);
+			result += this.genTextBody(node["p:txBody"], slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles, false);
 		}
 		result += "</div>";
 
@@ -982,9 +982,9 @@ genShape(node, slideLayoutSpNode, slideMasterSpNode, id, name, idx, type, order,
     var textBody = "";
     // TextBody
     if (node["p:txBody"] !== undefined) {
-      textBody = this.genTextBody(node["p:txBody"], slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles);
+      textBody = this.genTextBody(node["p:txBody"], slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles, true);
     }
-    if (textBody !== undefined && textBody !== "") {//Dejan added this to prevent creation of some undefined and empty elements (sldImg in NotesPage)
+    if (textBody !== undefined && textBody !== "") {//Dejan added this to prevent creation of some undefined and empty elements
     		result += "<div class='block content " + this.getVerticalAlign(node, slideLayoutSpNode, slideMasterSpNode, type) +
     				"' _id='" + id + "' _idx='" + idx + "' _type='" + type + "' _name='" + name +
     				"' style='position: absolute;" +
@@ -1118,7 +1118,7 @@ processSpPrNode(node, warpObj) {
 	// TODO:
 }
 
-genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles) {
+genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles, createList) {
 
 	var text = "";
 
@@ -1126,100 +1126,206 @@ genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, slideMaste
 		return text;
 	}
 
+  const isTitle = (type === 'title');
+  const isSubTitle = (type === 'subTitle');
+  const isCtrTitle = (type === 'ctrTitle');
+  const isSomeKindOfTitle = (isTitle || isSubTitle || isCtrTitle);
+  const isSldNum = (type === 'sldNum');
+  const layoutType = this.getTextByPathList(slideLayoutSpNode, ["p:nvSpPr", "p:nvPr", "p:ph", "attrs", "type"]);
+
   let title = '';
   let subTitle = '';
   let ctrTitle = '';
 
+
 	if (textBodyNode["a:p"].constructor === Array) {
 		// multi p
+    let previousNodeIsListItem = false;
+    let previousNodeIsOrderedListItem = false;
+    let previousItemLevel = "0";
 		for (var i=0; i<textBodyNode["a:p"].length; i++) {
+
+
 			var pNode = textBodyNode["a:p"][i];
 			var rNode = pNode["a:r"];
-			text += "<div class='" + this.getHorizontalAlign(pNode, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles) + "'>";
-			text += this.genBuChar(pNode);
+
+      let spanElement = "";
+
 			if (rNode === undefined) {
 				// without r
-				text += this.genSpanElement(pNode, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles);
+				spanElement += this.genSpanElement(pNode, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles);
 
-        if (type === 'title' ) {
+        if (isTitle) {
           title += this.getText(pNode);
-        } else if (type === 'subTitle') {
+        } else if (isSubTitle) {
           subTitle += this.getText(pNode);
-        } else if (type === 'ctrTitle') {
+        } else if (isCtrTitle) {
           ctrTitle += this.getText(pNode);
         }
 			} else if (rNode.constructor === Array) {
 				// with multi r
 				for (var j=0; j<rNode.length; j++) {
-					text += this.genSpanElement(rNode[j], slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles);
+					spanElement += this.genSpanElement(rNode[j], slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles);
 
-          if (type === 'title' ) {
+          if (isTitle) {
             title += this.getText(rNode[j]);
-          } else if (type === 'subTitle') {
+          } else if (isSubTitle) {
             subTitle += this.getText(rNode[j]);
-          } else if (type === 'ctrTitle') {
+          } else if (isCtrTitle) {
             ctrTitle += this.getText(rNode[j]);
           }
 				}
 			} else {
 				// with one r
-				text += this.genSpanElement(rNode, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles);
+				spanElement += this.genSpanElement(rNode, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles);
 
-        if (type === 'title' ) {
+        if (isTitle) {
           title += this.getText(rNode);
-        } else if (type === 'subTitle') {
+        } else if (isSubTitle) {
           subTitle += this.getText(rNode);
-        } else if (type === 'ctrTitle') {
+        } else if (isCtrTitle) {
           ctrTitle += this.getText(rNode);
         }
 			}
+
+
+      const insertListItemTag = (createList && !isSomeKindOfTitle && !isSldNum && (layoutType === undefined) && (pNode["a:pPr"] === undefined || pNode["a:pPr"]["a:buNone"] === undefined));
+      const isOrderedList = (pNode["a:pPr"] !== undefined && pNode["a:pPr"]["a:buAutoNum"] !== undefined);
+      let itemLevel = "0";
+      if (pNode["a:pPr"] !== undefined && pNode["a:pPr"]["attrs"] !== undefined && pNode["a:pPr"]["attrs"]["lvl"] !== undefined) {
+        itemLevel = pNode["a:pPr"]["attrs"]["lvl"];
+      }
+
+      if (spanElement !== "" && insertListItemTag) {//do not show bullets if the text is empty
+        if (isOrderedList) {
+          const orderedListStyle = (pNode["a:pPr"]["a:buAutoNum"]["attrs"] !== null && pNode["a:pPr"]["a:buAutoNum"]["attrs"]["type"] !== null) ? pNode["a:pPr"]["a:buAutoNum"]["attrs"]["type"] : '';
+          const orderedListStartAt = (pNode["a:pPr"]["a:buAutoNum"]["attrs"] !== null && pNode["a:pPr"]["a:buAutoNum"]["attrs"]["startAt"] !== null) ? 'start="' + pNode["a:pPr"]["a:buAutoNum"]["attrs"]["startAt"] + '"' : '';
+          
+          text += (previousNodeIsListItem && previousNodeIsOrderedListItem && (itemLevel === previousItemLevel)) ? "" : "<ol " + this.getOrderedListStyle(orderedListStyle) + " " + orderedListStartAt + ">";
+        } else {
+          text += (previousNodeIsListItem && !previousNodeIsOrderedListItem && (itemLevel === previousItemLevel)) ? "" : "<ul " + this.getUnorderedListStyle(itemLevel) + ">";
+        }
+
+        text += "<li>";//add list tag
+      }
+      previousNodeIsListItem = insertListItemTag;
+      previousNodeIsOrderedListItem = isOrderedList;
+      previousItemLevel = itemLevel;
+
+      text += "<div class='" + this.getHorizontalAlign(pNode, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles) + "'>";
+
+      text += this.genBuChar(pNode);
+
+      text += spanElement;
+
 			text += "</div>";
+
+      //see if next node is list item
+      let nextNodeIsListItem = false;
+      let nextNodeIsOrderedListItem = false;
+      let nextItemLevel = "0";
+      if (i < textBodyNode["a:p"].length - 1) {//it is not the last node in array
+        let pNodeNext = textBodyNode["a:p"][i+1];
+
+        nextNodeIsListItem = (createList && !isSomeKindOfTitle && !isSldNum && (layoutType === undefined) && (pNodeNext["a:pPr"] === undefined || pNodeNext["a:pPr"]["a:buNone"] === undefined));
+        nextNodeIsOrderedListItem = (pNodeNext["a:pPr"] !== undefined && pNodeNext["a:pPr"]["a:buAutoNum"] !== undefined);
+        if (pNodeNext["a:pPr"] !== undefined && pNodeNext["a:pPr"]["attrs"] !== undefined && pNodeNext["a:pPr"]["attrs"]["lvl"] !== undefined) {
+          nextItemLevel = pNodeNext["a:pPr"]["attrs"]["lvl"];
+        }
+      }
+
+      if (spanElement !== "" && insertListItemTag) {
+        text += "</li>";//add list tag
+
+        if (isOrderedList) {
+          text += (nextNodeIsListItem && nextNodeIsOrderedListItem && (itemLevel === nextItemLevel)) ? "" : "</ol>";
+        } else {
+          text += (nextNodeIsListItem && !nextNodeIsOrderedListItem && (itemLevel === nextItemLevel)) ? "" : "</ul>";
+        }
+      }
+
+      // text += (insertListItemTag) ? ((isOrderedList) ? "</ol>" : "</ul>") : "";
 		}
 	} else {
 		// one p
+
+
+
 		var pNode = textBodyNode["a:p"];
 		var rNode = pNode["a:r"];
-		text += "<div class='" + this.getHorizontalAlign(pNode, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles) + "'>";
-		text += this.genBuChar(pNode);
+
+    let spanElement = "";
+
 		if (rNode === undefined) {
 			// without r
-			text += this.genSpanElement(pNode, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles);
+			spanElement += this.genSpanElement(pNode, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles);
 
-      if (type === 'title' ) {
+      if (isTitle) {
         title += this.getText(pNode);
-      } else if (type === 'subTitle') {
+      } else if (isSubTitle) {
         subTitle += this.getText(pNode);
-      } else if (type === 'ctrTitle') {
+      } else if (isCtrTitle) {
         ctrTitle += this.getText(pNode);
       }
 		} else if (rNode.constructor === Array) {
 			// with multi r
 			for (var j=0; j<rNode.length; j++) {
-				text += this.genSpanElement(rNode[j], slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles);
+				spanElement += this.genSpanElement(rNode[j], slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles);
 
-        if (type === 'title' ) {
+        if (isTitle) {
           title += this.getText(rNode[j]);
-        } else if (type === 'subTitle') {
+        } else if (isSubTitle) {
           subTitle += this.getText(rNode[j]);
-        } else if (type === 'ctrTitle') {
+        } else if (isCtrTitle) {
           ctrTitle += this.getText(rNode[j]);
         }
 			}
 		} else {
 			// with one r
-			text += this.genSpanElement(rNode, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles);
+			spanElement += this.genSpanElement(rNode, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles);
 
-      if (type === 'title' ) {
+      if (isTitle) {
         title += this.getText(rNode);
-      } else if (type === 'subTitle') {
+      } else if (isSubTitle) {
         subTitle += this.getText(rNode);
-      } else if (type === 'ctrTitle') {
+      } else if (isCtrTitle) {
         ctrTitle += this.getText(rNode);
       }
 		}
-		text += "</div>";
+
+
+
+    const insertListItemTag = (createList && !isSomeKindOfTitle && !isSldNum && (layoutType === undefined) && (pNode["a:pPr"] === undefined || pNode["a:pPr"]["a:buNone"] === undefined));
+    const isOrderedList = (pNode["a:pPr"] !== undefined && pNode["a:pPr"]["a:buAutoNum"] !== undefined);
+
+
+
+    if (spanElement !== "" && insertListItemTag) {
+      text += (isOrderedList) ? "<ol>" : "<ul>";
+      text += "<li>";//add list tag
+    }
+
+    text += "<div class='" + this.getHorizontalAlign(pNode, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles) + "'>";
+
+
+    text += this.genBuChar(pNode);
+
+    text += spanElement;
+
+    text += "</div>";
+    if (spanElement !== "" && insertListItemTag) {
+      text += "</li>";//add list tag
+      text += (isOrderedList) ? "</ol>" : "</ul>";
+    }
+
+
+
 	}
-  if (type === 'title' || type === 'subTitle' || type === 'ctrTitle') {
+
+
+
+
+  if (isSomeKindOfTitle) {
     this.currentSlide.title = (title !== '') ? title : (ctrTitle !== '') ? ctrTitle : subTitle;
   }
 
@@ -1237,6 +1343,30 @@ getText(node) {//Get raw text from a:r (a:p) node - for the slide title
 		}
 	}
   return text;
+}
+
+getOrderedListStyle(type) {
+  if (type.startsWith('arabic')) {
+    return '';//default
+  } else if(type.startsWith('alphaLc')) {
+    return 'type="a"';
+  } else if(type.startsWith('alphaUc')) {
+    return 'type="A"';
+  } else if(type.startsWith('romanLc')) {
+    return 'type="i"';
+  } else if(type.startsWith('romanUc')) {
+    return 'type="I"';
+  }
+}
+
+getUnorderedListStyle(level) {
+  if (level === '1' || level === '4') {
+    return 'style="list-style-type:\'—\'"';
+  } else if (level === '2' || level === '5') {
+      return 'style="list-style-type:square"';
+  } else {
+    return '';//disc is default
+  }
 }
 
 genBuChar(node) {
