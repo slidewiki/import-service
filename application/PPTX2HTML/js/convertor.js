@@ -980,9 +980,10 @@ genShape(node, slideLayoutSpNode, slideMasterSpNode, id, name, idx, type, order,
 	} else {
 
     var textBody = "";
+    const createList = (slideLayoutSpNode !== undefined);//notes are not bulleted by default as slides are
     // TextBody
     if (node["p:txBody"] !== undefined) {
-      textBody = this.genTextBody(node["p:txBody"], slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles, true);
+      textBody = this.genTextBody(node["p:txBody"], slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles, createList);
     }
     if (textBody !== undefined && textBody !== "") {//Dejan added this to prevent creation of some undefined and empty elements
     		result += "<div class='block content " + this.getVerticalAlign(node, slideLayoutSpNode, slideMasterSpNode, type) +
@@ -1200,7 +1201,7 @@ genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, slideMaste
         if (isOrderedList) {
           const orderedListStyle = (pNode["a:pPr"]["a:buAutoNum"]["attrs"] !== null && pNode["a:pPr"]["a:buAutoNum"]["attrs"]["type"] !== null) ? pNode["a:pPr"]["a:buAutoNum"]["attrs"]["type"] : '';
           const orderedListStartAt = (pNode["a:pPr"]["a:buAutoNum"]["attrs"] !== null && pNode["a:pPr"]["a:buAutoNum"]["attrs"]["startAt"] !== null) ? 'start="' + pNode["a:pPr"]["a:buAutoNum"]["attrs"]["startAt"] + '"' : '';
-          
+
           text += (previousNodeIsListItem && previousNodeIsOrderedListItem && (itemLevel === previousItemLevel)) ? "" : "<ol " + this.getOrderedListStyle(orderedListStyle) + " " + orderedListStartAt + ">";
         } else {
           text += (previousNodeIsListItem && !previousNodeIsOrderedListItem && (itemLevel === previousItemLevel)) ? "" : "<ul " + this.getUnorderedListStyle(itemLevel) + ">";
