@@ -1362,7 +1362,7 @@ getOrderedListStyle(type) {
 
 getUnorderedListStyle(level) {
   if (level === '1' || level === '4') {
-    return 'style="list-style-type:\'—\'"';
+    return 'style="list-style-type:circle"';
   } else if (level === '2' || level === '5') {
       return 'style="list-style-type:square"';
   } else {
