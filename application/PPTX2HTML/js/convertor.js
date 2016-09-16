@@ -1199,10 +1199,10 @@ genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, slideMaste
 
       if (spanElement !== "" && insertListItemTag) {//do not show bullets if the text is empty
         if (isOrderedList) {
-          const orderedListStyle = (pNode["a:pPr"]["a:buAutoNum"]["attrs"] !== null && pNode["a:pPr"]["a:buAutoNum"]["attrs"]["type"] !== null) ? pNode["a:pPr"]["a:buAutoNum"]["attrs"]["type"] : '';
-          const orderedListStartAt = (pNode["a:pPr"]["a:buAutoNum"]["attrs"] !== null && pNode["a:pPr"]["a:buAutoNum"]["attrs"]["startAt"] !== null) ? 'start="' + pNode["a:pPr"]["a:buAutoNum"]["attrs"]["startAt"] + '"' : '';
+          const orderedListStyle = (pNode["a:pPr"]["a:buAutoNum"]["attrs"] !== undefined && pNode["a:pPr"]["a:buAutoNum"]["attrs"]["type"] !== undefined) ? pNode["a:pPr"]["a:buAutoNum"]["attrs"]["type"] : '';
+          const orderedListStartAt = (pNode["a:pPr"]["a:buAutoNum"]["attrs"] !== undefined && pNode["a:pPr"]["a:buAutoNum"]["attrs"]["startAt"] !== undefined) ? ' start="' + pNode["a:pPr"]["a:buAutoNum"]["attrs"]["startAt"] + '"' : '';
 
-          text += (previousNodeIsListItem && previousNodeIsOrderedListItem && (itemLevel === previousItemLevel)) ? "" : "<ol " + this.getOrderedListStyle(orderedListStyle) + " " + orderedListStartAt + ">";
+          text += (previousNodeIsListItem && previousNodeIsOrderedListItem && (itemLevel === previousItemLevel)) ? "" : "<ol " + this.getOrderedListStyle(orderedListStyle, itemLevel) + orderedListStartAt + ">";
         } else {
           text += (previousNodeIsListItem && !previousNodeIsOrderedListItem && (itemLevel === previousItemLevel)) ? "" : "<ul " + this.getUnorderedListStyle(itemLevel) + ">";
         }
@@ -1346,28 +1346,39 @@ getText(node) {//Get raw text from a:r (a:p) node - for the slide title
   return text;
 }
 
-getOrderedListStyle(type) {
-  if (type.startsWith('arabic')) {
-    return '';//default
-  } else if(type.startsWith('alphaLc')) {
-    return 'type="a"';
+getOrderedListStyle(type, level) {
+  const singleIndent = 30;
+  let style = '';//arabic is default
+  if(type.startsWith('alphaLc')) {
+    style = 'type="a"';
   } else if(type.startsWith('alphaUc')) {
-    return 'type="A"';
+    style = 'type="A"';
   } else if(type.startsWith('romanLc')) {
-    return 'type="i"';
+    style = 'type="i"';
   } else if(type.startsWith('romanUc')) {
-    return 'type="I"';
+    style = 'type="I"';
   }
+
+  if (level > 0) {//add indent
+    style += ' style="margin-left:' + (singleIndent * level) + 'px;"';
+  }
+  return style;
 }
 
 getUnorderedListStyle(level) {
-  if (level === '1' || level === '4') {
-    return 'style="list-style-type:circle"';
+  const singleIndent = 30;
+  let style = '';//disc is default
+  if (level === '1' || level === '4') {//set bullet type
+    style = 'style="list-style-type:circle;';
   } else if (level === '2' || level === '5') {
-      return 'style="list-style-type:square"';
-  } else {
-    return '';//disc is default
+    style =  'style="list-style-type:square;';
   }
+  if (level > 0) {//add indent
+    style += (style === '') ? 'style="' : '';
+    style += 'margin-left:' + (singleIndent * level) + 'px;"';
+  }
+
+  return style;
 }
 
 genBuChar(node) {
