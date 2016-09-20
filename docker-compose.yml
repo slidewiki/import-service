@@ -9,3 +9,6 @@ template:
     - APPLICATION_PORT=80
     - DATABASE_PORT=27017
     - VIRTUAL_HOST=importservice.manfredfris.ch
+  volumes_from:
+    - volume_share
+  privileged: true
