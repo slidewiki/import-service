@@ -8,7 +8,7 @@ let highlight = require('./highlight.min.js');
 let colz = require('./colz.class.min.js');
 let tXml = require('./tXml.js');
 let functions = require('./functions.js');
-const Microservices = require('../../configs/microservices.js');
+const Microservices = require('../../configs/microservices');
 // import tXml from './tXml.js';
 
 //TODO INCLUDE THESE SCRIPTS
