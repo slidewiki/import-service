@@ -1044,7 +1044,7 @@ processPicNode(node, warpObj) {
 
 
 
-  // this.saveImageToFile(imgName, zip);
+  this.saveImageToFile(imgName, zip);
 
 
 
@@ -1069,9 +1069,7 @@ saveImageToFile(imgName, zip) {
   const simpleImgName = imgNameArray[imgNameArray.length - 1];
   // let saveTo = './' + imgName;
 
-
-const saveTo = './' + simpleImgName;
-  // const saveTo = Microservices.file.dataFilesPath + '/' + user + '/' + 'test.png';
+  const saveTo = Microservices.file.dataFilesPath + '/' + this.user + '/' + 'test.png';
   let fileStream = fs.createWriteStream(saveTo);
   fileStream.write(zip.file(imgName).asBinary(), 'binary');
   fileStream.end();
