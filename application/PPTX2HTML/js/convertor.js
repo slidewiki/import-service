@@ -8,7 +8,7 @@ let highlight = require('./highlight.min.js');
 let colz = require('./colz.class.min.js');
 let tXml = require('./tXml.js');
 let functions = require('./functions.js');
-const Microservices = require('../../configs/microservices.js');
+// const Microservices = require('../../configs/microservices.js');
 // import tXml from './tXml.js';
 
 //TODO INCLUDE THESE SCRIPTS
@@ -1044,7 +1044,7 @@ processPicNode(node, warpObj) {
 
 
 
-  // this.saveImageToFile(imgName, zip);
+  this.saveImageToFile(imgName, zip);
 
 
 
@@ -1070,6 +1070,7 @@ saveImageToFile(imgName, zip) {
   // let saveTo = './' + imgName;
 
 
+  console.log(Microservices.file.dataFilesPath);
 
   const saveTo = Microservices.file.dataFilesPath + '/' + user + '/' + 'test.png';
   let fileStream = fs.createWriteStream(saveTo);
