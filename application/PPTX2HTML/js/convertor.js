@@ -8,7 +8,7 @@ let highlight = require('./highlight.min.js');
 let colz = require('./colz.class.min.js');
 let tXml = require('./tXml.js');
 let functions = require('./functions.js');
-const Microservices = require('../../configs/microservices');
+
 // import tXml from './tXml.js';
 
 //TODO INCLUDE THESE SCRIPTS
@@ -72,8 +72,6 @@ class Convertor {
           content: '',
           notes: ''
         };
-
-        this.user = '';
         //return this.processPPTX(data);
 
     }
@@ -1044,7 +1042,9 @@ processPicNode(node, warpObj) {
 
 
 
-  // this.saveImageToFile(imgName, zip);
+
+  // this.saveImageToFile(imgName, zip);//Uncomment to save image to file
+
 
 
 
@@ -1069,7 +1069,8 @@ saveImageToFile(imgName, zip) {
   const simpleImgName = imgNameArray[imgNameArray.length - 1];
   // let saveTo = './' + imgName;
 
-  const saveTo = Microservices.file.dataFilesPath + '/' + this.user + '/' + 'test.png';
+  const saveTo = './' + simpleImgName;
+
   let fileStream = fs.createWriteStream(saveTo);
   fileStream.write(zip.file(imgName).asBinary(), 'binary');
   fileStream.end();
@@ -2005,11 +2006,6 @@ getSchemeColorFromTheme(schemeClr) {
 extractChartData(serNode) {
 
 	var dataMat = new Array();
-
-  if (serNode === undefined) {
-		return dataMat;
-	}
-
     let that = this; //Klaas - FIXED
 	if (serNode["c:xVal"] !== undefined) {
 		var dataRow = new Array();
@@ -2024,7 +2020,7 @@ extractChartData(serNode) {
 			return "";
 		});
 		dataMat.push(dataRow);
-	} else {
+	} else if (serNode["c:val"] !== undefined) {
 
 		this.eachElement(serNode, function(innerNode, index) {
 			var dataRow = new Array();
@@ -2034,30 +2030,25 @@ extractChartData(serNode) {
 			//var colName = this.getTextByPathList(innerNode, ["c:tx", "c:strRef", "c:strCache", "c:pt", "c:v"]) || index;
             var colName = that.getTextByPathList(innerNode, ["c:tx", "c:strRef", "c:strCache", "c:pt", "c:v"]) || index;
 
-			// Category (string or number)
+			// Category
 			var rowNames = {};
 			if (that.getTextByPathList(innerNode, ["c:cat", "c:strRef", "c:strCache", "c:pt"]) !== undefined) {
 				that.eachElement(innerNode["c:cat"]["c:strRef"]["c:strCache"]["c:pt"], function(innerNode, index) {
 					rowNames[innerNode["attrs"]["idx"]] = innerNode["c:v"];
 					return "";
 				});
-      } else if (that.getTextByPathList(innerNode, ["c:cat", "c:numRef", "c:numCache", "c:pt"]) !== undefined) {
-				that.eachElement(innerNode["c:cat"]["c:numRef"]["c:numCache"]["c:pt"], function(innerNode, index) {
-					rowNames[innerNode["attrs"]["idx"]] = innerNode["c:v"];
-					return "";
-				});
 			}
 
 			// Value
-			if (that.getTextByPathList(innerNode, ["c:val", "c:numRef", "c:numCache", "c:pt"]) !== undefined) {
-        that.eachElement(innerNode["c:val"]["c:numRef"]["c:numCache"]["c:pt"], function(innerNode, index) {
-          dataRow.push({x: innerNode["attrs"]["idx"], y: parseFloat(innerNode["c:v"])});
-          return "";
-        });
-			}
+			that.eachElement(innerNode["c:val"]["c:numRef"]["c:numCache"]["c:pt"], function(innerNode, index) {
+				dataRow.push({x: innerNode["attrs"]["idx"], y: parseFloat(innerNode["c:v"])});
+				return "";
+			});
+
 			dataMat.push({key: colName, values: dataRow, xlabels: rowNames});
 			return "";
 		});
+	} else {
 
 	}
 
