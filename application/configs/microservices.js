@@ -2,7 +2,7 @@
 
 module.exports = {
   'deck': {
-    uri: 'localhost',
-    port: 5000
+    uri: 'deckservice.manfredfris.ch',
+    port: 80
   }
 };
