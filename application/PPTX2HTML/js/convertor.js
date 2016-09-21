@@ -1044,7 +1044,7 @@ processPicNode(node, warpObj) {
 
 
 
-  this.saveImageToFile(imgName, zip);
+  // this.saveImageToFile(imgName, zip);
 
 
 
