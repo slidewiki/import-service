@@ -1060,7 +1060,7 @@ processPicNode(node, warpObj) {
 	return "<div class='block content' style='position: absolute;" + this.getPosition(xfrmNode, undefined, undefined) + this.getSize(xfrmNode, undefined, undefined) +
 			" z-index: " + order + ";" +
 			// "'><img src=\"data:" + mimeType + ";base64," + functions.base64ArrayBuffer(imgArrayBuffer) + "\" style='position: absolute;width: 100%; height: 100%'" +
-      "'><img src=\"" + imagePath + "\" style='position: absolute;width: 100%; height: 100%'" +
+      "'><img src=\"http://" + imagePath + "\" style='position: absolute;width: 100%; height: 100%'" +
           altTag +
           "/></div>";
 }
@@ -1081,16 +1081,16 @@ saveImageToFile(imgName, zip) {
   const imgUserPath = this.user + '/' + simpleImgName;
   // const imgUserPath = this.user + simpleImgName;
   // const saveTo = '.' + Microservices.file.shareVolume + '/' + imgUserPath;
-  const saveTo = Microservices.file.shareVolume + '/' + 'test.jpg';
+  const saveTo = Microservices.file.shareVolume + '/' + imgUserPath;
 
-  // const userDir = Microservices.file.shareVolume + '/' + this.user;
-  // if (!fs.existsSync(userDir)){
-  //   fs.mkdirSync(userDir, 744, function(err) {
-  //     if(err) {
-  //       console.log(err);
-  //     }
-  //   });
-  // }
+  const userDir = Microservices.file.shareVolume + '/' + this.user;
+  if (!fs.existsSync(userDir)){
+    fs.mkdirSync(userDir, 744, function(err) {
+      if(err) {
+        console.log(err);
+      }
+    });
+  }
 
   let fileStream = fs.createWriteStream(saveTo);
   fileStream.write(zip.file(imgName).asBinary(), 'binary');
