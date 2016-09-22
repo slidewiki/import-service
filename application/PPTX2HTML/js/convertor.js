@@ -1080,17 +1080,17 @@ saveImageToFile(imgName, zip) {
   //Add deckId or create UUID + <orig. file extension>
   const imgUserPath = this.user + '/' + simpleImgName;
   // const imgUserPath = this.user + simpleImgName;
-  const saveTo = '.' + Microservices.file.shareVolume + '/' + imgUserPath;
-  // const saveTo = Microservices.file.shareVolume + '/' + imgUserPath;
+  // const saveTo = '.' + Microservices.file.shareVolume + '/' + imgUserPath;
+  const saveTo = Microservices.file.shareVolume + '/' + 'test.jpg';
 
-  const userDir = '.' + Microservices.file.shareVolume + '/' + this.user;
-  if (!fs.existsSync(userDir)){
-    fs.mkdirSync(userDir, 744, function(err) {
-      if(err) {
-        console.log(err);
-      }
-    });
-  }
+  // const userDir = Microservices.file.shareVolume + '/' + this.user;
+  // if (!fs.existsSync(userDir)){
+  //   fs.mkdirSync(userDir, 744, function(err) {
+  //     if(err) {
+  //       console.log(err);
+  //     }
+  //   });
+  // }
 
   let fileStream = fs.createWriteStream(saveTo);
   fileStream.write(zip.file(imgName).asBinary(), 'binary');
