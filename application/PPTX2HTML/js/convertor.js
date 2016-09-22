@@ -74,6 +74,7 @@ class Convertor {
         };
         //return this.processPPTX(data);
 
+        this.user = '';
     }
 
     getNoOfSlides(data) {
@@ -1043,7 +1044,7 @@ processPicNode(node, warpObj) {
 
 
 
-  // this.saveImageToFile(imgName, zip);//Uncomment to save image to file
+  const imagePath = this.saveImageToFile(imgName, zip);
 
 
 
@@ -1058,18 +1059,38 @@ processPicNode(node, warpObj) {
 
 	return "<div class='block content' style='position: absolute;" + this.getPosition(xfrmNode, undefined, undefined) + this.getSize(xfrmNode, undefined, undefined) +
 			" z-index: " + order + ";" +
-			"'><img src=\"data:" + mimeType + ";base64," + functions.base64ArrayBuffer(imgArrayBuffer) + "\" style='position: absolute;width: 100%; height: 100%'" +
+			// "'><img src=\"data:" + mimeType + ";base64," + functions.base64ArrayBuffer(imgArrayBuffer) + "\" style='position: absolute;width: 100%; height: 100%'" +
+      "'><img src=\"" + imagePath + "\" style='position: absolute;width: 100%; height: 100%'" +
           altTag +
           "/></div>";
 }
 
 saveImageToFile(imgName, zip) {
   let fs = require('fs');
+  let Microservices = require('../../configs/microservices');
+
   const imgNameArray = imgName.split('/');
   const simpleImgName = imgNameArray[imgNameArray.length - 1];
   // let saveTo = './' + imgName;
 
-  const saveTo = './' + simpleImgName;
+  // const saveTo = './' + simpleImgName;
+
+
+
+  //Add deckId or create UUID + <orig. file extension>
+  const imgUserPath = this.user + '/' + simpleImgName;
+  // const imgUserPath = this.user + simpleImgName;
+  const saveTo = '.' + Microservices.file.shareVolume + '/' + imgUserPath;
+  // const saveTo = Microservices.file.shareVolume + '/' + imgUserPath;
+
+  const userDir = '.' + Microservices.file.shareVolume + '/' + this.user;
+  if (!fs.existsSync(userDir)){
+    fs.mkdirSync(userDir, 744, function(err) {
+      if(err) {
+        console.log(err);
+      }
+    });
+  }
 
   let fileStream = fs.createWriteStream(saveTo);
   fileStream.write(zip.file(imgName).asBinary(), 'binary');
@@ -1078,8 +1099,10 @@ saveImageToFile(imgName, zip) {
     console.log('error', err);
   });
   fileStream.on('finish', (res) => {
-    console.log('save completed: ', simpleImgName);
+    // console.log('save completed: ', simpleImgName);
   });
+
+  return Microservices.file.url + '/' + imgUserPath;
 }
 
 processGraphicFrameNode(node, warpObj) {
@@ -2004,9 +2027,13 @@ getSchemeColorFromTheme(schemeClr) {
 }
 
 extractChartData(serNode) {
-
 	var dataMat = new Array();
-    let that = this; //Klaas - FIXED
+
+  if (serNode === undefined) {
+		return dataMat;
+	}
+
+  let that = this; //Klaas - FIXED
 	if (serNode["c:xVal"] !== undefined) {
 		var dataRow = new Array();
 		this.eachElement(serNode["c:xVal"]["c:numRef"]["c:numCache"]["c:pt"], function(innerNode, index) {

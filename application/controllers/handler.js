@@ -137,6 +137,7 @@ module.exports = {
       let data_url = request.payload.file;
       let buffer = new Buffer(data_url.split(',')[1], 'base64');
       let convertor = new Convertor.Convertor();
+      convertor.user = user;
       let noOfSlides = convertor.getNoOfSlides(buffer);
       reply('import completed').header('deckId', deck.id).header('noOfSlides', noOfSlides);
 
