@@ -155,7 +155,7 @@ module.exports = {
       let slides = convertor.processPPTX(buffer);
 
       //update the first slide which was created with new deck
-      findFirstSlideOfADeck(user, license, deck.id, slides[0]).then((slideId) => {
+      findFirstSlideOfADeck(deck.id).then((slideId) => {
         updateSlide(slideId, user, license, deck.id, slides[0]).then(() => {
           if (slides.length > 1) {
             //create and update the rest of slides
@@ -485,7 +485,8 @@ function updateSlide(slideId, user, license, deckId, slide) {
       res.setEncoding('utf8');
       res.on('data', (chunk) => {
         // console.log('Response: ', chunk);
-
+      });
+      res.on('end', () => {
         resolve(slideId);
       });
     });
@@ -499,7 +500,7 @@ function updateSlide(slideId, user, license, deckId, slide) {
   return myPromise;
 }
 
-function findFirstSlideOfADeck(user, license, deckId, slide) {
+function findFirstSlideOfADeck(deckId) {
   //Find the id of the first slidedata
   let myPromise = new Promise((resolve, reject) => {
     let http = require('http');
