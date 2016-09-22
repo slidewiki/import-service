@@ -75,6 +75,7 @@ class Convertor {
         //return this.processPPTX(data);
 
         this.user = '';
+        this.deckId = '';
     }
 
     getNoOfSlides(data) {
@@ -1071,15 +1072,13 @@ saveImageToFile(imgName, zip) {
 
   const imgNameArray = imgName.split('/');
   const simpleImgName = imgNameArray[imgNameArray.length - 1];
-  // let saveTo = './' + imgName;
 
   // const saveTo = './' + simpleImgName;
 
 
 
   //Add deckId or create UUID + <orig. file extension>
-  const imgUserPath = this.user + '/' + simpleImgName;
-  // const imgUserPath = this.user + simpleImgName;
+  const imgUserPath = this.user + '/' + this.deckId + simpleImgName;
   // const saveTo = '.' + Microservices.file.shareVolume + '/' + imgUserPath;
   const saveTo = Microservices.file.shareVolume + '/' + imgUserPath;
 
