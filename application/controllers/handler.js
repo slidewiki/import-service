@@ -454,7 +454,7 @@ function updateSlide(slideId, user, license, deckId, slide) {
       content: encodedContent,
       speakernotes:encodedNotes,
       user: String(user),
-      root_deck: String(deckId),
+      root_deck: String(deckId) + '-1',
       parent_deck: {
         id: String(deckId),
         revision: '1'

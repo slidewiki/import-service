@@ -1560,6 +1560,8 @@ genTable(node, warpObj) {
 		tableHtml += "</tr>";
 	}
 
+  tableHtml += "</table>";
+
 	return tableHtml;
 }
 
