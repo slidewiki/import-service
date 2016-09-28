@@ -6,7 +6,7 @@ module.exports = {
     port: 80
   },
   'file': {
-    url: 'fileservice.manfredfris.ch',
+    uri: 'fileservice.manfredfris.ch',
     shareVolume: '/data/files'
   }
 };

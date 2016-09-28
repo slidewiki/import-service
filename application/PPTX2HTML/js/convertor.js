@@ -1102,7 +1102,7 @@ saveImageToFile(imgName, zip) {
     // console.log('save completed: ', simpleImgName);
   });
 
-  return Microservices.file.url + '/' + imgUserPath;
+  return Microservices.file.uri + '/' + imgUserPath;
 }
 
 processGraphicFrameNode(node, warpObj) {
