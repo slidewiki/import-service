@@ -402,9 +402,9 @@ module.exports = {
 };
 
 
-saveImageToFile(imgName, file) {
+function saveImageToFile(imgName, file) {
   //Create UUID
-  var uuid = require('node-uuid');//https://www.npmjs.com/package/node-uuid
+  let uuid = require('node-uuid');//https://www.npmjs.com/package/node-uuid
   const uuid = uuid.v1();// Generate a v1 (time-based) id
 
   //Get file extension
