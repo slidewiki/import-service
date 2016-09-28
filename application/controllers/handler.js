@@ -341,6 +341,11 @@ module.exports = {
       });
 
 
+      //Use saveImageToFile function
+    //let filePath = saveImageToFile(filename, request.payload.upload);
+    //reply(filePath);
+
+
         ///JSON ONLY FOR DRAGGING and dropping
       //let response;
       //response.writeHead(200, {'Content-Type': 'application/json'});
@@ -395,6 +400,47 @@ module.exports = {
 
   }
 };
+
+
+saveImageToFile(imgName, file) {
+  //Create UUID
+  var uuid = require('node-uuid');//https://www.npmjs.com/package/node-uuid
+  const uuid = uuid.v1();// Generate a v1 (time-based) id
+
+  //Get file extension
+  const imgNameArray = imgName.split('.');
+  const extension = imgNameArray[imgNameArray.length - 1];
+
+  const imgUserPath = this.user + '/' + uuid + extension;
+  // const saveTo = '.' + Microservices.file.shareVolume + '/' + imgUserPath;
+  const saveTo = Microservices.file.shareVolume + '/' + imgUserPath;
+
+  //Create the user dir if does not exist
+  const userDir = Microservices.file.shareVolume + '/' + this.user;
+  if (!fs.existsSync(userDir)){
+    fs.mkdirSync(userDir, 744, function(err) {
+      if(err) {
+        console.log(err);
+      }
+    });
+  }
+
+  let fileStream = fs.createWriteStream(saveTo);
+
+  //fileStream.write(request.payload.file.data);
+  fileStream.write(file, 'binary');
+  fileStream.end();
+  fileStream.on('error', (err) => {
+    reply('error in upload!');
+    console.log('error', err);
+  });
+  fileStream.on('finish', (res) => {
+    console.log('upload completed');
+  });
+
+  return Microservices.file.url + '/' + imgUserPath;
+}
+
 
 function createNodesRecursive(user, license, deckId, previousSlideId, slides, index) {
   let selector = {
