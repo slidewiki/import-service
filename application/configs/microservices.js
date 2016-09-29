@@ -1,6 +1,6 @@
 'use strict';
 
-const co = require('./common');
+const co = require('../common');
 
 module.exports = {
   'deck': {
