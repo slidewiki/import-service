@@ -8,6 +8,7 @@ let highlight = require('./highlight.min.js');
 let colz = require('./colz.class.min.js');
 let tXml = require('./tXml.js');
 let functions = require('./functions.js');
+
 // import tXml from './tXml.js';
 
 //TODO INCLUDE THESE SCRIPTS
@@ -73,8 +74,15 @@ class Convertor {
         };
         //return this.processPPTX(data);
 
+        this.user = '';
+        this.deckId = '';
     }
 
+    getNoOfSlides(data) {
+        let zip = new JSZip(data);
+        this.filesInfo = this.getContentTypes(zip);
+        return this.filesInfo["slides"].length;
+    }
     //var MsgQueue = new Array();
 
     //var themeContent = null;
@@ -84,7 +92,9 @@ class Convertor {
         let dateBefore = new Date();
 
         let zip = new JSZip(data);
-        this.filesInfo = this.getContentTypes(zip);
+        if (this.filesInfo === null) {//if getNoOfSlides was not called
+            this.filesInfo = this.getContentTypes(zip);
+        }
         this.slideSize = this.getSlideSize(zip);
         this.themeContent = this.loadTheme(zip);
 
@@ -352,7 +362,7 @@ processSingleSlide(zip, sldFileName, index, slideSize) {
     //var result = "<div style='position: absolute;width:" + slideSize.width + "px; height:" + slideSize.height + "px; background-color: #" + bgColor + "'>"
     //var result = "<div style='position: absolute;border-style: dotted; background-color: #" + bgColor + "' >"
     //var result = "<div style='position: absolute;border-style: dotted; background-color: #" + bgColor + "' >"
-    var result = "<div class='pptx2html' style='position: relative;border-style: dotted;width:" + slideSize.width + "px; height:" + slideSize.height + "px; background-color: #" + bgColor + "'>"
+    var result = "<div class='pptx2html' style='position: relative;width:" + slideSize.width + "px; height:" + slideSize.height + "px; background-color: #" + bgColor + "'>"
 
 
 	for (var nodeKey in nodes) {
@@ -966,18 +976,19 @@ genShape(node, slideLayoutSpNode, slideMasterSpNode, id, name, idx, type, order,
 
 		// TextBody
 		if (node["p:txBody"] !== undefined) {
-			result += this.genTextBody(node["p:txBody"], slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles);
+			result += this.genTextBody(node["p:txBody"], slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles, false);
 		}
 		result += "</div>";
 
 	} else {
 
     var textBody = "";
+    const createList = (slideLayoutSpNode !== undefined);//notes are not bulleted by default as slides are
     // TextBody
     if (node["p:txBody"] !== undefined) {
-      textBody = this.genTextBody(node["p:txBody"], slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles);
+      textBody = this.genTextBody(node["p:txBody"], slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles, createList);
     }
-    if (textBody !== undefined && textBody !== "") {//Dejan added this to prevent creation of some undefined and empty elements (sldImg in NotesPage)
+    if (textBody !== undefined && textBody !== "") {//Dejan added this to prevent creation of some undefined and empty elements
     		result += "<div class='block content " + this.getVerticalAlign(node, slideLayoutSpNode, slideMasterSpNode, type) +
     				"' _id='" + id + "' _idx='" + idx + "' _type='" + type + "' _name='" + name +
     				"' style='position: absolute;" +
@@ -1033,7 +1044,9 @@ processPicNode(node, warpObj) {
 
 
 
-  // this.saveImageToFile(imgName, zip);//Uncomment to save image to file
+
+  const imagePath = this.saveImageToFile(imgName, zip);
+
 
 
 
@@ -1047,17 +1060,38 @@ processPicNode(node, warpObj) {
 
 	return "<div class='block content' style='position: absolute;" + this.getPosition(xfrmNode, undefined, undefined) + this.getSize(xfrmNode, undefined, undefined) +
 			" z-index: " + order + ";" +
-			"'><img src=\"data:" + mimeType + ";base64," + functions.base64ArrayBuffer(imgArrayBuffer) + "\" style='position: absolute;width: 100%; height: 100%'" +
+			// "'><img src=\"data:" + mimeType + ";base64," + functions.base64ArrayBuffer(imgArrayBuffer) + "\" style='position: absolute;width: 100%; height: 100%'" +
+      // "'><img src=\"http://" + imagePath + "\" style='position: absolute;width: 100%; height: 100%'" +
+      "'><img src=\"http://" + imagePath + "\" style='width: 100%; height: 100%'" +
           altTag +
           "/></div>";
 }
 
 saveImageToFile(imgName, zip) {
   let fs = require('fs');
+  let Microservices = require('../../configs/microservices');
+
   const imgNameArray = imgName.split('/');
   const simpleImgName = imgNameArray[imgNameArray.length - 1];
-  // let saveTo = './' + imgName;
-  const saveTo = './' + simpleImgName;
+
+  // const saveTo = './' + simpleImgName;
+
+
+
+  //Add deckId or create UUID + <orig. file extension>
+  const imgUserPath = this.user + '/' + this.deckId + simpleImgName;
+  // const saveTo = '.' + Microservices.file.shareVolume + '/' + imgUserPath;
+  const saveTo = Microservices.file.shareVolume + '/' + imgUserPath;
+
+  const userDir = Microservices.file.shareVolume + '/' + this.user;
+  if (!fs.existsSync(userDir)){
+    fs.mkdirSync(userDir, 744, function(err) {
+      if(err) {
+        console.log(err);
+      }
+    });
+  }
+
   let fileStream = fs.createWriteStream(saveTo);
   fileStream.write(zip.file(imgName).asBinary(), 'binary');
   fileStream.end();
@@ -1065,8 +1099,10 @@ saveImageToFile(imgName, zip) {
     console.log('error', err);
   });
   fileStream.on('finish', (res) => {
-    console.log('save completed: ', simpleImgName);
+    // console.log('save completed: ', simpleImgName);
   });
+
+  return Microservices.file.uri + '/' + imgUserPath;
 }
 
 processGraphicFrameNode(node, warpObj) {
@@ -1111,7 +1147,7 @@ processSpPrNode(node, warpObj) {
 	// TODO:
 }
 
-genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles) {
+genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles, createList) {
 
 	var text = "";
 
@@ -1119,100 +1155,206 @@ genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, slideMaste
 		return text;
 	}
 
+  const isTitle = (type === 'title');
+  const isSubTitle = (type === 'subTitle');
+  const isCtrTitle = (type === 'ctrTitle');
+  const isSomeKindOfTitle = (isTitle || isSubTitle || isCtrTitle);
+  const isSldNum = (type === 'sldNum');
+  const layoutType = this.getTextByPathList(slideLayoutSpNode, ["p:nvSpPr", "p:nvPr", "p:ph", "attrs", "type"]);
+
   let title = '';
   let subTitle = '';
   let ctrTitle = '';
 
+
 	if (textBodyNode["a:p"].constructor === Array) {
 		// multi p
+    let previousNodeIsListItem = false;
+    let previousNodeIsOrderedListItem = false;
+    let previousItemLevel = "0";
 		for (var i=0; i<textBodyNode["a:p"].length; i++) {
+
+
 			var pNode = textBodyNode["a:p"][i];
 			var rNode = pNode["a:r"];
-			text += "<div class='" + this.getHorizontalAlign(pNode, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles) + "'>";
-			text += this.genBuChar(pNode);
+
+      let spanElement = "";
+
 			if (rNode === undefined) {
 				// without r
-				text += this.genSpanElement(pNode, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles);
+				spanElement += this.genSpanElement(pNode, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles);
 
-        if (type === 'title' ) {
+        if (isTitle) {
           title += this.getText(pNode);
-        } else if (type === 'subTitle') {
+        } else if (isSubTitle) {
           subTitle += this.getText(pNode);
-        } else if (type === 'ctrTitle') {
+        } else if (isCtrTitle) {
           ctrTitle += this.getText(pNode);
         }
 			} else if (rNode.constructor === Array) {
 				// with multi r
 				for (var j=0; j<rNode.length; j++) {
-					text += this.genSpanElement(rNode[j], slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles);
+					spanElement += this.genSpanElement(rNode[j], slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles);
 
-          if (type === 'title' ) {
+          if (isTitle) {
             title += this.getText(rNode[j]);
-          } else if (type === 'subTitle') {
+          } else if (isSubTitle) {
             subTitle += this.getText(rNode[j]);
-          } else if (type === 'ctrTitle') {
+          } else if (isCtrTitle) {
             ctrTitle += this.getText(rNode[j]);
           }
 				}
 			} else {
 				// with one r
-				text += this.genSpanElement(rNode, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles);
+				spanElement += this.genSpanElement(rNode, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles);
 
-        if (type === 'title' ) {
+        if (isTitle) {
           title += this.getText(rNode);
-        } else if (type === 'subTitle') {
+        } else if (isSubTitle) {
           subTitle += this.getText(rNode);
-        } else if (type === 'ctrTitle') {
+        } else if (isCtrTitle) {
           ctrTitle += this.getText(rNode);
         }
 			}
+
+
+      const insertListItemTag = (createList && !isSomeKindOfTitle && !isSldNum && (layoutType === undefined) && (pNode["a:pPr"] === undefined || pNode["a:pPr"]["a:buNone"] === undefined));
+      const isOrderedList = (pNode["a:pPr"] !== undefined && pNode["a:pPr"]["a:buAutoNum"] !== undefined);
+      let itemLevel = "0";
+      if (pNode["a:pPr"] !== undefined && pNode["a:pPr"]["attrs"] !== undefined && pNode["a:pPr"]["attrs"]["lvl"] !== undefined) {
+        itemLevel = pNode["a:pPr"]["attrs"]["lvl"];
+      }
+
+      if (spanElement !== "" && insertListItemTag) {//do not show bullets if the text is empty
+        if (isOrderedList) {
+          const orderedListStyle = (pNode["a:pPr"]["a:buAutoNum"]["attrs"] !== undefined && pNode["a:pPr"]["a:buAutoNum"]["attrs"]["type"] !== undefined) ? pNode["a:pPr"]["a:buAutoNum"]["attrs"]["type"] : '';
+          const orderedListStartAt = (pNode["a:pPr"]["a:buAutoNum"]["attrs"] !== undefined && pNode["a:pPr"]["a:buAutoNum"]["attrs"]["startAt"] !== undefined) ? ' start="' + pNode["a:pPr"]["a:buAutoNum"]["attrs"]["startAt"] + '"' : '';
+
+          text += (previousNodeIsListItem && previousNodeIsOrderedListItem && (itemLevel === previousItemLevel)) ? "" : "<ol " + this.getOrderedListStyle(orderedListStyle, itemLevel) + orderedListStartAt + ">";
+        } else {
+          text += (previousNodeIsListItem && !previousNodeIsOrderedListItem && (itemLevel === previousItemLevel)) ? "" : "<ul " + this.getUnorderedListStyle(itemLevel) + ">";
+        }
+
+        text += "<li>";//add list tag
+      }
+      previousNodeIsListItem = insertListItemTag;
+      previousNodeIsOrderedListItem = isOrderedList;
+      previousItemLevel = itemLevel;
+
+      text += "<div class='" + this.getHorizontalAlign(pNode, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles) + "'>";
+
+      text += this.genBuChar(pNode);
+
+      text += spanElement;
+
 			text += "</div>";
+
+      //see if next node is list item
+      let nextNodeIsListItem = false;
+      let nextNodeIsOrderedListItem = false;
+      let nextItemLevel = "0";
+      if (i < textBodyNode["a:p"].length - 1) {//it is not the last node in array
+        let pNodeNext = textBodyNode["a:p"][i+1];
+
+        nextNodeIsListItem = (createList && !isSomeKindOfTitle && !isSldNum && (layoutType === undefined) && (pNodeNext["a:pPr"] === undefined || pNodeNext["a:pPr"]["a:buNone"] === undefined));
+        nextNodeIsOrderedListItem = (pNodeNext["a:pPr"] !== undefined && pNodeNext["a:pPr"]["a:buAutoNum"] !== undefined);
+        if (pNodeNext["a:pPr"] !== undefined && pNodeNext["a:pPr"]["attrs"] !== undefined && pNodeNext["a:pPr"]["attrs"]["lvl"] !== undefined) {
+          nextItemLevel = pNodeNext["a:pPr"]["attrs"]["lvl"];
+        }
+      }
+
+      if (spanElement !== "" && insertListItemTag) {
+        text += "</li>";//add list tag
+
+        if (isOrderedList) {
+          text += (nextNodeIsListItem && nextNodeIsOrderedListItem && (itemLevel === nextItemLevel)) ? "" : "</ol>";
+        } else {
+          text += (nextNodeIsListItem && !nextNodeIsOrderedListItem && (itemLevel === nextItemLevel)) ? "" : "</ul>";
+        }
+      }
+
+      // text += (insertListItemTag) ? ((isOrderedList) ? "</ol>" : "</ul>") : "";
 		}
 	} else {
 		// one p
+
+
+
 		var pNode = textBodyNode["a:p"];
 		var rNode = pNode["a:r"];
-		text += "<div class='" + this.getHorizontalAlign(pNode, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles) + "'>";
-		text += this.genBuChar(pNode);
+
+    let spanElement = "";
+
 		if (rNode === undefined) {
 			// without r
-			text += this.genSpanElement(pNode, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles);
+			spanElement += this.genSpanElement(pNode, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles);
 
-      if (type === 'title' ) {
+      if (isTitle) {
         title += this.getText(pNode);
-      } else if (type === 'subTitle') {
+      } else if (isSubTitle) {
         subTitle += this.getText(pNode);
-      } else if (type === 'ctrTitle') {
+      } else if (isCtrTitle) {
         ctrTitle += this.getText(pNode);
       }
 		} else if (rNode.constructor === Array) {
 			// with multi r
 			for (var j=0; j<rNode.length; j++) {
-				text += this.genSpanElement(rNode[j], slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles);
+				spanElement += this.genSpanElement(rNode[j], slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles);
 
-        if (type === 'title' ) {
+        if (isTitle) {
           title += this.getText(rNode[j]);
-        } else if (type === 'subTitle') {
+        } else if (isSubTitle) {
           subTitle += this.getText(rNode[j]);
-        } else if (type === 'ctrTitle') {
+        } else if (isCtrTitle) {
           ctrTitle += this.getText(rNode[j]);
         }
 			}
 		} else {
 			// with one r
-			text += this.genSpanElement(rNode, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles);
+			spanElement += this.genSpanElement(rNode, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles);
 
-      if (type === 'title' ) {
+      if (isTitle) {
         title += this.getText(rNode);
-      } else if (type === 'subTitle') {
+      } else if (isSubTitle) {
         subTitle += this.getText(rNode);
-      } else if (type === 'ctrTitle') {
+      } else if (isCtrTitle) {
         ctrTitle += this.getText(rNode);
       }
 		}
-		text += "</div>";
+
+
+
+    const insertListItemTag = (createList && !isSomeKindOfTitle && !isSldNum && (layoutType === undefined) && (pNode["a:pPr"] === undefined || pNode["a:pPr"]["a:buNone"] === undefined));
+    const isOrderedList = (pNode["a:pPr"] !== undefined && pNode["a:pPr"]["a:buAutoNum"] !== undefined);
+
+
+
+    if (spanElement !== "" && insertListItemTag) {
+      text += (isOrderedList) ? "<ol>" : "<ul>";
+      text += "<li>";//add list tag
+    }
+
+    text += "<div class='" + this.getHorizontalAlign(pNode, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles) + "'>";
+
+
+    text += this.genBuChar(pNode);
+
+    text += spanElement;
+
+    text += "</div>";
+    if (spanElement !== "" && insertListItemTag) {
+      text += "</li>";//add list tag
+      text += (isOrderedList) ? "</ol>" : "</ul>";
+    }
+
+
+
 	}
-  if (type === 'title' || type === 'subTitle' || type === 'ctrTitle') {
+
+
+
+
+  if (isSomeKindOfTitle) {
     this.currentSlide.title = (title !== '') ? title : (ctrTitle !== '') ? ctrTitle : subTitle;
   }
 
@@ -1230,6 +1372,41 @@ getText(node) {//Get raw text from a:r (a:p) node - for the slide title
 		}
 	}
   return text;
+}
+
+getOrderedListStyle(type, level) {
+  const singleIndent = 30;
+  let style = '';//arabic is default
+  if(type.startsWith('alphaLc')) {
+    style = 'type="a"';
+  } else if(type.startsWith('alphaUc')) {
+    style = 'type="A"';
+  } else if(type.startsWith('romanLc')) {
+    style = 'type="i"';
+  } else if(type.startsWith('romanUc')) {
+    style = 'type="I"';
+  }
+
+  if (level > 0) {//add indent
+    style += ' style="margin-left:' + (singleIndent * level) + 'px;"';
+  }
+  return style;
+}
+
+getUnorderedListStyle(level) {
+  const singleIndent = 30;
+  let style = '';//disc is default
+  if (level === '1' || level === '4') {//set bullet type
+    style = 'style="list-style-type:circle;';
+  } else if (level === '2' || level === '5') {
+    style =  'style="list-style-type:square;';
+  }
+  if (level > 0) {//add indent
+    style += (style === '') ? 'style="' : '';
+    style += 'margin-left:' + (singleIndent * level) + 'px;"';
+  }
+
+  return style;
 }
 
 genBuChar(node) {
@@ -1383,6 +1560,8 @@ genTable(node, warpObj) {
 		}
 		tableHtml += "</tr>";
 	}
+
+  tableHtml += "</table>";
 
 	return tableHtml;
 }
@@ -1850,9 +2029,13 @@ getSchemeColorFromTheme(schemeClr) {
 }
 
 extractChartData(serNode) {
-
 	var dataMat = new Array();
-    let that = this; //Klaas - FIXED
+
+  if (serNode === undefined) {
+		return dataMat;
+	}
+
+  let that = this; //Klaas - FIXED
 	if (serNode["c:xVal"] !== undefined) {
 		var dataRow = new Array();
 		this.eachElement(serNode["c:xVal"]["c:numRef"]["c:numCache"]["c:pt"], function(innerNode, index) {
