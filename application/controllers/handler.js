@@ -295,7 +295,7 @@ module.exports = {
     //console.log('request.params.filename'+  request.params.filename);
     //console.log('request.query.filename'+  request.query.filename);
     //console.log('request.payload["filename"]'+  request.payload["filename"]);
-    request.payload["upload"].pipe(fs.createWriteStream("./uploaded/test.png")); //this already works.
+    //request.payload["upload"].pipe(fs.createWriteStream("./uploaded/test.png")); //this already works.
     //request.payload["upload"].pipe(fs.createWriteStream('temp.data')); //this already works.
     //request.payload["upload"].pipe(fs.createWriteStream(saveTo));
 
@@ -306,7 +306,7 @@ module.exports = {
 
     //console.log(util.inspect(request.payload.upload.data, {showHidden: true, depth: 100})); //undefined
     //console.log(util.inspect(request.payload.upload._data, {showHidden: true, depth: 100})); //undefined
-    console.log(util.inspect(request.payload.upload.hapi.filename, {showHidden: true, depth: 100})); //undefined
+    //console.log(util.inspect(request.payload.upload.hapi.filename, {showHidden: true, depth: 100})); //undefined
     //let fileStream = fs.createWriteStream(saveTo);
     ////fileStream.write(request.payload.file.data);
     //fileStream.write(request.payload.file, 'binary');
@@ -324,26 +324,30 @@ module.exports = {
     });
     */
 
-    //TODO - create unique filename
-    //let saveTo = './' + request.payload.filename;
-    let saveTo = './uploaded/' + request.payload.upload.hapi.filename;
-    let fileStream = fs.createWriteStream(saveTo);
-    //fileStream.write(request.payload.file.data);
-    //fileStream.write(request.payload.file, 'binary');
-    fileStream.write(request.payload.upload._data); //this saves to file 'undefined'
-    fileStream.end();
-    fileStream.on('error', (err) => {
-      reply('error in upload!');
-      console.log('error', err);
-    });
-    fileStream.on('finish', (res) => {
-        console.log('upload completed');
-      });
+
+
+    // //TODO - create unique filename
+    // //let saveTo = './' + request.payload.filename;
+    // let saveTo = './uploaded/' + request.payload.upload.hapi.filename;
+    // let fileStream = fs.createWriteStream(saveTo);
+    // //fileStream.write(request.payload.file.data);
+    // //fileStream.write(request.payload.file, 'binary');
+    // fileStream.write(request.payload.upload._data); //this saves to file 'undefined'
+    // fileStream.end();
+    // fileStream.on('error', (err) => {
+    //   reply('error in upload!');
+    //   console.log('error', err);
+    // });
+    // fileStream.on('finish', (res) => {
+    //     console.log('upload completed');
+    //   });
 
 
       //Use saveImageToFile function
-    //let filePath = saveImageToFile(filename, request.payload.upload);
-    //reply(filePath);
+
+    const filename = request.payload.upload.hapi.filename;
+    const user = '2';//TODO how to get this?
+    const filePath = saveImageToFile(filename, request.payload.upload._data, user);
 
 
         ///JSON ONLY FOR DRAGGING and dropping
@@ -377,7 +381,8 @@ module.exports = {
 
         //content += request.params.CKEditor + ".tools.callFunction("+ request.params.CKEditorFuncNum + " , 'http://platform.manfredfris.ch/assets/images/logo_full.png', '' );\n";
         //content += "window.parent.CKEDITOR.tools.callFunction("+ request.query.CKEditorFuncNum + " , 'http://platform.manfredfris.ch/assets/images/logo_full.png', '' );\n";
-        content += 'window.parent.CKEDITOR.tools.callFunction('+ request.query.CKEditorFuncNum + ' , "http://platform.manfredfris.ch/assets/images/logo_full.png", "" );\n';
+        // content += 'window.parent.CKEDITOR.tools.callFunction('+ request.query.CKEditorFuncNum + ' , "http://platform.manfredfris.ch/assets/images/logo_full.png", "" );\n';
+        content += 'window.parent.CKEDITOR.tools.callFunction('+ request.query.CKEditorFuncNum + ' , "' + filePath + '", "" );\n';
 
         //CKEDITOR.instances.inlineContent
         //content += "alert('test');\n"; //WORKS!
@@ -402,21 +407,22 @@ module.exports = {
 };
 
 
-function saveImageToFile(imgName, file) {
+function saveImageToFile(imgName, file, user) {
   //Create UUID
-  let uuid = require('node-uuid');//https://www.npmjs.com/package/node-uuid
-  const uuid = uuid.v1();// Generate a v1 (time-based) id
+  let uuid = require('node-uuid');
+  const uuidValue = uuid.v1();// Generate a v1 (time-based) id
 
   //Get file extension
   const imgNameArray = imgName.split('.');
   const extension = imgNameArray[imgNameArray.length - 1];
 
-  const imgUserPath = this.user + '/' + uuid + extension;
-  // const saveTo = '.' + Microservices.file.shareVolume + '/' + imgUserPath;
+  const imgUserPath = user + '/' + uuidValue + '.' + extension;
+  // const saveTo = '.' + Microservices.file.shareVolume + '/' + imgUserPath;// For localhost testing
   const saveTo = Microservices.file.shareVolume + '/' + imgUserPath;
 
   //Create the user dir if does not exist
-  const userDir = Microservices.file.shareVolume + '/' + this.user;
+  // const userDir = '.' + Microservices.file.shareVolume + '/' + user;// For localhost testing
+  const userDir = Microservices.file.shareVolume + '/' + user;
   if (!fs.existsSync(userDir)){
     fs.mkdirSync(userDir, 744, function(err) {
       if(err) {
@@ -425,6 +431,7 @@ function saveImageToFile(imgName, file) {
     });
   }
 
+  //Save file
   let fileStream = fs.createWriteStream(saveTo);
 
   //fileStream.write(request.payload.file.data);
@@ -438,7 +445,7 @@ function saveImageToFile(imgName, file) {
     console.log('upload completed');
   });
 
-  return Microservices.file.url + '/' + imgUserPath;
+  return 'http://' + Microservices.file.url + '/' + imgUserPath;
 }
 
 
