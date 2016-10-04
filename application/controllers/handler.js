@@ -368,7 +368,7 @@ module.exports = {
         //'url': 'http://platform.manfredfris.ch/assets/images/logo_full.png'
         //});
 
-        let content = '<script type="text/javascript">\n';
+    let content = '<script type="text/javascript">\n';
         //content += "window.parent.CKEDITOR.tools.callFunction(1, 'http://platform.manfredfris.ch/assets/images/logo_full.png', '' );\n";
         //content += "window.opener.CKEDITOR.tools.callFunction(1, 'http://platform.manfredfris.ch/assets/images/logo_full.png', '' );\n";
         //content += "CKEDITOR.instances.inlineContent.tools.callFunction(1, 'http://platform.manfredfris.ch/assets/images/logo_full.png', '' );\n";
@@ -377,21 +377,21 @@ module.exports = {
 
         //       Save problem with Same-origin_policy when CKeditor image upload script is returned
         //       https://developer.mozilla.org/en-US/docs/Web/Security/Same-origin_policy
-        content += 'document.domain = "localhost";\n';
+    content += 'document.domain = "localhost";\n';
 
         //content += request.params.CKEditor + ".tools.callFunction("+ request.params.CKEditorFuncNum + " , 'http://platform.manfredfris.ch/assets/images/logo_full.png', '' );\n";
         //content += "window.parent.CKEDITOR.tools.callFunction("+ request.query.CKEditorFuncNum + " , 'http://platform.manfredfris.ch/assets/images/logo_full.png', '' );\n";
         // content += 'window.parent.CKEDITOR.tools.callFunction('+ request.query.CKEditorFuncNum + ' , "http://platform.manfredfris.ch/assets/images/logo_full.png", "" );\n';
-        content += 'window.parent.CKEDITOR.tools.callFunction('+ request.query.CKEditorFuncNum + ' , "' + filePath + '", "" );\n';
+    content += 'window.parent.CKEDITOR.tools.callFunction('+ request.query.CKEditorFuncNum + ' , "' + filePath + '", "" );\n';
 
         //CKEDITOR.instances.inlineContent
         //content += "alert('test');\n"; //WORKS!
 
         //SEARCH FOR ALTERNATIVES!!
 
-        content += '</script>';
+    content += '</script>';
         //reply('<script type="text/javascript">window.parent.CKEDITOR.tools.callFunction(1, "http://platform.manfredfris.ch/assets/images/logo_full.png", "");</script>);');
-        reply(content);
+    reply(content);
 
         //TODO check if image file is uploaded.
         //TODO send call to media service + user service to store media data of uploaded image file
