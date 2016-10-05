@@ -364,8 +364,8 @@ module.exports = {
       //Use saveImageToFile function
 
     const filename = request.payload.upload.hapi.filename;
-    const user = '2';//TODO how to get this?
-    const filePath = saveImageToFile(filename, request.payload.upload._data, user);
+    const userid = request.params.userid;
+    const filePath = saveImageToFile(filename, request.payload.upload._data, userid);
 
 
         ///JSON ONLY FOR DRAGGING and dropping

@@ -66,10 +66,16 @@ module.exports = function(server) {
   server.route({
     //will be POST
     method: 'POST',
-    path: '/importImage',
+    path: '/importImage/{userid}',
+
     handler: handlers.importImage,
     config: {
       cors: true,
+      validate: {
+        params: {
+          userid: Joi.string()
+        },
+      },
       payload: {
         parse: true,
         //allow: 'application/vnd.openxmlformats-officedocument.presentationml.presentation' - works!
