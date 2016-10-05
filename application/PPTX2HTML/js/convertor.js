@@ -75,13 +75,30 @@ class Convertor {
         //return this.processPPTX(data);
 
         this.user = '';
-        this.deckId = '';
     }
 
-    getNoOfSlides(data) {
+    convertFirstSlide(data) {
         let zip = new JSZip(data);
         this.filesInfo = this.getContentTypes(zip);
-        return this.filesInfo["slides"].length;
+        this.slideSize = this.getSlideSize(zip);
+        this.themeContent = this.loadTheme(zip);
+        const noOfSlides = this.filesInfo["slides"].length;
+
+        const filename = this.filesInfo["slides"][0];
+        this.currentSlide.content = this.processSingleSlide(zip, filename, 0, this.slideSize);
+        this.currentSlide.notes = this.processSingleSlideNotes(zip, filename, 0, this.slideSize);//Dejan added this to process notes
+
+        this.slides.push(this.currentSlide);
+        this.currentSlide = {
+          title: '',
+          content: '',
+          notes: ''
+        };
+
+        return {
+          firstSlide: this.slides[0],
+          noOfSlides: noOfSlides
+        }
     }
     //var MsgQueue = new Array();
 
@@ -92,11 +109,13 @@ class Convertor {
         let dateBefore = new Date();
 
         let zip = new JSZip(data);
-        if (this.filesInfo === null) {//if getNoOfSlides was not called
+        let startAtSlide = 1;
+        if (this.filesInfo === undefined) {//if convertFirstSlide was not called
             this.filesInfo = this.getContentTypes(zip);
+            this.slideSize = this.getSlideSize(zip);
+            this.themeContent = this.loadTheme(zip);
+            startAtSlide = 0;
         }
-        this.slideSize = this.getSlideSize(zip);
-        this.themeContent = this.loadTheme(zip);
 
         //this.totalHtmlResult = '';
 
@@ -119,7 +138,7 @@ class Convertor {
     this.slideHtml = '';//Dejan uncommented this to remove the first 'undefined'
 
 	var numOfSlides = this.filesInfo["slides"].length;
-	for (var i=0; i<numOfSlides; i++) {
+	for (var i=startAtSlide; i<numOfSlides; i++) {
 		var filename = this.filesInfo["slides"][i];
 
     this.currentSlide.content = this.processSingleSlide(zip, filename, i, this.slideSize);
@@ -1041,15 +1060,7 @@ processPicNode(node, warpObj) {
 			mimeType = "image/*";
 	}
 
-
-
-
-
   const imagePath = this.saveImageToFile(imgName, zip);
-
-
-
-
 
   //Dejan added this to create the img alt tag
   var descr = node["p:nvPicPr"]["p:cNvPr"]["attrs"]["descr"];
@@ -1070,19 +1081,21 @@ processPicNode(node, warpObj) {
 saveImageToFile(imgName, zip) {
   let fs = require('fs');
   let Microservices = require('../../configs/microservices');
+  //Create UUID
+  let uuid = require('node-uuid');
+  const uuidValue = uuid.v1();// Generate a v1 (time-based) id
+  //Get file extension
+  const imgNameArray = imgName.split('.');
+  const extension = imgNameArray[imgNameArray.length - 1];
 
-  const imgNameArray = imgName.split('/');
-  const simpleImgName = imgNameArray[imgNameArray.length - 1];
+  const imgUserPath = this.user + '/' + uuidValue + '.' + extension;
 
-  // const saveTo = './' + simpleImgName;
-
-
-
-  //Add deckId or create UUID + <orig. file extension>
-  const imgUserPath = this.user + '/' + this.deckId + simpleImgName;
-  // const saveTo = '.' + Microservices.file.shareVolume + '/' + imgUserPath;
+  // const imgUserPath = this.user + '/' + uuidValue + simpleImgName;
+  // const saveTo = '.' + Microservices.file.shareVolume + '/' + imgUserPath;// For localhost testing
   const saveTo = Microservices.file.shareVolume + '/' + imgUserPath;
 
+  //Create the user dir if does not exist
+  // const userDir = '.' + Microservices.file.shareVolume + '/' + this.user;// For localhost testing
   const userDir = Microservices.file.shareVolume + '/' + this.user;
   if (!fs.existsSync(userDir)){
     fs.mkdirSync(userDir, 744, function(err) {
@@ -1092,6 +1105,7 @@ saveImageToFile(imgName, zip) {
     });
   }
 
+  //Save file
   let fileStream = fs.createWriteStream(saveTo);
   fileStream.write(zip.file(imgName).asBinary(), 'binary');
   fileStream.end();
