@@ -206,7 +206,168 @@ module.exports = {
     //});
   }
 
+  ,importImage: function(request, reply) { // Klaas added this to test image upload
+    //console.log('request.params.CKEditorFuncNum' + request.params.CKEditorFuncNum); // {}
+    //console.log('request.query.CKEditorFuncNum' +request.query.CKEditorFuncNum);
 
+    //console.log('file sent to service: request.files.file.size' + request.files.file.data);
+    //console.log('file sent to service: request.params.files.file.size' + request.files.file.size);
+    //console.log(util.inspect(request.params, {showHidden: true, depth: 100}));
+    //console.log(util.inspect(request.payload.file.data, {showHidden: true, depth: 100})); //undefined
+    //console.log(util.inspect(request.payload.file, {showHidden: true, depth: 100})); ////<Buffer 50 4b 03 04
+    //console.log(util.inspect(request.payload, {showHidden: true, depth: 100}));//{ file: <Buffer 50 4b 0
+    //console.log(util.inspect(request.payload.filename, {showHidden: true, depth: 100}));//{ file: <Buffer 50 4b 0
+//http://stackoverflow.com/questions/4295782/how-do-you-extract-post-data-in-node-js --> does not seem to work
+//https://github.com/expressjs/node-multiparty
+
+//http://stackoverflow.com/questions/21823379/how-to-upload-files-using-nodejs-and-hapi#24521136
+
+    //TODO use multer?
+    //https://www.npmjs.com/package/multer
+
+    //req.params.name
+    //console.log('file sent to service: request.payload.size: ' + request.payload.size);
+    //console.log('file sent to service: request.payload.files.file.size' + request.payload.files.file.size);
+    //const user = request.payload.user;
+    //const license = request.payload.license;
+    //const fileName = request.payload.filename;
+    //console.log('filename: '+ request.payload.filename);
+    /*
+    const fileName = request.payload.filename;
+    let saveTo = './' + fileName;
+    let fileStream = fs.createWriteStream(saveTo);
+    ////fileStream.write(request.payload.file.data);
+    //fileStream.write(request.payload.file, 'binary');
+    //fileStream.write(request.payload["upload"], 'binary');
+    fileStream.write(request.payload.upload);
+    fileStream.end();
+    fileStream.on('error', (err) => {
+      reply('error in upload!');
+      console.log('error', err);
+    });
+    fileStream.on('finish', (res) => {
+      // reply('upload completed!');
+      console.log('upload completed');
+    });
+    */
+
+    //const fileName = request.payload.filename;
+    //let saveTo = './' + fileName;
+    //let saveTo = './' + request.payload.filename;
+    //let saveTo = './uploaded/' + fileName;
+    //console.log('saved to:' + saveTo);
+    //console.log('request.params.filename'+  request.params.filename);
+    //console.log('request.query.filename'+  request.query.filename);
+    //console.log('request.payload["filename"]'+  request.payload["filename"]);
+    //request.payload["upload"].pipe(fs.createWriteStream("./uploaded/test.png")); //this already works.
+    //request.payload["upload"].pipe(fs.createWriteStream('temp.data')); //this already works.
+    //request.payload["upload"].pipe(fs.createWriteStream(saveTo));
+
+    //console.log('request.payload[upload]' + request.payload['upload']);
+    //console.log('request.payload.upload' + request.payload.upload);
+    //console.log(util.inspect(request.payload.upload, {showHidden: true, depth: 100})); //undefined
+    //console.log(util.inspect(request.payload['upload'], {showHidden: true, depth: 100})); //undefined
+
+    //console.log(util.inspect(request.payload.upload.data, {showHidden: true, depth: 100})); //undefined
+    //console.log(util.inspect(request.payload.upload._data, {showHidden: true, depth: 100})); //undefined
+    //console.log(util.inspect(request.payload.upload.hapi.filename, {showHidden: true, depth: 100})); //undefined
+    //let fileStream = fs.createWriteStream(saveTo);
+    ////fileStream.write(request.payload.file.data);
+    //fileStream.write(request.payload.file, 'binary');
+    //fileStream.end();
+    //fileStream.on('error', (err) => {
+    /*
+    request.payload["upload"].on('error', (err) => {
+      reply('error in upload!');
+      console.log('error', err);
+    });
+    //fileStream.on('finish', (res) => {
+    request.payload["upload"].on('finish', (res) => {
+      // reply('upload completed!');
+      console.log('upload completed');
+    });
+    */
+
+
+
+    // //TODO - create unique filename
+    // //let saveTo = './' + request.payload.filename;
+    // let saveTo = './uploaded/' + request.payload.upload.hapi.filename;
+    // let fileStream = fs.createWriteStream(saveTo);
+    // //fileStream.write(request.payload.file.data);
+    // //fileStream.write(request.payload.file, 'binary');
+    // fileStream.write(request.payload.upload._data); //this saves to file 'undefined'
+    // fileStream.end();
+    // fileStream.on('error', (err) => {
+    //   reply('error in upload!');
+    //   console.log('error', err);
+    // });
+    // fileStream.on('finish', (res) => {
+    //     console.log('upload completed');
+    //   });
+
+
+      //Use saveImageToFile function
+
+    const filename = request.payload.upload.hapi.filename;
+    const userid = request.params.userid;
+    const filePath = saveImageToFile(filename, request.payload.upload._data, userid);
+
+
+        ///JSON ONLY FOR DRAGGING and dropping
+      //let response;
+      //response.writeHead(200, {'Content-Type': 'application/json'});
+      //let json = JSON.stringify({
+        //'uploaded': 1,
+        //'fileName': 'logo_full.png',
+        //'url': 'http://platform.manfredfris.ch/assets/images/logo_full.png'
+      //});
+      //response.end(json);
+      //console.log(json);
+      //reply (json);
+      // JSON ONLY FOR DRAGGING and dropping  - http://stackoverflow.com/questions/33197058/ckeditor-can-not-parse-json-response
+      //reply ({
+        //'uploaded': '1',
+        //'fileName': 'logo_full.png',
+        //'url': 'http://platform.manfredfris.ch/assets/images/logo_full.png'
+        //});
+
+    let content = '<script type="text/javascript">\n';
+        //content += "window.parent.CKEDITOR.tools.callFunction(1, 'http://platform.manfredfris.ch/assets/images/logo_full.png', '' );\n";
+        //content += "window.opener.CKEDITOR.tools.callFunction(1, 'http://platform.manfredfris.ch/assets/images/logo_full.png', '' );\n";
+        //content += "CKEDITOR.instances.inlineContent.tools.callFunction(1, 'http://platform.manfredfris.ch/assets/images/logo_full.png', '' );\n";
+        //content += "window.parent.CKEDITOR.instances.inlineContent.tools.callFunction(1, 'http://platform.manfredfris.ch/assets/images/logo_full.png', '' );\n";
+        //window.parent.CKEDITOR
+
+        //       Save problem with Same-origin_policy when CKeditor image upload script is returned
+        //       https://developer.mozilla.org/en-US/docs/Web/Security/Same-origin_policy
+    content += 'document.domain = "slidewiki.org";\n';
+
+        //content += request.params.CKEditor + ".tools.callFunction("+ request.params.CKEditorFuncNum + " , 'http://platform.manfredfris.ch/assets/images/logo_full.png', '' );\n";
+        //content += "window.parent.CKEDITOR.tools.callFunction("+ request.query.CKEditorFuncNum + " , 'http://platform.manfredfris.ch/assets/images/logo_full.png', '' );\n";
+        // content += 'window.parent.CKEDITOR.tools.callFunction('+ request.query.CKEditorFuncNum + ' , "http://platform.manfredfris.ch/assets/images/logo_full.png", "" );\n';
+    content += 'window.parent.CKEDITOR.tools.callFunction('+ request.query.CKEditorFuncNum + ' , "' + filePath + '", "" );\n';
+
+        //CKEDITOR.instances.inlineContent
+        //content += "alert('test');\n"; //WORKS!
+
+        //SEARCH FOR ALTERNATIVES!!
+
+    content += '</script>';
+        //reply('<script type="text/javascript">window.parent.CKEDITOR.tools.callFunction(1, "http://platform.manfredfris.ch/assets/images/logo_full.png", "");</script>);');
+    reply(content);
+
+        //TODO check if image file is uploaded.
+        //TODO send call to media service + user service to store media data of uploaded image file
+      // reply('upload completed!');
+      //reply(response);
+      //reply (pptx2html.convert(request.payload.file));
+
+      //SEE http://docs.ckeditor.com/#!/guide/dev_file_browser_api
+      //console.log('upload completed');
+    //});
+
+  }
   // ,testPPTX2HTML: function(request, reply) {// Dejan added this to test pptx2html
   //   if (!request.payload) {
   //     let file = './PPTX2HTML/pptx samples/simple slide - notes - p1,3.pptx';
@@ -217,7 +378,51 @@ module.exports = {
   //   }
   //   reply('test completed, look at the console');
   // }
+
 };
+
+
+function saveImageToFile(imgName, file, user) {
+  //Create UUID
+  let uuid = require('node-uuid');
+  const uuidValue = uuid.v1();// Generate a v1 (time-based) id
+
+  //Get file extension
+  const imgNameArray = imgName.split('.');
+  const extension = imgNameArray[imgNameArray.length - 1];
+
+  const imgUserPath = user + '/' + uuidValue + '.' + extension;
+  // const saveTo = '.' + Microservices.file.shareVolume + '/' + imgUserPath;// For localhost testing
+  const saveTo = Microservices.file.shareVolume + '/' + imgUserPath;
+
+  //Create the user dir if does not exist
+  // const userDir = '.' + Microservices.file.shareVolume + '/' + user;// For localhost testing
+  const userDir = Microservices.file.shareVolume + '/' + user;
+  if (!fs.existsSync(userDir)){
+    fs.mkdirSync(userDir, 744, function(err) {
+      if(err) {
+        console.log(err);
+      }
+    });
+  }
+
+  //Save file
+  let fileStream = fs.createWriteStream(saveTo);
+
+  //fileStream.write(request.payload.file.data);
+  fileStream.write(file, 'binary');
+  fileStream.end();
+  fileStream.on('error', (err) => {
+    reply('error in upload!');
+    console.log('error', err);
+  });
+  fileStream.on('finish', (res) => {
+    console.log('upload completed');
+  });
+
+  return 'http://' + Microservices.file.uri + '/' + imgUserPath;
+}
+
 
 function createNodesRecursive(user, license, deckId, previousSlideId, slides, index) {
   let selector = {
