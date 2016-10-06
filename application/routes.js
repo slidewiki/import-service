@@ -42,6 +42,39 @@ module.exports = function(server) {
     }
   });
 
+  server.route({
+    //will be POST
+    method: 'POST',
+    path: '/importImage/{userid}',
+
+    handler: handlers.importImage,
+    config: {
+      cors: true,
+      validate: {
+        params: {
+          userid: Joi.string()
+        },
+      },
+      payload: {
+        parse: true,
+        //allow: 'application/vnd.openxmlformats-officedocument.presentationml.presentation' - works!
+        //allow: 'application/x-www-form-urlencoded'
+        //allow: 'multipart/form-data'
+        maxBytes: 209715200,
+        output:'stream',
+      },
+      //validate: {
+    //    params: {
+    //      payload: Joi.object().keys({
+    //        file: Joi.string()
+    //      }).requiredKeys('file')
+    //    },
+     // },
+      tags: ['api'],
+      description: 'Import image file to SlideWiki'
+    }
+  });
+
   // server.route({// Dejan added this to test pptx2html in the microservice
   //   //will be POST
   //   method: 'POST',
@@ -63,6 +96,7 @@ module.exports = function(server) {
   //     description: 'Test PPTX2HTML library (read some local pptx file)'
   //   }
   // });
+
   /*
   //Get slide with id id from database and return it (when not available, return NOT FOUND). Validate id
   server.route({
