@@ -109,6 +109,10 @@ module.exports = {
     //console.log(pptx2html.convert(request.payload.files.files)); Cannot read property 'files' of undefined
 
     const user = request.payload.user;
+    let language = request.payload.language;
+    if (language === undefined) {//to make it work until corresponding frontend branch is merged
+      language = 'en_GB';
+    }
     const license = request.payload.license;
     const fileName = request.payload.filename;
     const deckName = fileName.split('.')[0];
@@ -140,7 +144,7 @@ module.exports = {
     let firstSlide = initialResult.firstSlide;
     const noOfSlides = initialResult.noOfSlides;
 
-    return createDeck(user, license, deckName, firstSlide).then((deck) => {
+    return createDeck(user, language, license, deckName, firstSlide).then((deck) => {
       // let noOfSlides = convertor.getNoOfSlides(buffer);
       reply('import completed').header('deckId', deck.id).header('noOfSlides', noOfSlides);
 
@@ -450,7 +454,7 @@ function createNodesRecursive(user, license, deckId, previousSlideId, slides, in
 }
 
 //Send a request to insert a new deck with the first slide
-function createDeck(user, license, deckName, firstSlide) {
+function createDeck(user, language, license, deckName, firstSlide) {
   // console.log('deck', user, license, deckName);
   let myPromise = new Promise((resolve, reject) => {
     let firstSlideTitle = replaceSpecialSymbols(firstSlide.title);//deck tree does not display some encoded symbols properly
@@ -461,6 +465,7 @@ function createDeck(user, license, deckName, firstSlide) {
 
     let jsonData = {
       user: user,
+      language: language,
       license: license,
       title: deckName,
       first_slide: {
