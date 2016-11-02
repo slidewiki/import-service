@@ -110,11 +110,11 @@ module.exports = {
 
     const user = request.payload.user;
     let language = request.payload.language;
-    if (language === undefined) {//to make it work until corresponding frontend branch is merged
+    if (language === undefined || language === undefined || language === '') {
       language = 'en_GB';
     }
     const license = request.payload.license;
-    const fileName = request.payload.filename;
+    const fileName = he.encode(request.payload.filename, {allowUnsafeSymbols: true});//encode special characters
     const deckName = fileName.split('.')[0];
 
     //
