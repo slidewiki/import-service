@@ -110,7 +110,7 @@ module.exports = {
 
     const user = request.payload.user;
     let language = request.payload.language;
-    if (language === undefined || language === undefined || language === '') {
+    if (language === undefined || language === null || language === '') {
       language = 'en_GB';
     }
     const license = request.payload.license;
