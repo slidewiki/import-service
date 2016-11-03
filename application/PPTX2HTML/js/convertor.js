@@ -69,6 +69,8 @@ class Convertor {
 
         this.currentSlide = {
           title: '',
+          ctrTitle: '',
+          subTitle: '',
           content: '',
           notes: ''
         };
@@ -91,6 +93,8 @@ class Convertor {
         this.slides.push(this.currentSlide);
         this.currentSlide = {
           title: '',
+          ctrTitle: '',
+          subTitle: '',
           content: '',
           notes: ''
         };
@@ -160,6 +164,8 @@ class Convertor {
     this.slides.push(this.currentSlide);
     this.currentSlide = {
       title: '',
+      ctrTitle: '',
+      subTitle: '',
       content: '',
       notes: ''
     };
@@ -1177,8 +1183,6 @@ genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, slideMaste
   const layoutType = this.getTextByPathList(slideLayoutSpNode, ["p:nvSpPr", "p:nvPr", "p:ph", "attrs", "type"]);
 
   let title = '';
-  let subTitle = '';
-  let ctrTitle = '';
 
 
 	if (textBodyNode["a:p"].constructor === Array) {
@@ -1198,36 +1202,33 @@ genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, slideMaste
 				// without r
 				spanElement += this.genSpanElement(pNode, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles);
 
-        if (isTitle) {
-          title += this.getText(pNode);
-        } else if (isSubTitle) {
-          subTitle += this.getText(pNode);
-        } else if (isCtrTitle) {
-          ctrTitle += this.getText(pNode);
+        if (isSomeKindOfTitle) {
+          const text = this.getText(pNode);
+          if (text !== undefined) {
+            title += text;
+          }
         }
 			} else if (rNode.constructor === Array) {
 				// with multi r
 				for (var j=0; j<rNode.length; j++) {
 					spanElement += this.genSpanElement(rNode[j], slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles);
 
-          if (isTitle) {
-            title += this.getText(rNode[j]);
-          } else if (isSubTitle) {
-            subTitle += this.getText(rNode[j]);
-          } else if (isCtrTitle) {
-            ctrTitle += this.getText(rNode[j]);
+          if (isSomeKindOfTitle) {
+            const text = this.getText(rNode[j]);
+            if (text !== undefined) {
+              title += text;
+            }
           }
 				}
 			} else {
 				// with one r
 				spanElement += this.genSpanElement(rNode, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles);
 
-        if (isTitle) {
-          title += this.getText(rNode);
-        } else if (isSubTitle) {
-          subTitle += this.getText(rNode);
-        } else if (isCtrTitle) {
-          ctrTitle += this.getText(rNode);
+        if (isSomeKindOfTitle) {
+          const text = this.getText(rNode);
+          if (text !== undefined) {
+            title += text;
+          }
         }
 			}
 
@@ -1303,36 +1304,33 @@ genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, slideMaste
 			// without r
 			spanElement += this.genSpanElement(pNode, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles);
 
-      if (isTitle) {
-        title += this.getText(pNode);
-      } else if (isSubTitle) {
-        subTitle += this.getText(pNode);
-      } else if (isCtrTitle) {
-        ctrTitle += this.getText(pNode);
+      if (isSomeKindOfTitle) {
+        const text = this.getText(pNode);
+        if (text !== undefined) {
+          title += text;
+        }
       }
 		} else if (rNode.constructor === Array) {
 			// with multi r
 			for (var j=0; j<rNode.length; j++) {
 				spanElement += this.genSpanElement(rNode[j], slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles);
 
-        if (isTitle) {
-          title += this.getText(rNode[j]);
-        } else if (isSubTitle) {
-          subTitle += this.getText(rNode[j]);
-        } else if (isCtrTitle) {
-          ctrTitle += this.getText(rNode[j]);
+        if (isSomeKindOfTitle) {
+          const text = this.getText(rNode[j]);
+          if (text !== undefined) {
+            title += text;
+          }
         }
 			}
 		} else {
 			// with one r
 			spanElement += this.genSpanElement(rNode, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles);
 
-      if (isTitle) {
-        title += this.getText(rNode);
-      } else if (isSubTitle) {
-        subTitle += this.getText(rNode);
-      } else if (isCtrTitle) {
-        ctrTitle += this.getText(rNode);
+      if (isSomeKindOfTitle) {
+        const text = this.getText(rNode);
+        if (text !== undefined) {
+          title += text;
+        }
       }
 		}
 
@@ -1361,15 +1359,14 @@ genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, slideMaste
       text += (isOrderedList) ? "</ol>" : "</ul>";
     }
 
-
-
 	}
 
-
-
-
-  if (isSomeKindOfTitle) {
-    this.currentSlide.title = (title !== '') ? title : (ctrTitle !== '') ? ctrTitle : subTitle;
+  if (isTitle && this.currentSlide.title === '') {
+    this.currentSlide.title = title;
+  } else if (isCtrTitle && this.currentSlide.ctrTitle === '') {
+    this.currentSlide.ctrTitle = title;
+  } else if (isSubTitle && this.currentSlide.subTitle === '') {
+    this.currentSlide.subTitle = title;
   }
 
 	return text;
