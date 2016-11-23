@@ -1380,7 +1380,7 @@ getText(node) {//Get raw text from a:r (a:p) node - for the slide title
       if (typeof text !== 'undefined') {
           text = text[0];
       } else {
-        text = "&nbsp;";
+        text = ' ';
       }
 		}
 	}
