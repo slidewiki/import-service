@@ -457,7 +457,11 @@ function createNodesRecursive(user, license, deckId, previousSlideId, slides, in
 function createDeck(user, language, license, deckName, firstSlide) {
   // console.log('deck', user, license, deckName);
   let myPromise = new Promise((resolve, reject) => {
-    const title = (firstSlide.title !== '') ? firstSlide.title : (firstSlide.ctrTitle !== '') ? firstSlide.ctrTitle : firstSlide.subTitle;
+    let title = (firstSlide.title !== '') ? firstSlide.title : (firstSlide.ctrTitle !== '') ? firstSlide.ctrTitle : firstSlide.subTitle;
+    title = title.trim();
+    if (title.length > 100) {
+      title = title.substring(0,99) + '...';
+    }
     let firstSlideTitle = replaceSpecialSymbols(title);//deck tree does not display some encoded symbols properly
     firstSlideTitle = he.encode(firstSlideTitle, {allowUnsafeSymbols: true});//encode some symbols which were not replaced
     //Encode special characters (e.g. bullets)
@@ -517,7 +521,11 @@ function createDeck(user, language, license, deckName, firstSlide) {
 
 function createSlide(selector, nodeSpec, user, slide, license) {
   let myPromise = new Promise((resolve, reject) => {
-    const title = (slide.title !== '') ? slide.title : (slide.ctrTitle !== '') ? slide.ctrTitle : slide.subTitle;
+    let title = (slide.title !== '') ? slide.title : (slide.ctrTitle !== '') ? slide.ctrTitle : slide.subTitle;
+    title = title.trim();
+    if (title.length > 100) {
+      title = title.substring(0,99) + '...';
+    }
     let slideTitle = replaceSpecialSymbols(title);//deck tree does not display some encoded symbols properly
     slideTitle = he.encode(slideTitle, {allowUnsafeSymbols: true});//encode some symbols which were not replaced
     //Encode special characters (e.g. bullets)
