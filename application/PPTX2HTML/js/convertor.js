@@ -1505,10 +1505,10 @@ __proto__: Array[0]
 		}
   }
     //console.log('text = ' + text);
-    //Dejan added this to prevent creation of some undefined elements - is this the right way to do it, perhaps sometimes there is some element in this node?
+    //Dejan added this to prevent creation of some undefined elements - is this the right way to do it?
   if (text === undefined) {
     // console.log(node);
-    return "";
+    text = "&nbsp;";
   }
 
 
