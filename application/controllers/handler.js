@@ -501,10 +501,13 @@ function createDeck(user, language, license, deckName, firstSlide) {
       // console.log('STATUS: ' + res.statusCode);
       // console.log('HEADERS: ' + JSON.stringify(res.headers));
       res.setEncoding('utf8');
+      let body = '';
       res.on('data', (chunk) => {
         // console.log('Response: ', chunk);
-        let newDeck = JSON.parse(chunk);
-
+        body += chunk;
+      });
+      res.on('end', () => {
+        let newDeck = JSON.parse(body);
         resolve(newDeck);
       });
     });
@@ -565,10 +568,13 @@ function createSlide(selector, nodeSpec, user, slide, license) {
       // console.log('STATUS: ' + res.statusCode);
       // console.log('HEADERS: ' + JSON.stringify(res.headers));
       res.setEncoding('utf8');
+      let body = '';
       res.on('data', (chunk) => {
         // console.log('Response: ', chunk);
-        let newDeckTreeNode = JSON.parse(chunk);
-
+        body += chunk;
+      });
+      res.on('end', () => {
+        let newDeckTreeNode = JSON.parse(body);
         resolve(newDeckTreeNode);
       });
     });
