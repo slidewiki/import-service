@@ -1204,9 +1204,7 @@ genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, slideMaste
 
         if (isSomeKindOfTitle) {
           const text = this.getText(pNode);
-          if (text !== undefined) {
-            title += text;
-          }
+          title += (text !== undefined) ? text : ' ';
         }
 			} else if (rNode.constructor === Array) {
 				// with multi r
@@ -1215,9 +1213,7 @@ genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, slideMaste
 
           if (isSomeKindOfTitle) {
             const text = this.getText(rNode[j]);
-            if (text !== undefined) {
-              title += text;
-            }
+            title += (text !== undefined) ? text : ' ';
           }
 				}
 			} else {
@@ -1226,9 +1222,7 @@ genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, slideMaste
 
         if (isSomeKindOfTitle) {
           const text = this.getText(rNode);
-          if (text !== undefined) {
-            title += text;
-          }
+          title += (text !== undefined) ? text : ' ';
         }
 			}
 
@@ -1306,9 +1300,7 @@ genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, slideMaste
 
       if (isSomeKindOfTitle) {
         const text = this.getText(pNode);
-        if (text !== undefined) {
-          title += text;
-        }
+        title += (text !== undefined) ? text : ' ';
       }
 		} else if (rNode.constructor === Array) {
 			// with multi r
@@ -1317,9 +1309,7 @@ genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, slideMaste
 
         if (isSomeKindOfTitle) {
           const text = this.getText(rNode[j]);
-          if (text !== undefined) {
-            title += text;
-          }
+          title += (text !== undefined) ? text : ' ';
         }
 			}
 		} else {
@@ -1328,9 +1318,7 @@ genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, slideMaste
 
       if (isSomeKindOfTitle) {
         const text = this.getText(rNode);
-        if (text !== undefined) {
-          title += text;
-        }
+        title += (text !== undefined) ? text : ' ';
       }
 		}
 
@@ -1379,8 +1367,6 @@ getText(node) {//Get raw text from a:r (a:p) node - for the slide title
 		if (typeof text !== 'string') {
       if (typeof text !== 'undefined') {
           text = text[0];
-      } else {
-        text = ' ';
       }
 		}
 	}
