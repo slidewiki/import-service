@@ -2060,38 +2060,53 @@ extractChartData(serNode) {
 			return "";
 		});
 		dataMat.push(dataRow);
-	} else if (serNode["c:val"] !== undefined) {
+	} else {
 
 		this.eachElement(serNode, function(innerNode, index) {
 			var dataRow = new Array();
-            //Klaas: Typeerrorconvertor.js:1538 Uncaught TypeError: Cannot read property 'getTextByPathList' of undefined
-            //Klaas: is problem with scoping? it should work, unless there is recursion. then we need
-            //Klaas: ES7 => fat arrow, .bind(this) or that = this to keep track of lexical/dynamic scope
+      //Klaas: Typeerrorconvertor.js:1538 Uncaught TypeError: Cannot read property 'getTextByPathList' of undefined
+      //Klaas: is problem with scoping? it should work, unless there is recursion. then we need
+      //Klaas: ES7 => fat arrow, .bind(this) or that = this to keep track of lexical/dynamic scope
 			//var colName = this.getTextByPathList(innerNode, ["c:tx", "c:strRef", "c:strCache", "c:pt", "c:v"]) || index;
-            var colName = that.getTextByPathList(innerNode, ["c:tx", "c:strRef", "c:strCache", "c:pt", "c:v"]) || index;
+      var colName = that.getTextByPathList(innerNode, ["c:tx", "c:strRef", "c:strCache", "c:pt", "c:v"]) || index;
 
-			// Category
+			// Category (string or number)
 			var rowNames = {};
 			if (that.getTextByPathList(innerNode, ["c:cat", "c:strRef", "c:strCache", "c:pt"]) !== undefined) {
 				that.eachElement(innerNode["c:cat"]["c:strRef"]["c:strCache"]["c:pt"], function(innerNode, index) {
 					rowNames[innerNode["attrs"]["idx"]] = innerNode["c:v"];
 					return "";
 				});
-			}
+			} else if (that.getTextByPathList(innerNode, ["c:cat", "c:numRef", "c:numCache", "c:pt"]) !== undefined) {
+        that.eachElement(innerNode["c:cat"]["c:numRef"]["c:numCache"]["c:pt"], function(innerNode, index) {
+          rowNames[innerNode["attrs"]["idx"]] = innerNode["c:v"];
+          return "";
+        });
+      }
 
 			// Value
+      /*
 			that.eachElement(innerNode["c:val"]["c:numRef"]["c:numCache"]["c:pt"], function(innerNode, index) {
 				dataRow.push({x: innerNode["attrs"]["idx"], y: parseFloat(innerNode["c:v"])});
 				return "";
 			});
+      */
+      if (that.getTextByPathList(innerNode, ["c:val", "c:numRef", "c:numCache", "c:pt"]) !== undefined) {
+        that.eachElement(innerNode["c:val"]["c:numRef"]["c:numCache"]["c:pt"], function(innerNode, index) {
+          dataRow.push({x: innerNode["attrs"]["idx"], y: parseFloat(innerNode["c:v"])});
+          return "";
+        });
+      }
 
 			dataMat.push({key: colName, values: dataRow, xlabels: rowNames});
 			return "";
 		});
-	} else {
 
 	}
 
+  console.log("///////////////////////////////////////////////////////");
+  console.log(dataMat);
+  console.log("///////////////////////////////////////////////////////");
 	return dataMat;
 }
 
