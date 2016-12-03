@@ -218,6 +218,12 @@ getContentTypes(zip) {
 			default:
 		}
 	}
+
+  //Fix the order of slides
+  slidesLocArray.sort((a, b) => {
+    return parseInt(a.replace(/\D+/g, '')) - parseInt(b.replace(/\D+/g, ''));
+  });
+
 	return {
 		"slides": slidesLocArray,
 		"slideLayouts": slideLayoutsLocArray
