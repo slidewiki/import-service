@@ -262,8 +262,8 @@ Reveal.initialize({\
                     data.push({key: 'data' + (i + 1), values: arr});
                 }
 
-			//data = chartData;
-                chart = nv.models.scatterChart()
+			      data = chartData;
+            chart = nv.models.scatterChart()
 						.showDistX(true)
 						.showDistY(true)
 						.color(d3.scale.category10().range());

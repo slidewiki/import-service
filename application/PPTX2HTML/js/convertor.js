@@ -2,6 +2,7 @@
 //'use strict';
 //jszip = require('./jszip.min.js');
 let JSZip = require('./jszip.min.js');
+const util = require('util');
 //import JSZip from './jszip.min';
 
 let highlight = require('./highlight.min.js');
@@ -678,7 +679,7 @@ processSpNode(node, warpObj) {
 	this.debug( {"id": id, "name": name, "idx": idx, "type": type, "order": order} );
 	//debug( JSON.stringify( node ) );
 
-	return this.genShape(node, slideLayoutSpNode, slideMasterSpNode, id, name, idx, type, order, warpObj["slideMasterTextStyles"]);
+	return this.genShape(node, slideLayoutSpNode, slideMasterSpNode, id, name, idx, type, order, warpObj);
 }
 
 processCxnSpNode(node, warpObj) {
@@ -692,10 +693,10 @@ processCxnSpNode(node, warpObj) {
 
 	this.debug( {"id": id, "name": name, "order": order} );
 
-	return this.genShape(node, undefined, undefined, id, name, undefined, undefined, order, warpObj["slideMasterTextStyles"]);
+	return this.genShape(node, undefined, undefined, id, name, undefined, undefined, order, warpObj);
 }
 
-genShape(node, slideLayoutSpNode, slideMasterSpNode, id, name, idx, type, order, slideMasterTextStyles) {
+genShape(node, slideLayoutSpNode, slideMasterSpNode, id, name, idx, type, order, warpObj) {
 
 	var xfrmList = ["p:spPr", "a:xfrm"];
 	var slideXfrmNode = this.getTextByPathList(node, xfrmList);
@@ -1001,7 +1002,7 @@ genShape(node, slideLayoutSpNode, slideMasterSpNode, id, name, idx, type, order,
 
 		// TextBody
 		if (node["p:txBody"] !== undefined) {
-			result += this.genTextBody(node["p:txBody"], slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles, false);
+			result += this.genTextBody(node["p:txBody"], slideLayoutSpNode, slideMasterSpNode, type, warpObj, false);
 		}
 		result += "</div>";
 
@@ -1011,7 +1012,7 @@ genShape(node, slideLayoutSpNode, slideMasterSpNode, id, name, idx, type, order,
     const createList = (slideLayoutSpNode !== undefined);//notes are not bulleted by default as slides are
     // TextBody
     if (node["p:txBody"] !== undefined) {
-      textBody = this.genTextBody(node["p:txBody"], slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles, createList);
+      textBody = this.genTextBody(node["p:txBody"], slideLayoutSpNode, slideMasterSpNode, type, warpObj, createList);
     }
     if (textBody !== undefined && textBody !== "") {//Dejan added this to prevent creation of some undefined and empty elements
     		result += "<div class='block content " + this.getVerticalAlign(node, slideLayoutSpNode, slideMasterSpNode, type) +
@@ -1167,9 +1168,10 @@ processSpPrNode(node, warpObj) {
 	// TODO:
 }
 
-genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles, createList) {
+genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, warpObj, createList) {
 
 	var text = "";
+  var slideMasterTextStyles = warpObj["slideMasterTextStyles"];
 
 	if (textBodyNode === undefined) {
 		return text;
@@ -1200,7 +1202,7 @@ genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, slideMaste
 
 			if (rNode === undefined) {
 				// without r
-				spanElement += this.genSpanElement(pNode, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles);
+				spanElement += this.genSpanElement(pNode, slideLayoutSpNode, slideMasterSpNode, type, warpObj);
 
         if (isSomeKindOfTitle) {
           const text = this.getText(pNode);
@@ -1211,7 +1213,7 @@ genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, slideMaste
 			} else if (rNode.constructor === Array) {
 				// with multi r
 				for (var j=0; j<rNode.length; j++) {
-					spanElement += this.genSpanElement(rNode[j], slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles);
+					spanElement += this.genSpanElement(rNode[j], slideLayoutSpNode, slideMasterSpNode, type, warpObj);
 
           if (isSomeKindOfTitle) {
             const text = this.getText(rNode[j]);
@@ -1222,7 +1224,7 @@ genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, slideMaste
 				}
 			} else {
 				// with one r
-				spanElement += this.genSpanElement(rNode, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles);
+				spanElement += this.genSpanElement(rNode, slideLayoutSpNode, slideMasterSpNode, type, warpObj);
 
         if (isSomeKindOfTitle) {
           const text = this.getText(rNode);
@@ -1302,7 +1304,7 @@ genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, slideMaste
 
 		if (rNode === undefined) {
 			// without r
-			spanElement += this.genSpanElement(pNode, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles);
+			spanElement += this.genSpanElement(pNode, slideLayoutSpNode, slideMasterSpNode, type, warpObj);
 
       if (isSomeKindOfTitle) {
         const text = this.getText(pNode);
@@ -1313,7 +1315,7 @@ genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, slideMaste
 		} else if (rNode.constructor === Array) {
 			// with multi r
 			for (var j=0; j<rNode.length; j++) {
-				spanElement += this.genSpanElement(rNode[j], slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles);
+				spanElement += this.genSpanElement(rNode[j], slideLayoutSpNode, slideMasterSpNode, type, warpObj);
 
         if (isSomeKindOfTitle) {
           const text = this.getText(rNode[j]);
@@ -1324,7 +1326,7 @@ genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, slideMaste
 			}
 		} else {
 			// with one r
-			spanElement += this.genSpanElement(rNode, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles);
+			spanElement += this.genSpanElement(rNode, slideLayoutSpNode, slideMasterSpNode, type, warpObj);
 
       if (isSomeKindOfTitle) {
         const text = this.getText(rNode);
@@ -1448,7 +1450,10 @@ genBuChar(node) {
 					"; margin-right: " + marginRight + "px" +
 					"; font-size: 20pt" +
 					"'>" + buChar + "</span>";
-		}
+		} else {
+      marginLeft = 328600 * 96 / 914400 * lvl;
+      return "<span style='margin-left: " + marginLeft + "px;'>" + buChar + "</span>";
+    }
 	} else {
 		//buChar = '•';
 		return "<span style='margin-left: " + 328600 * 96 / 914400 * lvl + "px" +
@@ -1458,8 +1463,9 @@ genBuChar(node) {
 	return "";
 }
 
-genSpanElement(node, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles) {
+genSpanElement(node, slideLayoutSpNode, slideMasterSpNode, type, warpObj) {
 
+  let slideMasterTextStyles = warpObj["slideMasterTextStyles"];
 	let text = node["a:t"]; //Klaas: makes object out of text this while it might need to be string...? (since this is about getSpanElement)
     //text = text[0]; //does not always return array
     /*["History of copied items is shared between branches", attrs: Object]
@@ -1476,7 +1482,7 @@ __proto__: Array[0]
 	if (typeof text !== 'string') {
         //Klaas: getTextByPathList() gets undefefined node if it contains text...
 		//text = this.getTextByPathList(node, ["a:fld", "a:t"]);
-        text = this.getTextByPathList(node, ["a:t"]);
+    text = this.getTextByPathList(node, ["a:t"]);
         //console.log('genSpanElement() type of text, AFTER = ' + typeof text);
 
         //if (typeof text !== undefined && typeof text !== 'string') { //klaas test
@@ -1510,17 +1516,23 @@ __proto__: Array[0]
     // console.log(node);
     return "";
   }
+  let textStyle = "style='color: " + this.getFontColor(node, type, slideMasterTextStyles) +
+      				"; font-size: " + this.getFontSize(node, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles) +
+      				"; font-family: " + this.getFontType(node, type, slideMasterTextStyles) +
+      				"; font-weight: " + this.getFontBold(node, type, slideMasterTextStyles) +
+      				"; font-style: " + this.getFontItalic(node, type, slideMasterTextStyles) +
+      				"; text-decoration: " + this.getFontDecoration(node, type, slideMasterTextStyles) +
+      				"; vertical-align: " + this.getTextVerticalAlign(node, type, slideMasterTextStyles) +
+                      ";'";
 
+    let linkID = this.getTextByPathList(node, ["a:rPr", "a:hlinkClick", "attrs", "r:id"]);
 
-	return "<span class='text-block' style='color: " + this.getFontColor(node, type, slideMasterTextStyles) +
-				"; font-size: " + this.getFontSize(node, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles) +
-				"; font-family: " + this.getFontType(node, type, slideMasterTextStyles) +
-				"; font-weight: " + this.getFontBold(node, type, slideMasterTextStyles) +
-				"; font-style: " + this.getFontItalic(node, type, slideMasterTextStyles) +
-				"; text-decoration: " + this.getFontDecoration(node, type, slideMasterTextStyles) +
-				"; vertical-align: " + this.getTextVerticalAlign(node, type, slideMasterTextStyles) +
-                ";'>" + text + "</span>";
-				//";'>" + text.replace(/\s/i, "&nbsp;") + "</span>";
+    if (linkID !== undefined) {
+      let linkURL = warpObj["slideResObj"][linkID]["target"];
+      return "<span class='text-block " + textStyle + "'><a href='" + linkURL + "' target='_blank'>" + text.replace(/\s/i, "&nbsp;") + "</a></span>";
+  	} else {
+  		return "<span class='text-block " + textStyle + "'>" + text.replace(/\s/i, "&nbsp;") + "</span>";
+    }
 }
 
 genTable(node, warpObj) {
@@ -1538,7 +1550,7 @@ genTable(node, warpObj) {
 
 			if (tcNodes.constructor === Array) {
 				for (var j=0; j<tcNodes.length; j++) {
-					var text = this.genTextBody(tcNodes[j]["a:txBody"]);
+					var text = this.genTextBody(tcNodes[j]["a:txBody"], undefined, undefined, undefined, warpObj);
 					var rowSpan = this.getTextByPathList(tcNodes[j], ["attrs", "rowSpan"]);
 					var colSpan = this.getTextByPathList(tcNodes[j], ["attrs", "gridSpan"]);
 					var vMerge = this.getTextByPathList(tcNodes[j], ["attrs", "vMerge"]);
@@ -2104,9 +2116,9 @@ extractChartData(serNode) {
 
 	}
 
-  console.log("///////////////////////////////////////////////////////");
-  console.log(dataMat);
-  console.log("///////////////////////////////////////////////////////");
+  //console.log("///////////////////////////////////////////////////////");
+  //console.log(util.inspect(dataMat, false, null));
+  //console.log("///////////////////////////////////////////////////////");
 	return dataMat;
 }
 
