@@ -1206,9 +1206,7 @@ genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, warpObj, c
 
         if (isSomeKindOfTitle) {
           const text = this.getText(pNode);
-          if (text !== undefined) {
-            title += text;
-          }
+          title += (text !== undefined) ? text : ' ';
         }
 			} else if (rNode.constructor === Array) {
 				// with multi r
@@ -1217,9 +1215,7 @@ genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, warpObj, c
 
           if (isSomeKindOfTitle) {
             const text = this.getText(rNode[j]);
-            if (text !== undefined) {
-              title += text;
-            }
+            title += (text !== undefined) ? text : ' ';
           }
 				}
 			} else {
@@ -1228,9 +1224,7 @@ genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, warpObj, c
 
         if (isSomeKindOfTitle) {
           const text = this.getText(rNode);
-          if (text !== undefined) {
-            title += text;
-          }
+          title += (text !== undefined) ? text : ' ';
         }
 			}
 
@@ -1308,9 +1302,7 @@ genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, warpObj, c
 
       if (isSomeKindOfTitle) {
         const text = this.getText(pNode);
-        if (text !== undefined) {
-          title += text;
-        }
+        title += (text !== undefined) ? text : ' ';
       }
 		} else if (rNode.constructor === Array) {
 			// with multi r
@@ -1319,9 +1311,7 @@ genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, warpObj, c
 
         if (isSomeKindOfTitle) {
           const text = this.getText(rNode[j]);
-          if (text !== undefined) {
-            title += text;
-          }
+          title += (text !== undefined) ? text : ' ';
         }
 			}
 		} else {
@@ -1330,9 +1320,7 @@ genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, warpObj, c
 
       if (isSomeKindOfTitle) {
         const text = this.getText(rNode);
-        if (text !== undefined) {
-          title += text;
-        }
+        title += (text !== undefined) ? text : ' ';
       }
 		}
 
@@ -1511,10 +1499,10 @@ __proto__: Array[0]
 		}
   }
     //console.log('text = ' + text);
-    //Dejan added this to prevent creation of some undefined elements - is this the right way to do it, perhaps sometimes there is some element in this node?
+    //Dejan added this to prevent creation of some undefined elements - is this the right way to do it?
   if (text === undefined) {
     // console.log(node);
-    return "";
+    text = "&nbsp;";
   }
   let textStyle = "style='color: " + this.getFontColor(node, type, slideMasterTextStyles) +
       				"; font-size: " + this.getFontSize(node, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles) +
