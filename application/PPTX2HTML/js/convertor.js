@@ -413,7 +413,7 @@ processSingleSlideNotes(zip, sldFileName, index, slideSize) {
 	var resName = sldFileName.replace("slides/slide", "slides/_rels/slide") + ".rels";
 	var resContent = this.readXmlFile(zip, resName);
 	var RelationshipArray = resContent["Relationships"]["Relationship"];
-
+  var slideResObj = {}; // Added by Luis - this should take another mnemonic name.
   var notesFilename = "";
 
 	if (RelationshipArray.constructor === Array) {
@@ -423,7 +423,10 @@ processSingleSlideNotes(zip, sldFileName, index, slideSize) {
 					notesFilename = RelationshipArray[i]["attrs"]["Target"].replace("../", "ppt/");
 					break;
 				default:
-
+          slideResObj[RelationshipArray[i]["attrs"]["Id"]] = {
+            "type": RelationshipArray[i]["attrs"]["Type"].replace("http://schemas.openxmlformats.org/officeDocument/2006/relationships/", ""),
+            "target": RelationshipArray[i]["attrs"]["Target"].replace("../", "ppt/")
+          };
 			}
 		}
 	}
@@ -465,7 +468,8 @@ processSingleSlideNotes(zip, sldFileName, index, slideSize) {
     // console.log(notesNodes);
 
     var notesWarpObj = {
-      "zip": zip//,
+      "zip": zip,
+      // "slideResObj": slideResObj
       //"slideMasterTables": notesMasterTables// Don't use notes master settings - we probably won't display it as in the PowerPoint Notes Page (with slide image, slide number, date,...)
     };
 
@@ -1098,12 +1102,12 @@ saveImageToFile(imgName, zip) {
   const imgUserPath = this.user + '/' + uuidValue + '.' + extension;
 
   // const imgUserPath = this.user + '/' + uuidValue + simpleImgName;
-  // const saveTo = '.' + Microservices.file.shareVolume + '/' + imgUserPath;// For localhost testing
-  const saveTo = Microservices.file.shareVolume + '/' + imgUserPath;
+   const saveTo = '.' + Microservices.file.shareVolume + '/' + imgUserPath;// For localhost testing
+  //const saveTo = Microservices.file.shareVolume + '/' + imgUserPath;
 
   //Create the user dir if does not exist
-  // const userDir = '.' + Microservices.file.shareVolume + '/' + this.user;// For localhost testing
-  const userDir = Microservices.file.shareVolume + '/' + this.user;
+   const userDir = '.' + Microservices.file.shareVolume + '/' + this.user;// For localhost testing
+  //const userDir = Microservices.file.shareVolume + '/' + this.user;
   if (!fs.existsSync(userDir)){
     fs.mkdirSync(userDir, 744, function(err) {
       if(err) {
@@ -1514,8 +1518,11 @@ __proto__: Array[0]
                       ";'";
 
     let linkID = this.getTextByPathList(node, ["a:rPr", "a:hlinkClick", "attrs", "r:id"]);
+    //console.log('///////////////////////////////////////////////////linkID');
+    //console.log(linkID);
+    //console.log('///////////////////////////////////////////////////linkID');
 
-    if (linkID !== undefined) {
+    if (linkID !== undefined && warpObj["slideResObj"] !== undefined) {
       let linkURL = warpObj["slideResObj"][linkID]["target"];
       return "<span class='text-block " + textStyle + "'><a href='" + linkURL + "' target='_blank'>" + text.replace(/\s/i, "&nbsp;") + "</a></span>";
   	} else {
@@ -1581,19 +1588,17 @@ genChart(node, warpObj) {
 
 	var order = node["attrs"]["order"];
 	var xfrmNode = this.getTextByPathList(node, ["p:xfrm"]);
-	var result = "<div id='chart" + this.chartID + "' class='block content' style='position: absolute;" +
-					this.getPosition(xfrmNode, undefined, undefined) + this.getSize(xfrmNode, undefined, undefined) +
-					" z-index: " + order + ";'></div>";
 
 	var rid = node["a:graphic"]["a:graphicData"]["c:chart"]["attrs"]["r:id"];
 	var refName = warpObj["slideResObj"][rid]["target"];
 	var content = this.readXmlFile(warpObj["zip"], refName);
 	var plotArea = this.getTextByPathList(content, ["c:chartSpace", "c:chart", "c:plotArea"]);
-
+  var chartType = null;
 	var chartData = null;
 	for (var key in plotArea) {
 		switch (key) {
 			case "c:lineChart":
+        chartType = 'lineChart';
 				chartData = {
 					"type": "createChart",
 					"data": {
@@ -1604,6 +1609,7 @@ genChart(node, warpObj) {
 				};
 				break;
 			case "c:barChart":
+        chartType = 'multiBarChart';
 				chartData = {
 					"type": "createChart",
 					"data": {
@@ -1614,6 +1620,7 @@ genChart(node, warpObj) {
 				};
 				break;
 			case "c:pieChart":
+        charType = 'pieChart';
 				chartData = {
 					"type": "createChart",
 					"data": {
@@ -1624,6 +1631,7 @@ genChart(node, warpObj) {
 				};
 				break;
 			case "c:pie3DChart":
+        chartType = 'pieChart';
 				chartData = {
 					"type": "createChart",
 					"data": {
@@ -1634,6 +1642,7 @@ genChart(node, warpObj) {
 				};
 				break;
 			case "c:areaChart":
+        chartType = 'stackedAreaChart';
 				chartData = {
 					"type": "createChart",
 					"data": {
@@ -1644,6 +1653,7 @@ genChart(node, warpObj) {
 				};
 				break;
 			case "c:scatterChart":
+        charType = 'scatterChart';
 				chartData = {
 					"type": "createChart",
 					"data": {
@@ -1660,12 +1670,26 @@ genChart(node, warpObj) {
 			default:
 		}
 	}
+/*
+  console.log("/////////////////////////////////////////////////////// flat");
+  console.log(JSON.stringify(chartData.data.chartData)); //.replace('\'','\"'))
+  console.log("///////////////////////////////////////////////////////specific");
+  console.log(util.inspect(chartData.data.chartData, false, null));
+  console.log("///////////////////////////////////////////////////////");
+*/
+  var result = "<NVD3Chart id='chart" + this.chartID + "' class='block content' style='position: absolute;" +
+					this.getPosition(xfrmNode, undefined, undefined) + this.getSize(xfrmNode, undefined, undefined) +
+					" z-index: " + order + ";' " + "type='" + chartType + "' datum='" + JSON.stringify(chartData.data.chartData)
+          +"' x='x' y='y'>";
 
 	//if (chartData !== null) {
 //		MsgQueue.push(chartData);
 //	}
 
 	this.chartID++;
+  //console.log('////////////////////////////////////////// result');
+  //console.log(result);
+  //console.log('////////////////////////////////////////// result');
 	return result;
 }
 
