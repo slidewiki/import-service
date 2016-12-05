@@ -219,6 +219,12 @@ getContentTypes(zip) {
 			default:
 		}
 	}
+
+  //Fix the order of slides
+  slidesLocArray.sort((a, b) => {
+    return parseInt(a.replace(/\D+/g, '')) - parseInt(b.replace(/\D+/g, ''));
+  });
+
 	return {
 		"slides": slidesLocArray,
 		"slideLayouts": slideLayoutsLocArray
@@ -1102,12 +1108,12 @@ saveImageToFile(imgName, zip) {
   const imgUserPath = this.user + '/' + uuidValue + '.' + extension;
 
   // const imgUserPath = this.user + '/' + uuidValue + simpleImgName;
-   const saveTo = '.' + Microservices.file.shareVolume + '/' + imgUserPath;// For localhost testing
-  //const saveTo = Microservices.file.shareVolume + '/' + imgUserPath;
+  // const saveTo = '.' + Microservices.file.shareVolume + '/' + imgUserPath;// For localhost testing
+  const saveTo = Microservices.file.shareVolume + '/' + imgUserPath;
 
   //Create the user dir if does not exist
-   const userDir = '.' + Microservices.file.shareVolume + '/' + this.user;// For localhost testing
-  //const userDir = Microservices.file.shareVolume + '/' + this.user;
+  // const userDir = '.' + Microservices.file.shareVolume + '/' + this.user;// For localhost testing
+  const userDir = Microservices.file.shareVolume + '/' + this.user;
   if (!fs.existsSync(userDir)){
     fs.mkdirSync(userDir, 744, function(err) {
       if(err) {
