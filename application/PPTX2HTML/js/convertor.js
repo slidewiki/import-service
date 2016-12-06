@@ -1676,26 +1676,16 @@ genChart(node, warpObj) {
 			default:
 		}
 	}
-/*
-  console.log("/////////////////////////////////////////////////////// flat");
-  console.log(JSON.stringify(chartData.data.chartData)); //.replace('\'','\"'))
-  console.log("///////////////////////////////////////////////////////specific");
-  console.log(util.inspect(chartData.data.chartData, false, null));
-  console.log("///////////////////////////////////////////////////////");
-*/
-  var result = "<NVD3Chart id='chart" + this.chartID + "' class='block content' style='position: absolute;" +
-					this.getPosition(xfrmNode, undefined, undefined) + this.getSize(xfrmNode, undefined, undefined) +
-					" z-index: " + order + ";' " + "type='" + chartType + "' datum='" + JSON.stringify(chartData.data.chartData)
-          +"' x='x' y='y'>";
+
+  var result = "<div id='chart" + this.chartID + "' class='block content' style='position: absolute;" +
+   					this.getPosition(xfrmNode, undefined, undefined) + this.getSize(xfrmNode, undefined, undefined) +
+   					" z-index: " + order + ";'" + "datum='" + JSON.stringify(chartData) + "'></div>";
 
 	//if (chartData !== null) {
 //		MsgQueue.push(chartData);
 //	}
 
 	this.chartID++;
-  //console.log('////////////////////////////////////////// result');
-  //console.log(result);
-  //console.log('////////////////////////////////////////// result');
 	return result;
 }
 
@@ -2134,9 +2124,6 @@ extractChartData(serNode) {
 
 	}
 
-  //console.log("///////////////////////////////////////////////////////");
-  //console.log(util.inspect(dataMat, false, null));
-  //console.log("///////////////////////////////////////////////////////");
 	return dataMat;
 }
 
