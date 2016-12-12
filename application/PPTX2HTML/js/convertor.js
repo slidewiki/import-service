@@ -1108,12 +1108,12 @@ saveImageToFile(imgName, zip) {
   const imgUserPath = this.user + '/' + uuidValue + '.' + extension;
 
   // const imgUserPath = this.user + '/' + uuidValue + simpleImgName;
-  // const saveTo = '.' + Microservices.file.shareVolume + '/' + imgUserPath;// For localhost testing
-  const saveTo = Microservices.file.shareVolume + '/' + imgUserPath;
+   const saveTo = '.' + Microservices.file.shareVolume + '/' + imgUserPath;// For localhost testing
+  //const saveTo = Microservices.file.shareVolume + '/' + imgUserPath;
 
   //Create the user dir if does not exist
-  // const userDir = '.' + Microservices.file.shareVolume + '/' + this.user;// For localhost testing
-  const userDir = Microservices.file.shareVolume + '/' + this.user;
+   const userDir = '.' + Microservices.file.shareVolume + '/' + this.user;// For localhost testing
+  //const userDir = Microservices.file.shareVolume + '/' + this.user;
   if (!fs.existsSync(userDir)){
     fs.mkdirSync(userDir, 744, function(err) {
       if(err) {
@@ -1524,9 +1524,6 @@ __proto__: Array[0]
                       ";'";
 
     let linkID = this.getTextByPathList(node, ["a:rPr", "a:hlinkClick", "attrs", "r:id"]);
-    //console.log('///////////////////////////////////////////////////linkID');
-    //console.log(linkID);
-    //console.log('///////////////////////////////////////////////////linkID');
 
     if (linkID !== undefined && warpObj["slideResObj"] !== undefined) {
       let linkURL = warpObj["slideResObj"][linkID]["target"];
@@ -1626,8 +1623,8 @@ genChart(node, warpObj) {
 				};
 				break;
 			case "c:pieChart":
-        charType = 'pieChart';
-				chartData = {
+        chartType = 'pieChart';
+        chartData = {
 					"type": "createChart",
 					"data": {
 						"this.chartID": "chart" + this.chartID,
@@ -1659,7 +1656,7 @@ genChart(node, warpObj) {
 				};
 				break;
 			case "c:scatterChart":
-        charType = 'scatterChart';
+        chartType = 'scatterChart';
 				chartData = {
 					"type": "createChart",
 					"data": {
