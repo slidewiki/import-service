@@ -1530,9 +1530,9 @@ __proto__: Array[0]
 
     if (linkID !== undefined && warpObj["slideResObj"] !== undefined) {
       let linkURL = warpObj["slideResObj"][linkID]["target"];
-      return "<span class='text-block " + textStyle + "'><a href='" + linkURL + "' target='_blank'>" + text.replace(/\s/i, "&nbsp;") + "</a></span>";
+      return "<span class='text-block' " + textStyle + "><a href='" + linkURL + "' target='_blank'>" + text.replace(/\s/i, "&nbsp;") + "</a></span>";
   	} else {
-  		return "<span class='text-block " + textStyle + "'>" + text.replace(/\s/i, "&nbsp;") + "</span>";
+  		return "<span class='text-block' " + textStyle + ">" + text.replace(/\s/i, "&nbsp;") + "</span>";
     }
 }
 
