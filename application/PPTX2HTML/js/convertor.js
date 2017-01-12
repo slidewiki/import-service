@@ -724,13 +724,16 @@ genShape(node, slideLayoutSpNode, slideMasterSpNode, id, name, idx, type, order,
 	if (shapType !== undefined) {
 
 		var off = this.getTextByPathList(slideXfrmNode, ["a:off", "attrs"]);
-		var x = parseInt(off["x"]) * 96 / 914400;
-		var y = parseInt(off["y"]) * 96 / 914400;
+		var x = (off !== undefined) ? parseInt(off["x"]) * 96 / 914400 : 0;
+		var y = (off !== undefined) ? parseInt(off["y"]) * 96 / 914400 : 0;
 
 		var ext = this.getTextByPathList(slideXfrmNode, ["a:ext", "attrs"]);
-		var w = parseInt(ext["cx"]) * 96 / 914400;
-		var h = parseInt(ext["cy"]) * 96 / 914400;
+		var w = (ext !== undefined) ? parseInt(ext["cx"]) * 96 / 914400 : 0;
+		var h = (ext !== undefined) ? parseInt(ext["cy"]) * 96 / 914400 : 0;
 
+    if (ext === undefined) {
+        shapType = '';//prevent it to create a shape
+    }
 		result += "<svg class='drawing' _id='" + id + "' _idx='" + idx + "' _type='" + type + "' _name='" + name +
 				"' style='position: absolute;" +
 					this.getPosition(slideXfrmNode, undefined, undefined) +
