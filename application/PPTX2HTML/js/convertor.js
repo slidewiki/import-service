@@ -734,6 +734,10 @@ genShape(node, slideLayoutSpNode, slideMasterSpNode, id, name, idx, type, order,
     if (ext === undefined) {
         shapType = '';//prevent it to create a shape
     }
+
+    let svgPos = this.getPosition(slideXfrmNode, undefined, undefined);
+    let svgSize = this.getSize(slideXfrmNode, undefined, undefined);
+
     result += "<div class='drawing-container' _id='" + id + "' _idx='" + idx + "' _type='" + type + "' _name='" + name +
         "' style='position: absolute;"
              + svgPos
