@@ -1894,7 +1894,10 @@ getBorder(node, isSvgMode) {
 
 	// Border width: 1pt = 12700, default = 0.75pt
 	var borderWidth = parseInt(this.getTextByPathList(lineNode, ["attrs", "w"])) / 12700;
-	if (isNaN(borderWidth) || borderWidth < 1) {
+  if (isNaN(borderWidth)) {
+    borderWidth = 1;
+  }
+	if (borderWidth < 1) {
 		cssText += "1pt ";
 	} else {
 		cssText += borderWidth + "pt ";
