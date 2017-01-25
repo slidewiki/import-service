@@ -734,12 +734,20 @@ genShape(node, slideLayoutSpNode, slideMasterSpNode, id, name, idx, type, order,
     if (ext === undefined) {
         shapType = '';//prevent it to create a shape
     }
-		result += "<svg class='drawing' _id='" + id + "' _idx='" + idx + "' _type='" + type + "' _name='" + name +
-				"' style='position: absolute;" +
-					this.getPosition(slideXfrmNode, undefined, undefined) +
-					this.getSize(slideXfrmNode, undefined, undefined) +
-					" z-index: " + order + ";" +
-				"'>";
+
+    let svgPos = this.getPosition(slideXfrmNode, undefined, undefined);
+    let svgSize = this.getSize(slideXfrmNode, undefined, undefined);
+
+    result += "<div class='drawing-container' _id='" + id + "' _idx='" + idx + "' _type='" + type + "' _name='" + name +
+        "' style='position: absolute;"
+             + svgPos
+             + svgSize
+             + " z-index: " + order + ";'>" +
+        "<svg class='drawing' _id='" + id + "' _idx='" + idx + "' _type='" + type + "' _name='" + name +
+        "' style='position: absolute;"
+             + "top:0px; left:0px;"
+             + svgSize
+             + " z-index: " + order + ";'>";
 
 		// Fill Color
 		var fillColor = this.getFill(node, true);
@@ -1003,7 +1011,7 @@ genShape(node, slideLayoutSpNode, slideMasterSpNode, id, name, idx, type, order,
 				console.warn("Undefine shape type.");
 		}
 
-		result += "</svg>";
+		result += "</svg></div>";
 
 		result += "<div class='block content " + this.getVerticalAlign(node, slideLayoutSpNode, slideMasterSpNode, type) +
 				"' _id='" + id + "' _idx='" + idx + "' _type='" + type + "' _name='" + name +
