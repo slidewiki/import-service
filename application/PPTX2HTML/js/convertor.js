@@ -150,7 +150,7 @@ class Convertor {
     this.currentSlide.notes = this.processSingleSlideNotes(zip, filename, i, this.slideSize);//Dejan added this to process notes
 
     this.slideHtml += this.currentSlide.content +
-    "<div class='pptx2html' style='position: relative;left:" + (this.slideSize.width + 5) + "px;top:-" + this.slideSize.height + "px;'>" +
+    "<div class='pptx2html' style='position: relative;left:" + (this.slideSize.width + 5) + "px;top:-" + this.slideSize.height + "px;'><div></div>" +
     this.currentSlide.notes +
     "</div>";
 		//self.postMessage({
