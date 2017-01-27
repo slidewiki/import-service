@@ -9,6 +9,9 @@ let highlight = require('./highlight.min.js');
 let colz = require('./colz.class.min.js');
 let tXml = require('./tXml.js');
 let functions = require('./functions.js');
+var nv = require('nvd3');
+var d3 = require('d3');
+var jsdom = require('jsdom');
 
 // import tXml from './tXml.js';
 
@@ -1119,12 +1122,12 @@ saveImageToFile(imgName, zip) {
   const imgUserPath = this.user + '/' + uuidValue + '.' + extension;
 
   // const imgUserPath = this.user + '/' + uuidValue + simpleImgName;
-  // const saveTo = '.' + Microservices.file.shareVolume + '/' + imgUserPath;// For localhost testing
-  const saveTo = Microservices.file.shareVolume + '/' + imgUserPath;
+   const saveTo = '.' + Microservices.file.shareVolume + '/' + imgUserPath;// For localhost testing
+  //const saveTo = Microservices.file.shareVolume + '/' + imgUserPath;
 
   //Create the user dir if does not exist
-  // const userDir = '.' + Microservices.file.shareVolume + '/' + this.user;// For localhost testing
-  const userDir = Microservices.file.shareVolume + '/' + this.user;
+   const userDir = '.' + Microservices.file.shareVolume + '/' + this.user;// For localhost testing
+  //const userDir = Microservices.file.shareVolume + '/' + this.user;
   if (!fs.existsSync(userDir)){
     fs.mkdirSync(userDir, 744, function(err) {
       if(err) {
@@ -1535,9 +1538,6 @@ __proto__: Array[0]
                       ";'";
 
     let linkID = this.getTextByPathList(node, ["a:rPr", "a:hlinkClick", "attrs", "r:id"]);
-    //console.log('///////////////////////////////////////////////////linkID');
-    //console.log(linkID);
-    //console.log('///////////////////////////////////////////////////linkID');
 
     if (linkID !== undefined && warpObj["slideResObj"] !== undefined) {
       let linkURL = warpObj["slideResObj"][linkID]["target"];
@@ -1601,6 +1601,96 @@ genTable(node, warpObj) {
 	return tableHtml;
 }
 
+renderChart(data, resultContainer) {
+    var htmlStub = '<div id="stub">'+ resultContainer + '</div>';
+    var chartID = data.chartID;
+
+    jsdom.env(
+         htmlStub,
+        [
+        	"http://code.jquery.com/jquery.js",
+			"https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.min.js",
+			"https://cdnjs.cloudflare.com/ajax/libs/nvd3/1.8.5/nv.d3.min.js"
+		],
+
+        function (err, window) {
+        	//console.log("contents of a.the-link:", window.$("#stub").parent().html());
+            var $ = window.$;
+            var d3 = window.d3;
+            var nv = window.nv;
+			var el = $('#' + chartID);
+            console.log(el.parent().html());
+
+			// Extract the data of the chartID
+			var chart = JSON.parse($(this).attr('datum'));
+
+			var chartType =  chart.data.chartType;
+			var chartData = chart.data.chartData;
+			var data = [];
+			chart = null;
+			switch (chartType) {
+				case 'lineChart':
+					data = chartData;
+					chart = nv.models.lineChart()
+						.useInteractiveGuideline(true);
+					chart.xAxis.tickFormat(function(d) { return chartData[0].xlabels[d] || d; });
+					break;
+				case 'barChart':
+					data = chartData;
+					chart = nv.models.multiBarChart();
+					chart.xAxis.tickFormat(function(d) { return chartData[0].xlabels[d] || d; });
+					break;
+				case 'pieChart':
+					chartData = chartData[0].values;
+					chart = nv.models.pieChart();
+					break;
+				case 'pie3DChart':
+					chartData = chartData[0].values;
+					chart = nv.models.pieChart();
+					break;
+				case 'areaChart':
+					data = chartData;
+					chart = nv.models.stackedAreaChart()
+						.clipEdge(true)
+						.useInteractiveGuideline(true);
+					chart.xAxis.tickFormat(function(d) { return chartData[0].xlabels[d] || d; });
+					break;
+				case 'scatterChart':
+
+					for (let i=0; i<chartData.length; i++) {
+						let arr = [];
+						for (let j=0; j<chartData[i].length; j++) {
+							arr.push({x: j, y: chartData[i][j]});
+						}
+						data.push({key: 'data' + (i + 1), values: arr});
+					}
+
+					chart = nv.models.scatterChart()
+						.showDistX(true)
+						.showDistY(true)
+						.color(d3.scale.category10().range());
+					chart.xAxis.axisLabel('X').tickFormat(d3.format('.02f'));
+					chart.yAxis.axisLabel('Y').tickFormat(d3.format('.02f'));
+					chartData = data;
+					break;
+				default:
+			}
+
+			if (chart !== null) {
+				d3.select('#' + chartID)
+					.append('svg')
+					.datum(chartData)
+					.transition().duration(500)
+					.call(chart);
+
+				nv.utils.windowResize(chart.update);
+			}
+
+        }
+    );
+    console.log('ola');
+}
+
 genChart(node, warpObj) {
 
 	var order = node["attrs"]["order"];
@@ -1619,7 +1709,7 @@ genChart(node, warpObj) {
 				chartData = {
 					"type": "createChart",
 					"data": {
-						"this.chartID": "chart" + this.chartID,
+						"chartID": "chart" + this.chartID,
 						"chartType": "lineChart",
 						"chartData": this.extractChartData(plotArea[key]["c:ser"])
 					}
@@ -1630,18 +1720,18 @@ genChart(node, warpObj) {
 				chartData = {
 					"type": "createChart",
 					"data": {
-						"this.chartID": "chart" + this.chartID,
+						"chartID": "chart" + this.chartID,
 						"chartType": "barChart",
 						"chartData": this.extractChartData(plotArea[key]["c:ser"])
 					}
 				};
 				break;
 			case "c:pieChart":
-        charType = 'pieChart';
-				chartData = {
+        chartType = 'pieChart';
+        chartData = {
 					"type": "createChart",
 					"data": {
-						"this.chartID": "chart" + this.chartID,
+						"chartID": "chart" + this.chartID,
 						"chartType": "pieChart",
 						"chartData": this.extractChartData(plotArea[key]["c:ser"])
 					}
@@ -1652,7 +1742,7 @@ genChart(node, warpObj) {
 				chartData = {
 					"type": "createChart",
 					"data": {
-						"this.chartID": "chart" + this.chartID,
+						"chartID": "chart" + this.chartID,
 						"chartType": "pie3DChart",
 						"chartData": this.extractChartData(plotArea[key]["c:ser"])
 					}
@@ -1663,18 +1753,18 @@ genChart(node, warpObj) {
 				chartData = {
 					"type": "createChart",
 					"data": {
-						"this.chartID": "chart" + this.chartID,
+						"chartID": "chart" + this.chartID,
 						"chartType": "areaChart",
 						"chartData": this.extractChartData(plotArea[key]["c:ser"])
 					}
 				};
 				break;
 			case "c:scatterChart":
-        charType = 'scatterChart';
+        chartType = 'scatterChart';
 				chartData = {
 					"type": "createChart",
 					"data": {
-						"this.chartID": "chart" + this.chartID,
+						"chartID": "chart" + this.chartID,
 						"chartType": "scatterChart",
 						"chartData": this.extractChartData(plotArea[key]["c:ser"])
 					}
@@ -1687,26 +1777,18 @@ genChart(node, warpObj) {
 			default:
 		}
 	}
-/*
-  console.log("/////////////////////////////////////////////////////// flat");
-  console.log(JSON.stringify(chartData.data.chartData)); //.replace('\'','\"'))
-  console.log("///////////////////////////////////////////////////////specific");
-  console.log(util.inspect(chartData.data.chartData, false, null));
-  console.log("///////////////////////////////////////////////////////");
-*/
-  var result = "<NVD3Chart id='chart" + this.chartID + "' class='block content' style='position: absolute;" +
-					this.getPosition(xfrmNode, undefined, undefined) + this.getSize(xfrmNode, undefined, undefined) +
-					" z-index: " + order + ";' " + "type='" + chartType + "' datum='" + JSON.stringify(chartData.data.chartData)
-          +"' x='x' y='y'>";
 
+
+  	var resultContainer = "<div id='chart" + this.chartID + "' class='block content' style='position: absolute;" +
+   					this.getPosition(xfrmNode, undefined, undefined) + this.getSize(xfrmNode, undefined, undefined) +
+   					" z-index: " + order + ";'" + /*"datum='" + JSON.stringify(chartData) + */"></div>";
+
+    var result = this.renderChart(chartData.data, resultContainer);
 	//if (chartData !== null) {
 //		MsgQueue.push(chartData);
 //	}
 
 	this.chartID++;
-  //console.log('////////////////////////////////////////// result');
-  //console.log(result);
-  //console.log('////////////////////////////////////////// result');
 	return result;
 }
 
@@ -2148,9 +2230,6 @@ extractChartData(serNode) {
 
 	}
 
-  //console.log("///////////////////////////////////////////////////////");
-  //console.log(util.inspect(dataMat, false, null));
-  //console.log("///////////////////////////////////////////////////////");
 	return dataMat;
 }
 
