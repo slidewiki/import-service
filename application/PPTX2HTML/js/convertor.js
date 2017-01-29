@@ -91,10 +91,34 @@ class Convertor {
         const noOfSlides = this.filesInfo["slides"].length;
 
         const filename = this.filesInfo["slides"][0];
-        this.currentSlide.content = this.processSingleSlide(zip, filename, 0, this.slideSize);
-        this.currentSlide.notes = this.processSingleSlideNotes(zip, filename, 0, this.slideSize);//Dejan added this to process notes
+        var promises = [];
+        //this.currentSlide.content = this.processSingleSlide(zip, filename, 0, this.slideSize);
+        //this.currentSlide.notes = this.processSingleSlideNotes(zip, filename, 0, this.slideSize);//Dejan added this to process notes
 
-        this.slides.push(this.currentSlide);
+		promises.push(this.processSingleSlide(zip, filename, 0, this.slideSize));
+        promises.push(this.processSingleSlideNotes(zip, filename, 0, this.slideSize));
+        console.log('////////////////////////');
+        console.log('firstSlideconv');
+        console.log('////////////////////////');
+        return Promise.all(promises).then(function(values){
+            console.log('////////////////////////');
+            console.log('prmoise');
+            console.log('////////////////////////');
+
+            return {
+                title: '',
+                ctrTitle: '',
+                subTitle: '',
+                content: '',
+                notes: values[1],
+                firstSlide: values[0],
+                noOfSlides: noOfSlides
+            }
+		}).catch(function(err){console.log("convertFirstSlide " + err)});
+
+/*
+
+ 		this.slides.push(this.currentSlide);
         this.currentSlide = {
           title: '',
           ctrTitle: '',
@@ -106,7 +130,7 @@ class Convertor {
         return {
           firstSlide: this.slides[0],
           noOfSlides: noOfSlides
-        }
+        }*/
     }
     //var MsgQueue = new Array();
 
@@ -146,33 +170,54 @@ class Convertor {
     this.slideHtml = '';//Dejan uncommented this to remove the first 'undefined'
 
 	var numOfSlides = this.filesInfo["slides"].length;
+
+	var promises = [];
+
 	for (var i=startAtSlide; i<numOfSlides; i++) {
 		var filename = this.filesInfo["slides"][i];
 
-    this.currentSlide.content = this.processSingleSlide(zip, filename, i, this.slideSize);
-    this.currentSlide.notes = this.processSingleSlideNotes(zip, filename, i, this.slideSize);//Dejan added this to process notes
+		var slidePromises =
+			( this.processSingleSlide(zip, filename, i, this.slideSize),
+				this.processSingleSlideNotes(zip, filename, i, this.slideSize) );//Dejan added this to process notes
 
-    this.slideHtml += this.currentSlide.content +
-    "<div class='pptx2html' style='position: relative;left:" + (this.slideSize.width + 5) + "px;top:-" + this.slideSize.height + "px;'>" +
-    this.currentSlide.notes +
-    "</div>";
-		//self.postMessage({
-		//	"type": "slide",
-		//	"data": slideHtml
-		//});
-		//self.postMessage({
-		//	"type": "progress-update",
-		//	"data": (i + 1) * 100 / numOfSlides
-		//});
+        promises.push(
+        	Promise.all(slidePromises).then(function(values){
 
-    this.slides.push(this.currentSlide);
-    this.currentSlide = {
-      title: '',
-      ctrTitle: '',
-      subTitle: '',
-      content: '',
-      notes: ''
-    };
+            	var result = values[0] +
+					"<div class='pptx2html' style='position: relative;left:" + (this.slideSize.width + 5) + "px;top:-" + this.slideSize.height + "px;'>" +
+                	values[1] + "</div>";
+
+                return result;
+
+        	}).catch(function(err){console.log("proccessPPTX " + err)})
+		);
+
+
+
+/*
+        this.slideHtml += this.currentSlide.content +
+		"<div class='pptx2html' style='position: relative;left:" + (this.slideSize.width + 5) + "px;top:-" + this.slideSize.height + "px;'>" +
+		this.currentSlide.notes +
+		"</div>";
+*/
+			//self.postMessage({
+			//	"type": "slide",
+			//	"data": slideHtml
+			//});
+			//self.postMessage({
+			//	"type": "progress-update",
+			//	"data": (i + 1) * 100 / numOfSlides
+			//});
+
+
+/*		this.slides.push(this.currentSlide);
+		this.currentSlide = {
+		  title: '',
+		  ctrTitle: '',
+		  subTitle: '',
+		  content: '',
+		  notes: ''
+		};*/
 	}
 	var dateAfter = new Date();
 	//self.postMessage({
@@ -187,7 +232,10 @@ class Convertor {
     //console.log('slideHtml'+slideHtml+'this.totalHtmlResult'+this.totalHtmlResult);
     //this.totalHtmlResult += slideHtml;
     // return this.slideHtml;
-    return this.slides;
+    //return this.slides;
+	return Promise.all(slidePromises).then(function(values){
+		return values.join('');
+	}).catch(function(err){console.log("proccessPPTX " + err)});
 
     /*TODO:
     ALt tags (content placeholders) for images: located in p:sld, p:cSld, p:spTree, p:pic, p:nvPicPr, p:cNvPr, attrs, descr:
@@ -397,24 +445,29 @@ processSingleSlide(zip, sldFileName, index, slideSize) {
     //var result = "<div style='position: absolute;width:" + slideSize.width + "px; height:" + slideSize.height + "px; background-color: #" + bgColor + "'>"
     //var result = "<div style='position: absolute;border-style: dotted; background-color: #" + bgColor + "' >"
     //var result = "<div style='position: absolute;border-style: dotted; background-color: #" + bgColor + "' >"
-    var result = "<div class='pptx2html' style='position: relative;width:" + slideSize.width + "px; height:" + slideSize.height + "px; background-color: #" + bgColor + "'>"
+    // var result = "<div class='pptx2html' style='position: relative;width:" + slideSize.width + "px; height:" + slideSize.height + "px; background-color: #" + bgColor + "'>"
 
+    var promises = [];
 
 	for (var nodeKey in nodes) {
         let that = this;
 		if (nodes[nodeKey].constructor === Array) {
-			for (var i=0; i<nodes[nodeKey].length; i++) {
-                //console.log('nodeinslide' . nodes);
-				result += that.processNodesInSlide(nodeKey, nodes[nodeKey][i], warpObj);
+            for (var i=0; i<nodes[nodeKey].length; i++) {
+                promises.push(this.processNodesInSlide(nodeKey, nodes[nodeKey][i], warpObj));
 			}
 		} else {
-			result += that.processNodesInSlide(nodeKey, nodes[nodeKey], warpObj);
-            //console.log('nodeinslide');
+			promises.push(this.processNodesInSlide(nodeKey, nodes[nodeKey], warpObj));
+
 		}
 	}
 
-	//return result + "</section>";
-    return result + "</div>";
+	return Promise.all(promises).then(function(values){
+		var result =
+            "<div class='pptx2html' style='position: relative;width:" + slideSize.width + "px; height:" + slideSize.height + "px; background-color: #" + bgColor + "'>" +
+			values.join('') + "</div>";
+        return result;
+    }).catch(function(err){console.log("processSingleSlide " + err)});
+
 }
 
 processSingleSlideNotes(zip, sldFileName, index, slideSize) {
@@ -482,21 +535,28 @@ processSingleSlideNotes(zip, sldFileName, index, slideSize) {
       //"slideMasterTables": notesMasterTables// Don't use notes master settings - we probably won't display it as in the PowerPoint Notes Page (with slide image, slide number, date,...)
     };
 
+    var promises = [];
     for (var nodeKey in notesNodes) {
       let that = this;
       if (notesNodes[nodeKey].constructor === Array) {
         for (var i=0; i<notesNodes[nodeKey].length; i++) {
           // Extract only nodes with notes (disregard Slide Image, Slide Number,... )
         	if (that.isNodeNotesPlaceholder(notesNodes[nodeKey][i])) {
-            notes += that.processNodesInSlide(nodeKey, notesNodes[nodeKey][i], notesWarpObj);
+            promises.push(that.processNodesInSlide(nodeKey, notesNodes[nodeKey][i], notesWarpObj));
           }
         }
       } else {
         if (that.isNodeNotesPlaceholder(notesNodes[nodeKey])) {
-          notes += that.processNodesInSlide(nodeKey, notesNodes[nodeKey], notesWarpObj);
+          promises.push(that.processNodesInSlide(nodeKey, notesNodes[nodeKey], notesWarpObj));
         }
       }
     }
+
+    return Promise.all(promises).then(function(values) {
+          var result =  values.join('');
+          return result;
+    }).catch(function(err){console.log("processSingleSlideNotes "+err)});
+
   }
 
   return notes;
@@ -571,28 +631,30 @@ indexNodes(content) {
 
 processNodesInSlide(nodeKey, nodeValue, warpObj) {
 
-	var result = "";
 
 	switch (nodeKey) {
 		case "p:sp":	// Shape, Text
-			result = this.processSpNode(nodeValue, warpObj);
+			return this.processSpNode(nodeValue, warpObj);
 			break;
 		case "p:cxnSp":	// Shape, Text (with connection)
-			result = this.processCxnSpNode(nodeValue, warpObj);
+			return this.processCxnSpNode(nodeValue, warpObj);
 			break;
 		case "p:pic":	// Picture
-			result = this.processPicNode(nodeValue, warpObj);
+			return this.processPicNode(nodeValue, warpObj);
 			break;
 		case "p:graphicFrame":	// Chart, Diagram, Table
-			result = this.processGraphicFrameNode(nodeValue, warpObj);
+			return this.processGraphicFrameNode(nodeValue, warpObj);
 			break;
 		case "p:grpSp":	// 群組
-			result = this.processGroupSpNode(nodeValue, warpObj);
+			return this.processGroupSpNode(nodeValue, warpObj);
 			break;
 		default:
 	}
 
-	return result;
+	return new Promise(function(resolve, reject){
+		resolve();
+	});
+	// return result;
 
 }
 
@@ -612,22 +674,30 @@ processGroupSpNode(node, warpObj) {
 
 	var order = node["attrs"]["order"];
 
-	var result = "<div class='block group' style='position: absolute;z-index: " + order + "; top: " + (y - chy) + "px; left: " + (x - chx) + "px; width: " + (cx - chcx) + "px; height: " + (cy - chcy) + "px;'>";
+	// var result = "<div class='block group' style='position: absolute;z-index: " + order + "; top: " + (y - chy) + "px; left: " + (x - chx) + "px; width: " + (cx - chcx) + "px; height: " + (cy - chcy) + "px;'>";
+	// Process all child nodes
 
-	// Procsee all child nodes
+	var promises = [];
+
 	for (var nodeKey in node) {
 		if (node[nodeKey].constructor === Array) {
 			for (var i=0; i<node[nodeKey].length; i++) {
-				result += this.processNodesInSlide(nodeKey, node[nodeKey][i], warpObj);
+				promises.push(this.processNodesInSlide(nodeKey, node[nodeKey][i], warpObj));
 			}
 		} else {
-			result += this.processNodesInSlide(nodeKey, node[nodeKey], warpObj);
+			promises.push(this.processNodesInSlide(nodeKey, node[nodeKey], warpObj));
 		}
 	}
 
-	result += "</div>";
+    return Promise.all(promises).then(function(values){
+        var result = "<div class='block group' style='position: absolute;z-index: " + order + "; top: " + (y - chy) + "px; left: " + (x - chx) + "px; width: " + (cx - chcx) + "px; height: " + (cy - chcy) + "px;'>";
+        	+ values.join('') + "</div>";
+        	console.log(result);
+        return result;
+    }).catch(function(err){console.log("processGroupSpNode " + err)});
 
-	return result;
+
+    // return result;
 }
 
 processSpNode(node, warpObj) {
@@ -691,8 +761,11 @@ processSpNode(node, warpObj) {
 
 	this.debug( {"id": id, "name": name, "idx": idx, "type": type, "order": order} );
 	//debug( JSON.stringify( node ) );
-
-	return this.genShape(node, slideLayoutSpNode, slideMasterSpNode, id, name, idx, type, order, warpObj);
+	var that = this;
+	return new Promise(function(resolve, reject) {
+		resolve(that.genShape(node, slideLayoutSpNode, slideMasterSpNode, id, name, idx, type, order, warpObj));
+	});
+	// return this.genShape(node, slideLayoutSpNode, slideMasterSpNode, id, name, idx, type, order, warpObj);
 }
 
 processCxnSpNode(node, warpObj) {
@@ -705,8 +778,12 @@ processCxnSpNode(node, warpObj) {
 	var order = node["attrs"]["order"];
 
 	this.debug( {"id": id, "name": name, "order": order} );
+	var that = this;
+    return new Promise(function(resolve, reject) {
+        resolve(that.genShape(node, undefined, undefined, id, name, undefined, undefined, order, warpObj));
+    });
 
-	return this.genShape(node, undefined, undefined, id, name, undefined, undefined, order, warpObj);
+    // return this.genShape(node, undefined, undefined, id, name, undefined, undefined, order, warpObj);
 }
 
 genShape(node, slideLayoutSpNode, slideMasterSpNode, id, name, idx, type, order, warpObj) {
@@ -1061,7 +1138,7 @@ processPicNode(node, warpObj) {
 	var xfrmNode = node["p:spPr"]["a:xfrm"];
 	switch (imgFileExt) {
 		case "jpg":
-		case "jpeg":
+		case "jpeg":f
 			mimeType = "image/jpeg";
 			break;
 		case "png":
@@ -1089,13 +1166,17 @@ processPicNode(node, warpObj) {
     altTag = " alt=\"" + descr + "\"";
   }
 
-	return "<div class='block content' style='position: absolute;" + this.getPosition(xfrmNode, undefined, undefined) + this.getSize(xfrmNode, undefined, undefined) +
+	var res = "<div class='block content' style='position: absolute;" + this.getPosition(xfrmNode, undefined, undefined) + this.getSize(xfrmNode, undefined, undefined) +
 			" z-index: " + order + ";" +
 			// "'><img src=\"data:" + mimeType + ";base64," + functions.base64ArrayBuffer(imgArrayBuffer) + "\" style='position: absolute;width: 100%; height: 100%'" +
       // "'><img src=\"http://" + imagePath + "\" style='position: absolute;width: 100%; height: 100%'" +
       "'><img src=\"http://" + imagePath + "\" style='width: 100%; height: 100%'" +
           altTag +
           "/></div>";
+
+  return new Promise(function(resolve, reject){
+  		resolve(res);
+	});
 }
 
 saveImageToFile(imgName, zip) {
@@ -1141,23 +1222,23 @@ saveImageToFile(imgName, zip) {
 
 processGraphicFrameNode(node, warpObj) {
 
-	var result = "";
+	// var result = "";
 	var graphicTypeUri = this.getTextByPathList(node, ["a:graphic", "a:graphicData", "attrs", "uri"]);
 
 	switch (graphicTypeUri) {
 		case "http://schemas.openxmlformats.org/drawingml/2006/table":
-			result = this.genTable(node, warpObj);
+			return this.genTable(node, warpObj);
 			break;
 		case "http://schemas.openxmlformats.org/drawingml/2006/chart":
-			result = this.genChart(node, warpObj);
+			return this.genChart(node, warpObj);
 			break;
 		case "http://schemas.openxmlformats.org/drawingml/2006/diagram":
-			result = this.genDiagram(node, warpObj);
+			return this.genDiagram(node, warpObj);
 			break;
 		default:
 	}
 
-	return result;
+	// return result;
 }
 
 processSpPrNode(node, warpObj) {
@@ -1182,197 +1263,216 @@ processSpPrNode(node, warpObj) {
 }
 
 genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, warpObj, createList) {
+    return new Promise((resolve, reject) => {
+        var text = "";
+        var slideMasterTextStyles = warpObj["slideMasterTextStyles"];
 
-	var text = "";
-  var slideMasterTextStyles = warpObj["slideMasterTextStyles"];
-
-	if (textBodyNode === undefined) {
-		return text;
-	}
-
-  const isTitle = (type === 'title');
-  const isSubTitle = (type === 'subTitle');
-  const isCtrTitle = (type === 'ctrTitle');
-  const isSomeKindOfTitle = (isTitle || isSubTitle || isCtrTitle);
-  const isSldNum = (type === 'sldNum');
-  const layoutType = this.getTextByPathList(slideLayoutSpNode, ["p:nvSpPr", "p:nvPr", "p:ph", "attrs", "type"]);
-
-  let title = '';
-
-
-	if (textBodyNode["a:p"].constructor === Array) {
-		// multi p
-    let previousNodeIsListItem = false;
-    let previousNodeIsOrderedListItem = false;
-    let previousItemLevel = "0";
-		for (var i=0; i<textBodyNode["a:p"].length; i++) {
-
-
-			var pNode = textBodyNode["a:p"][i];
-			var rNode = pNode["a:r"];
-
-      let spanElement = "";
-
-			if (rNode === undefined) {
-				// without r
-				spanElement += this.genSpanElement(pNode, slideLayoutSpNode, slideMasterSpNode, type, warpObj);
-
-        if (isSomeKindOfTitle) {
-          const text = this.getText(pNode);
-          title += (text !== undefined) ? text : ' ';
+        if (textBodyNode === undefined) {
+            resolve({
+                text: text
+            });
         }
-			} else if (rNode.constructor === Array) {
-				// with multi r
-				for (var j=0; j<rNode.length; j++) {
-					spanElement += this.genSpanElement(rNode[j], slideLayoutSpNode, slideMasterSpNode, type, warpObj);
 
-          if (isSomeKindOfTitle) {
-            const text = this.getText(rNode[j]);
-            title += (text !== undefined) ? text : ' ';
-          }
-				}
-			} else {
-				// with one r
-				spanElement += this.genSpanElement(rNode, slideLayoutSpNode, slideMasterSpNode, type, warpObj);
+        const isTitle = (type === 'title');
+        const isSubTitle = (type === 'subTitle');
+        const isCtrTitle = (type === 'ctrTitle');
+        const isSomeKindOfTitle = (isTitle || isSubTitle || isCtrTitle);
+        const isSldNum = (type === 'sldNum');
+        const layoutType = this.getTextByPathList(slideLayoutSpNode, ["p:nvSpPr", "p:nvPr", "p:ph", "attrs", "type"]);
 
-        if (isSomeKindOfTitle) {
-          const text = this.getText(rNode);
-          title += (text !== undefined) ? text : ' ';
-        }
-			}
+        var title = '';
 
 
-      const insertListItemTag = (createList && !isSomeKindOfTitle && !isSldNum && (layoutType === undefined) && (pNode["a:pPr"] === undefined || pNode["a:pPr"]["a:buNone"] === undefined));
-      const isOrderedList = (pNode["a:pPr"] !== undefined && pNode["a:pPr"]["a:buAutoNum"] !== undefined);
-      let itemLevel = "0";
-      if (pNode["a:pPr"] !== undefined && pNode["a:pPr"]["attrs"] !== undefined && pNode["a:pPr"]["attrs"]["lvl"] !== undefined) {
-        itemLevel = pNode["a:pPr"]["attrs"]["lvl"];
-      }
+        if (textBodyNode["a:p"].constructor === Array) {
+            // multi p
+            var previousNodeIsListItem = false;
+            var previousNodeIsOrderedListItem = false;
+            var previousItemLevel = "0";
+            for (var i=0; i<textBodyNode["a:p"].length; i++) {
 
-      if (spanElement !== "" && insertListItemTag) {//do not show bullets if the text is empty
-        if (isOrderedList) {
-          const orderedListStyle = (pNode["a:pPr"]["a:buAutoNum"]["attrs"] !== undefined && pNode["a:pPr"]["a:buAutoNum"]["attrs"]["type"] !== undefined) ? pNode["a:pPr"]["a:buAutoNum"]["attrs"]["type"] : '';
-          const orderedListStartAt = (pNode["a:pPr"]["a:buAutoNum"]["attrs"] !== undefined && pNode["a:pPr"]["a:buAutoNum"]["attrs"]["startAt"] !== undefined) ? ' start="' + pNode["a:pPr"]["a:buAutoNum"]["attrs"]["startAt"] + '"' : '';
 
-          text += (previousNodeIsListItem && previousNodeIsOrderedListItem && (itemLevel === previousItemLevel)) ? "" : "<ol " + this.getOrderedListStyle(orderedListStyle, itemLevel) + orderedListStartAt + ">";
+                var pNode = textBodyNode["a:p"][i];
+                var rNode = pNode["a:r"];
+
+                let spanElement = "";
+
+                if (rNode === undefined) {
+                    // without r
+                    spanElement += this.genSpanElement(pNode, slideLayoutSpNode, slideMasterSpNode, type, warpObj);
+
+                    if (isSomeKindOfTitle) {
+                        const text = this.getText(pNode);
+                        title += (text !== undefined) ? text : ' ';
+                    }
+                } else if (rNode.constructor === Array) {
+                    // with multi r
+                    for (var j=0; j<rNode.length; j++) {
+                        spanElement += this.genSpanElement(rNode[j], slideLayoutSpNode, slideMasterSpNode, type, warpObj);
+
+                        if (isSomeKindOfTitle) {
+                            const text = this.getText(rNode[j]);
+                            title += (text !== undefined) ? text : ' ';
+                        }
+                    }
+                } else {
+                    // with one r
+                    spanElement += this.genSpanElement(rNode, slideLayoutSpNode, slideMasterSpNode, type, warpObj);
+
+                    if (isSomeKindOfTitle) {
+                        const text = this.getText(rNode);
+                        title += (text !== undefined) ? text : ' ';
+                    }
+                }
+
+
+                const insertListItemTag = (createList && !isSomeKindOfTitle && !isSldNum && (layoutType === undefined) && (pNode["a:pPr"] === undefined || pNode["a:pPr"]["a:buNone"] === undefined));
+                const isOrderedList = (pNode["a:pPr"] !== undefined && pNode["a:pPr"]["a:buAutoNum"] !== undefined);
+                let itemLevel = "0";
+                if (pNode["a:pPr"] !== undefined && pNode["a:pPr"]["attrs"] !== undefined && pNode["a:pPr"]["attrs"]["lvl"] !== undefined) {
+                    itemLevel = pNode["a:pPr"]["attrs"]["lvl"];
+                }
+
+                if (spanElement !== "" && insertListItemTag) {//do not show bullets if the text is empty
+                    if (isOrderedList) {
+                        const orderedListStyle = (pNode["a:pPr"]["a:buAutoNum"]["attrs"] !== undefined && pNode["a:pPr"]["a:buAutoNum"]["attrs"]["type"] !== undefined) ? pNode["a:pPr"]["a:buAutoNum"]["attrs"]["type"] : '';
+                        const orderedListStartAt = (pNode["a:pPr"]["a:buAutoNum"]["attrs"] !== undefined && pNode["a:pPr"]["a:buAutoNum"]["attrs"]["startAt"] !== undefined) ? ' start="' + pNode["a:pPr"]["a:buAutoNum"]["attrs"]["startAt"] + '"' : '';
+
+                        text += (previousNodeIsListItem && previousNodeIsOrderedListItem && (itemLevel === previousItemLevel)) ? "" : "<ol " + this.getOrderedListStyle(orderedListStyle, itemLevel) + orderedListStartAt + ">";
+                    } else {
+                        text += (previousNodeIsListItem && !previousNodeIsOrderedListItem && (itemLevel === previousItemLevel)) ? "" : "<ul " + this.getUnorderedListStyle(itemLevel) + ">";
+                    }
+
+                    text += "<li>";//add list tag
+                }
+                previousNodeIsListItem = insertListItemTag;
+                previousNodeIsOrderedListItem = isOrderedList;
+                previousItemLevel = itemLevel;
+
+                text += "<div class='" + this.getHorizontalAlign(pNode, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles) + "'>";
+
+                text += this.genBuChar(pNode);
+
+                text += spanElement;
+
+                text += "</div>";
+
+                //see if next node is list item
+                let nextNodeIsListItem = false;
+                let nextNodeIsOrderedListItem = false;
+                let nextItemLevel = "0";
+                if (i < textBodyNode["a:p"].length - 1) {//it is not the last node in array
+                    let pNodeNext = textBodyNode["a:p"][i+1];
+
+                    nextNodeIsListItem = (createList && !isSomeKindOfTitle && !isSldNum && (layoutType === undefined) && (pNodeNext["a:pPr"] === undefined || pNodeNext["a:pPr"]["a:buNone"] === undefined));
+                    nextNodeIsOrderedListItem = (pNodeNext["a:pPr"] !== undefined && pNodeNext["a:pPr"]["a:buAutoNum"] !== undefined);
+                    if (pNodeNext["a:pPr"] !== undefined && pNodeNext["a:pPr"]["attrs"] !== undefined && pNodeNext["a:pPr"]["attrs"]["lvl"] !== undefined) {
+                        nextItemLevel = pNodeNext["a:pPr"]["attrs"]["lvl"];
+                    }
+                }
+
+                if (spanElement !== "" && insertListItemTag) {
+                    text += "</li>";//add list tag
+
+                    if (isOrderedList) {
+                        text += (nextNodeIsListItem && nextNodeIsOrderedListItem && (itemLevel === nextItemLevel)) ? "" : "</ol>";
+                    } else {
+                        text += (nextNodeIsListItem && !nextNodeIsOrderedListItem && (itemLevel === nextItemLevel)) ? "" : "</ul>";
+                    }
+                }
+
+                // text += (insertListItemTag) ? ((isOrderedList) ? "</ol>" : "</ul>") : "";
+            }
         } else {
-          text += (previousNodeIsListItem && !previousNodeIsOrderedListItem && (itemLevel === previousItemLevel)) ? "" : "<ul " + this.getUnorderedListStyle(itemLevel) + ">";
+            // one p
+
+
+
+            var pNode = textBodyNode["a:p"];
+            var rNode = pNode["a:r"];
+
+            let spanElement = "";
+
+            if (rNode === undefined) {
+                // without r
+                spanElement += this.genSpanElement(pNode, slideLayoutSpNode, slideMasterSpNode, type, warpObj);
+
+                if (isSomeKindOfTitle) {
+                    const text = this.getText(pNode);
+                    title += (text !== undefined) ? text : ' ';
+                }
+            } else if (rNode.constructor === Array) {
+                // with multi r
+                for (var j=0; j<rNode.length; j++) {
+                    spanElement += this.genSpanElement(rNode[j], slideLayoutSpNode, slideMasterSpNode, type, warpObj);
+
+                    if (isSomeKindOfTitle) {
+                        const text = this.getText(rNode[j]);
+                        title += (text !== undefined) ? text : ' ';
+                    }
+                }
+            } else {
+                // with one r
+                spanElement += this.genSpanElement(rNode, slideLayoutSpNode, slideMasterSpNode, type, warpObj);
+
+                if (isSomeKindOfTitle) {
+                    const text = this.getText(rNode);
+                    title += (text !== undefined) ? text : ' ';
+                }
+            }
+
+
+
+            const insertListItemTag = (createList && !isSomeKindOfTitle && !isSldNum && (layoutType === undefined) && (pNode["a:pPr"] === undefined || pNode["a:pPr"]["a:buNone"] === undefined));
+            const isOrderedList = (pNode["a:pPr"] !== undefined && pNode["a:pPr"]["a:buAutoNum"] !== undefined);
+
+
+
+            if (spanElement !== "" && insertListItemTag) {
+                text += (isOrderedList) ? "<ol>" : "<ul>";
+                text += "<li>";//add list tag
+            }
+
+            text += "<div class='" + this.getHorizontalAlign(pNode, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles) + "'>";
+
+
+            text += this.genBuChar(pNode);
+
+            text += spanElement;
+
+            text += "</div>";
+            if (spanElement !== "" && insertListItemTag) {
+                text += "</li>";//add list tag
+                text += (isOrderedList) ? "</ol>" : "</ul>";
+            }
+
         }
 
-        text += "<li>";//add list tag
-      }
-      previousNodeIsListItem = insertListItemTag;
-      previousNodeIsOrderedListItem = isOrderedList;
-      previousItemLevel = itemLevel;
-
-      text += "<div class='" + this.getHorizontalAlign(pNode, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles) + "'>";
-
-      text += this.genBuChar(pNode);
-
-      text += spanElement;
-
-			text += "</div>";
-
-      //see if next node is list item
-      let nextNodeIsListItem = false;
-      let nextNodeIsOrderedListItem = false;
-      let nextItemLevel = "0";
-      if (i < textBodyNode["a:p"].length - 1) {//it is not the last node in array
-        let pNodeNext = textBodyNode["a:p"][i+1];
-
-        nextNodeIsListItem = (createList && !isSomeKindOfTitle && !isSldNum && (layoutType === undefined) && (pNodeNext["a:pPr"] === undefined || pNodeNext["a:pPr"]["a:buNone"] === undefined));
-        nextNodeIsOrderedListItem = (pNodeNext["a:pPr"] !== undefined && pNodeNext["a:pPr"]["a:buAutoNum"] !== undefined);
-        if (pNodeNext["a:pPr"] !== undefined && pNodeNext["a:pPr"]["attrs"] !== undefined && pNodeNext["a:pPr"]["attrs"]["lvl"] !== undefined) {
-          nextItemLevel = pNodeNext["a:pPr"]["attrs"]["lvl"];
-        }
-      }
-
-      if (spanElement !== "" && insertListItemTag) {
-        text += "</li>";//add list tag
-
-        if (isOrderedList) {
-          text += (nextNodeIsListItem && nextNodeIsOrderedListItem && (itemLevel === nextItemLevel)) ? "" : "</ol>";
+        if (isTitle && this.currentSlide.title === '') {
+            this.currentSlide.title = title;
+            resolve({
+               title: title,
+			   text: text
+            });
+        } else if (isCtrTitle && this.currentSlide.ctrTitle === '') {
+            this.currentSlide.ctrTitle = title;
+            resolve({
+               ctrlTitle: title,
+               text: text
+            });
+        } else if (isSubTitle && this.currentSlide.subTitle === '') {
+            this.currentSlide.subTitle = title;
+            resolve({
+               subTitle: title,
+               text: text
+            });
         } else {
-          text += (nextNodeIsListItem && !nextNodeIsOrderedListItem && (itemLevel === nextItemLevel)) ? "" : "</ul>";
+            resolve({
+                text: text
+            });
         }
-      }
 
-      // text += (insertListItemTag) ? ((isOrderedList) ? "</ol>" : "</ul>") : "";
-		}
-	} else {
-		// one p
-
-
-
-		var pNode = textBodyNode["a:p"];
-		var rNode = pNode["a:r"];
-
-    let spanElement = "";
-
-		if (rNode === undefined) {
-			// without r
-			spanElement += this.genSpanElement(pNode, slideLayoutSpNode, slideMasterSpNode, type, warpObj);
-
-      if (isSomeKindOfTitle) {
-        const text = this.getText(pNode);
-        title += (text !== undefined) ? text : ' ';
-      }
-		} else if (rNode.constructor === Array) {
-			// with multi r
-			for (var j=0; j<rNode.length; j++) {
-				spanElement += this.genSpanElement(rNode[j], slideLayoutSpNode, slideMasterSpNode, type, warpObj);
-
-        if (isSomeKindOfTitle) {
-          const text = this.getText(rNode[j]);
-          title += (text !== undefined) ? text : ' ';
-        }
-			}
-		} else {
-			// with one r
-			spanElement += this.genSpanElement(rNode, slideLayoutSpNode, slideMasterSpNode, type, warpObj);
-
-      if (isSomeKindOfTitle) {
-        const text = this.getText(rNode);
-        title += (text !== undefined) ? text : ' ';
-      }
-		}
-
-
-
-    const insertListItemTag = (createList && !isSomeKindOfTitle && !isSldNum && (layoutType === undefined) && (pNode["a:pPr"] === undefined || pNode["a:pPr"]["a:buNone"] === undefined));
-    const isOrderedList = (pNode["a:pPr"] !== undefined && pNode["a:pPr"]["a:buAutoNum"] !== undefined);
-
-
-
-    if (spanElement !== "" && insertListItemTag) {
-      text += (isOrderedList) ? "<ol>" : "<ul>";
-      text += "<li>";//add list tag
-    }
-
-    text += "<div class='" + this.getHorizontalAlign(pNode, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles) + "'>";
-
-
-    text += this.genBuChar(pNode);
-
-    text += spanElement;
-
-    text += "</div>";
-    if (spanElement !== "" && insertListItemTag) {
-      text += "</li>";//add list tag
-      text += (isOrderedList) ? "</ol>" : "</ul>";
-    }
-
-	}
-
-  if (isTitle && this.currentSlide.title === '') {
-    this.currentSlide.title = title;
-  } else if (isCtrTitle && this.currentSlide.ctrTitle === '') {
-    this.currentSlide.ctrTitle = title;
-  } else if (isSubTitle && this.currentSlide.subTitle === '') {
-    this.currentSlide.subTitle = title;
-  }
-
-	return text;
+        // return text;
+    });
 }
 
 getText(node) {//Get raw text from a:r (a:p) node - for the slide title
@@ -1537,20 +1637,42 @@ __proto__: Array[0]
 }
 
 genTable(node, warpObj) {
-
 	var order = node["attrs"]["order"];
 	var tableNode = this.getTextByPathList(node, ["a:graphic", "a:graphicData", "a:tbl"]);
 	var xfrmNode = this.getTextByPathList(node, ["p:xfrm"]);
+	var rowPromises = [];
 	var tableHtml = "<table style='position: absolute;" + this.getPosition(xfrmNode, undefined, undefined) + this.getSize(xfrmNode, undefined, undefined) + " z-index: " + order + ";'>";
 
 	var trNodes = tableNode["a:tr"];
 	if (trNodes.constructor === Array) {
 		for (var i=0; i<trNodes.length; i++) {
+            var colPromises = [];
 			tableHtml += "<tr>";
 			var tcNodes = trNodes[i]["a:tc"];
 
 			if (tcNodes.constructor === Array) {
 				for (var j=0; j<tcNodes.length; j++) {
+					var that = this;
+				    colPromises.push(
+                        that.genTextBody(tcNodes[j]["a:txBody"], undefined, undefined, undefined, warpObj).then((info) => {
+							;
+                        	var rowSpan = that.getTextByPathList(tcNodes[j], ["attrs", "rowSpan"]);
+                            var colSpan = that.getTextByPathList(tcNodes[j], ["attrs", "gridSpan"]);
+                            var vMerge = that.getTextByPathList(tcNodes[j], ["attrs", "vMerge"]);
+                            var hMerge = that.getTextByPathList(tcNodes[j], ["attrs", "hMerge"]);
+                            if (rowSpan !== undefined) {
+                            	info.text = "<td rowspan='" + parseInt(rowSpan) + "'>" + info.text + "</td>";
+                                return info;
+                            } else if (colSpan !== undefined) {
+                                info.text = "<td colspan='" + parseInt(colSpan) + "'>" + info.text + "</td>";
+                                return info;
+                            } else if (vMerge === undefined && hMerge === undefined) {
+                            	info.text = "<td>" + info.text + "</td>";
+                                return info;
+                            }
+                        })
+                    );
+				    /*
 					var text = this.genTextBody(tcNodes[j]["a:txBody"], undefined, undefined, undefined, warpObj);
 					var rowSpan = this.getTextByPathList(tcNodes[j], ["attrs", "rowSpan"]);
 					var colSpan = this.getTextByPathList(tcNodes[j], ["attrs", "gridSpan"]);
@@ -1563,121 +1685,151 @@ genTable(node, warpObj) {
 					} else if (vMerge === undefined && hMerge === undefined) {
 						tableHtml += "<td>" + text + "</td>";
 					}
+					*/
 				}
 			} else {
-				var text = this.genTextBody(tcNodes["a:txBody"]);
-				tableHtml += "<td>" + text + "</td>";
+			    colPromises.push(this.genTextBody(tcNodes["a:txBody"]).then(function(info){
+                    info.text = "<td>" + info.text + "</td>";
+			        return info;
+                }));
+				/*var text = this.genTextBody(tcNodes["a:txBody"]);
+				tableHtml += "<td>" + text + "</td>";*/
 			}
-			tableHtml += "</tr>";
+			// create the Row.
+            rowPromises.push(Promise.all(colPromises).then(function(colsInfo){
+                var colsText = '<tr>' + colsInfo.map((colInfo) => {return colInfo.text}).join('') + '</tr>';
+                return {text: colsText};
+            }));
 		}
 	} else {
 		tableHtml += "<tr>";
 		var tcNodes = trNodes["a:tc"];
+        var colPromises = [];
 		if (tcNodes.constructor === Array) {
+
 			for (var j=0; j<tcNodes.length; j++) {
-				var text = this.genTextBody(tcNodes[j]["a:txBody"]);
-				tableHtml += "<td>" + text + "</td>";
+			    colPromises.push(this.genTextBody(tcNodes[j]["a:txBody"]).then((info) => {
+			    	info.text = "<td>" + info.text + "</td>";
+                    return info;
+                }));
+				/*var text = this.genTextBody(tcNodes[j]["a:txBody"]);
+				tableHtml += "<td>" + text + "</td>";*/
 			}
 		} else {
-			var text = this.genTextBody(tcNodes["a:txBody"]);
-			tableHtml += "<td>" + text + "</td>";
+			colPromises.push(this.genTextBody(tcNodes["a:txBody"]).then((info) => {
+                info.text = "<td>" + info.text + "</td>";
+            	return info;
+			}));
+			/*var text = this.genTextBody(tcNodes["a:txBody"]);
+			tableHtml += "<td>" + text + "</td>";*/
 		}
-		tableHtml += "</tr>";
+		// Create the row
+        rowPromises.push(Promise.all(colPromises).then(function(colsInfo){
+            var colsText = '<tr>' + colsInfo.map((colInfo) => {return colInfo.text}).join('') + '</tr>';
+            return {text: colsText};
+        }));
+
 	}
 
-  tableHtml += "</table>";
+	// Return the promise that return the table HTML
+	return Promise.all(rowPromises).then((rowsInfo) => {
+			var rowsText = "<table>" + rowsInfo.map((rowInfo) => { return rowInfo.text}).join('') + "</table>";
+			return {text: rowsText};
+		});
+    // tableHtml += "</table>";
 
-	return tableHtml;
+	// return tableHtml;
 }
 
 renderChart(data, resultContainer) {
     var htmlStub = '<div id="stub">'+ resultContainer + '</div>';
     var chartID = data.chartID;
+	var dataF = data;
+    var out = null;
 
-    jsdom.env(
-         htmlStub,
-        [
-        	"http://code.jquery.com/jquery.js",
-			"https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.min.js",
-			"https://cdnjs.cloudflare.com/ajax/libs/nvd3/1.8.5/nv.d3.min.js"
-		],
+    return new Promise( function(resolve, reject) {
+    	jsdom.env(
+            htmlStub,
+            [
+                "http://code.jquery.com/jquery.js",
+                "https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.min.js",
+                "https://cdnjs.cloudflare.com/ajax/libs/nvd3/1.8.5/nv.d3.min.js"
+            ],
 
-        function (err, window) {
-        	//console.log("contents of a.the-link:", window.$("#stub").parent().html());
-            var $ = window.$;
-            var d3 = window.d3;
-            var nv = window.nv;
-			var el = $('#' + chartID);
-            console.log(el.parent().html());
+            function (err, window) {
+                var $ = window.$;
+                var d3 = window.d3;
+                var nv = window.nv;
+                var el = $('#' + chartID);
 
-			// Extract the data of the chartID
-			var chart = JSON.parse($(this).attr('datum'));
 
-			var chartType =  chart.data.chartType;
-			var chartData = chart.data.chartData;
-			var data = [];
-			chart = null;
-			switch (chartType) {
-				case 'lineChart':
-					data = chartData;
-					chart = nv.models.lineChart()
-						.useInteractiveGuideline(true);
-					chart.xAxis.tickFormat(function(d) { return chartData[0].xlabels[d] || d; });
-					break;
-				case 'barChart':
-					data = chartData;
-					chart = nv.models.multiBarChart();
-					chart.xAxis.tickFormat(function(d) { return chartData[0].xlabels[d] || d; });
-					break;
-				case 'pieChart':
-					chartData = chartData[0].values;
-					chart = nv.models.pieChart();
-					break;
-				case 'pie3DChart':
-					chartData = chartData[0].values;
-					chart = nv.models.pieChart();
-					break;
-				case 'areaChart':
-					data = chartData;
-					chart = nv.models.stackedAreaChart()
-						.clipEdge(true)
-						.useInteractiveGuideline(true);
-					chart.xAxis.tickFormat(function(d) { return chartData[0].xlabels[d] || d; });
-					break;
-				case 'scatterChart':
 
-					for (let i=0; i<chartData.length; i++) {
-						let arr = [];
-						for (let j=0; j<chartData[i].length; j++) {
-							arr.push({x: j, y: chartData[i][j]});
-						}
-						data.push({key: 'data' + (i + 1), values: arr});
-					}
+                var chartType =  dataF.chartType;
+                var chartData = dataF.chartData;
+                var data = [];
+                var chart = null;
+                switch (chartType) {
+                    case 'lineChart':
+                        data = chartData;
+                        chart = nv.models.lineChart()
+                            .useInteractiveGuideline(true);
+                        chart.xAxis.tickFormat(function(d) { return chartData[0].xlabels[d] || d; });
+                        break;
+                    case 'barChart':
+                        data = chartData;
+                        chart = nv.models.multiBarChart();
+                        chart.xAxis.tickFormat(function(d) { return chartData[0].xlabels[d] || d; });
+                        break;
+                    case 'pieChart':
+                        chartData = chartData[0].values;
+                        chart = nv.models.pieChart();
+                        break;
+                    case 'pie3DChart':
+                        chartData = chartData[0].values;
+                        chart = nv.models.pieChart();
+                        break;
+                    case 'areaChart':
+                        data = chartData;
+                        chart = nv.models.stackedAreaChart()
+                            .clipEdge(true)
+                            .useInteractiveGuideline(true);
+                        chart.xAxis.tickFormat(function(d) { return chartData[0].xlabels[d] || d; });
+                        break;
+                    case 'scatterChart':
 
-					chart = nv.models.scatterChart()
-						.showDistX(true)
-						.showDistY(true)
-						.color(d3.scale.category10().range());
-					chart.xAxis.axisLabel('X').tickFormat(d3.format('.02f'));
-					chart.yAxis.axisLabel('Y').tickFormat(d3.format('.02f'));
-					chartData = data;
-					break;
-				default:
-			}
+                        for (let i=0; i<chartData.length; i++) {
+                            let arr = [];
+                            for (let j=0; j<chartData[i].length; j++) {
+                                arr.push({x: j, y: chartData[i][j]});
+                            }
+                            data.push({key: 'data' + (i + 1), values: arr});
+                        }
 
-			if (chart !== null) {
-				d3.select('#' + chartID)
-					.append('svg')
-					.datum(chartData)
-					.transition().duration(500)
-					.call(chart);
+                        chart = nv.models.scatterChart()
+                            .showDistX(true)
+                            .showDistY(true)
+                            .color(d3.scale.category10().range());
+                        chart.xAxis.axisLabel('X').tickFormat(d3.format('.02f'));
+                        chart.yAxis.axisLabel('Y').tickFormat(d3.format('.02f'));
+                        chartData = data;
+                        break;
+                    default:
+                }
 
-				nv.utils.windowResize(chart.update);
-			}
+                if (chart !== null) {
+                    d3.select('#' + chartID)
+                        .append('svg')
+                        .datum(chartData)
+                        .transition().duration(500)
+                        .call(chart);
 
-        }
-    );
-    console.log('ola');
+                    nv.utils.windowResize(chart.update);
+                }
+                out = el.parent().html();
+                resolve(out);
+            }
+        )
+    }).catch(function(err){ console.log('Error while rendering chart: ' + err)});
 }
 
 genChart(node, warpObj) {
@@ -1771,22 +1923,21 @@ genChart(node, warpObj) {
   	var resultContainer = "<div id='chart" + this.chartID + "' class='block content' style='position: absolute;" +
    					this.getPosition(xfrmNode, undefined, undefined) + this.getSize(xfrmNode, undefined, undefined) +
    					" z-index: " + order + ";'" + /*"datum='" + JSON.stringify(chartData) + */"></div>";
-
-    var result = this.renderChart(chartData.data, resultContainer);
-	//if (chartData !== null) {
-//		MsgQueue.push(chartData);
-//	}
-
+	var chartID = this.chartID;
 	this.chartID++;
-	return result;
+
+    return this.renderChart(chartData.data, resultContainer);
 }
 
 genDiagram(node, warpObj) {
 	var order = node["attrs"]["order"];
 	var xfrmNode = this.getTextByPathList(node, ["p:xfrm"]);
-	return "<div class='block content' style='position: absolute;border: 1px dotted;" +
+	var diagramHtml = "<div class='block content' style='position: absolute;border: 1px dotted;" +
 				this.getPosition(xfrmNode, undefined, undefined) + this.getSize(xfrmNode, undefined, undefined) +
 			"'>TODO: diagram</div>";
+	return new Promise(function(resolve, reject){
+		resolve(diagramHtml);
+	});
 }
 
 getPosition(slideSpNode, slideLayoutSpNode, slideMasterSpNode) {
