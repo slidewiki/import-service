@@ -530,23 +530,26 @@ processSingleSlideNotes(zip, sldFileName, index, slideSize) {
       // "slideResObj": slideResObj
       //"slideMasterTables": notesMasterTables// Don't use notes master settings - we probably won't display it as in the PowerPoint Notes Page (with slide image, slide number, date,...)
     };
-	console.log('///////////////////////////////aempila');
 
     var promises = [];
     for (var nodeKey in notesNodes) {
-      let that = this;
+      var that = this;
       if (notesNodes[nodeKey].constructor === Array) {
         for (var i=0; i<notesNodes[nodeKey].length; i++) {
+            console.log('/////////////////////////////////////////////ola1');
+            console.log(that.isNodeNotesPlaceholder(notesNodes[nodeKey][i]));
           // Extract only nodes with notes (disregard Slide Image, Slide Number,... )
         	if (that.isNodeNotesPlaceholder(notesNodes[nodeKey][i])) {
-        		console.log('ola1');
+
             promises.push(that.processNodesInSlide(nodeKey, notesNodes[nodeKey][i], notesWarpObj));
           }
         }
       } else {
+
+          console.log('/////////////////////////////////////////////ola2');
+          console.log(that.isNodeNotesPlaceholder(notesNodes[nodeKey]));
         if (that.isNodeNotesPlaceholder(notesNodes[nodeKey])) {
-        	console.log('ola2');
-          promises.push(that.processNodesInSlide(nodeKey, notesNodes[nodeKey], notesWarpObj));
+            promises.push(that.processNodesInSlide(nodeKey, notesNodes[nodeKey], notesWarpObj));
         }
       }
     }
@@ -575,12 +578,19 @@ processSingleSlideNotes(zip, sldFileName, index, slideSize) {
 
 isNodeNotesPlaceholder(node) {//test if the node is a notes placeholder
   var name;
+  console.log('//////////////////////////isNodesPlaceholder');
+  console.log(JSON.stringify(node));
   if ((node["p:nvSpPr"] !== undefined) &&
     (node["p:nvSpPr"]["p:cNvPr"] !== undefined) &&
     (node["p:nvSpPr"]["p:cNvPr"]["attrs"] !== undefined)) {
       name = node["p:nvSpPr"]["p:cNvPr"]["attrs"]["name"];
   }
-  return (name !== undefined && name.startsWith("Notes Placeholder"));
+
+    // TODO: this is not a good way to identify if the element is a Note placeholder, the pptx change this attr depending
+	// on its language configuartion.
+    return (name !== undefined &&
+			(name.startsWith("Notes Placeholder") // English
+			|| name.startsWith("Marcador de notas"))); //Spanish
 }
 
 indexNodes(content) {
