@@ -140,56 +140,73 @@ module.exports = {
     let convertor = new Convertor.Convertor();
     convertor.user = user;
 
-    let initialResult = convertor.convertFirstSlide(buffer);
-    let firstSlide = initialResult.firstSlide;
-    const noOfSlides = initialResult.noOfSlides;
+    //let initialResult = convertor.convertFirstSlide(buffer);
+    //let firstSlide = initialResult.firstSlide;
 
-    return createDeck(user, language, license, deckName, firstSlide).then((deck) => {
-      // let noOfSlides = convertor.getNoOfSlides(buffer);
-      reply('import completed').header('deckId', deck.id).header('noOfSlides', noOfSlides);
 
-      //Save file
-      // fs.writeFile('./' + fileName, buffer, (err) => {
-      //   if (err) {
-      //     reply('error in upload!');
-      //     console.log('error', err);
-      //   } else {
-      //     console.log('upload completed');
-      //   }
-      // });
+    var reply = reply;
 
-      if (noOfSlides > 1) {
-        let slides = convertor.processPPTX(buffer);
-        findFirstSlideOfADeck(deck.id).then((slideId) => {
-        // updateSlide(slideId, user, license, deck.id, slides[0]).then(() => {
-
-          //create the rest of slides
-          createNodesRecursive(user, license, deck.id, slideId, slides, 1);
-
-        // }).catch((error) => {
-        //   request.log('error', error);
-        //   reply(boom.badImplementation());
+    return convertor.convertFirstSlide(buffer).then(function(result){
+      //var firstSlide = result.firstSlide;
+      const noOfSlides = result.noOfSlides;
+        console.log('//////////////////////ola');
+      console.log(result);
+        console.log('//////////////////////ola');
+      return createDeck(user, language, license, deckName, result).then((deck) => {
+          // let noOfSlides = convertor.getNoOfSlides(buffer);
+          reply('import completed').header('deckId', deck.id).header('noOfSlides', noOfSlides);
+        //Save file
+        // fs.writeFile('./' + fileName, buffer, (err) => {
+        //   if (err) {
+        //     reply('error in upload!');
+        //     console.log('error', err);
+        //   } else {
+        //     console.log('upload completed');
+        //   }
         // });
-        // let previousSlideId = slideId;
-        // for (let i = 1; i < slides.length; i++) {
-        //
-        //   createDeckTreeNode(selector, nodeSpec, user).then((node) => {
-        //     console.log(node);
-        //     updateSlide(node.id, user, license, deck.id, slides[i]);
-        //     previousSlideId = node.id;
-        //   });
-        //
-        // }
 
-        }).catch((error) => {
-          request.log('error', error);
-          reply(boom.badImplementation());
-        });
-      }
-    }).catch((error) => {
-      request.log('error', error);
-      reply(boom.badImplementation());
+        if (noOfSlides > 1) {
+            //var slides = convertor.processPPTX(buffer);
+            convertor.processPPTX(buffer).then(function(result){
+                var slides = result;
+                return findFirstSlideOfADeck(deck.id).then((slideId) => {
+                    // updateSlide(slideId, user, license, deck.id, slides[0]).then(() => {
+
+                    //create the rest of slides
+                    return createNodesRecursive(user, license, deck.id, slideId, slides, 1);
+
+                // }).catch((error) => {
+                //   request.log('error', error);
+                //   reply(boom.badImplementation());
+                // });
+                // let previousSlideId = slideId;
+                // for (let i = 1; i < slides.length; i++) {
+                //
+                //   createDeckTreeNode(selector, nodeSpec, user).then((node) => {
+                //     console.log(node);
+                //     updateSlide(node.id, user, license, deck.id, slides[i]);
+                //     previousSlideId = node.id;
+                //   });
+                //
+                // }
+
+                }).catch((error) => {
+                        request.log('error', error);
+                        reply(boom.badImplementation());
+                });
+            }).catch((err) => {
+                console.log('Error processingPPTX: ' + err);
+            });
+
+        }
+      }).catch((error) => {
+        request.log('error', error);
+        reply(boom.badImplementation());
+      });
+    }).catch(function(err){
+        console.log('Error converting first slide: ' + err);
     });
+
 
 
 
@@ -453,21 +470,24 @@ function createNodesRecursive(user, license, deckId, previousSlideId, slides, in
   });
 }
 
-//Send a request to insert a new deck with the first slide
 function createDeck(user, language, license, deckName, firstSlide) {
-  // console.log('deck', user, license, deckName);
-  let myPromise = new Promise((resolve, reject) => {
-    let title = (firstSlide.title !== '') ? firstSlide.title : (firstSlide.ctrTitle !== '') ? firstSlide.ctrTitle : firstSlide.subTitle;
+//Send a request to insert a new deck with the first slide
+// console.log('deck', user, license, deckName);
+    let myPromise = new Promise((resolve, reject) => {
+    var title = (firstSlide.title !== '') ? firstSlide.title : (firstSlide.ctrTitle !== '') ? firstSlide.ctrTitle : firstSlide.subTitle;
+    // In case it is undefined.
+    if (firstSlide.title === undefined && firstSlide.ctrTitle === undefined && firstSlide.subTitle === undefined) title = '';
     title = title.trim();
+
     if (title.length > 100) {
-      title = title.substring(0,99) + '...';
+        title = title.substring(0,99) + '...';
     }
+
     let firstSlideTitle = replaceSpecialSymbols(title);//deck tree does not display some encoded symbols properly
     firstSlideTitle = he.encode(firstSlideTitle, {allowUnsafeSymbols: true});//encode some symbols which were not replaced
     //Encode special characters (e.g. bullets)
     let encodedFirstSlideContent = he.encode(firstSlide.content, {allowUnsafeSymbols: true});
     let encodedFirstSlideNotes = he.encode(firstSlide.notes, {allowUnsafeSymbols: true});
-
     let jsonData = {
       user: user,
       language: language,
@@ -476,7 +496,7 @@ function createDeck(user, language, license, deckName, firstSlide) {
       first_slide: {
         content: encodedFirstSlideContent,
         title: (firstSlideTitle !== '') ? firstSlideTitle : 'Slide 1',//It is not allowed to be empty
-        speakernotes:encodedFirstSlideNotes
+        speakernotes: encodedFirstSlideNotes
       }
     };
 
@@ -496,28 +516,40 @@ function createDeck(user, language, license, deckName, firstSlide) {
         'Content-Length': data.length
       }
     };
+    var reqData = {};
+    reqData.data = data;
+    reqData.options = options;
+    resolve(reqData);
+  }).then((reqData) => {
+        var data = reqData.data;
+        var options = reqData.options;
+        return new Promise((resolve, reject) => {
+            var req = http.request(options, (res) => {
+                    // console.log('STATUS: ' + res.statusCode);
+                    // console.log('HEADERS: ' + JSON.stringify(res.headers));
+                    res.setEncoding('utf8');
+            let body = '';
+            res.on('data', (chunk) => {
+                // console.log('Response: ', chunk);
+                body += chunk;
+            });
+                res.on('end', () => {
+                    var newDeck = JSON.parse(body);
+                resolve(newDeck);
+            });
+            });
+                req.on('error', (e) => {
+                console.log('problem with request: ' + e.message);
+                reject(e);
+            });
+                req.write(data);
+                req.end();
+            }).catch((err) => {
+               console.log('Error creating deck: ' + err);
+            });
 
-    let req = http.request(options, (res) => {
-      // console.log('STATUS: ' + res.statusCode);
-      // console.log('HEADERS: ' + JSON.stringify(res.headers));
-      res.setEncoding('utf8');
-      let body = '';
-      res.on('data', (chunk) => {
-        // console.log('Response: ', chunk);
-        body += chunk;
-      });
-      res.on('end', () => {
-        let newDeck = JSON.parse(body);
-        resolve(newDeck);
-      });
-    });
-    req.on('error', (e) => {
-      console.log('problem with request: ' + e.message);
-      reject(e);
-    });
-    req.write(data);
-    req.end();
-  });
+            });
+
 
   return myPromise;
 }
@@ -591,7 +623,7 @@ function createSlide(selector, nodeSpec, user, slide, slideNo, license) {
 
 function findFirstSlideOfADeck(deckId) {
   //Find the id of the first slidedata
-  let myPromise = new Promise((resolve, reject) => {
+  var myPromise = new Promise((resolve, reject) => {
 
     let options = {
       host: Microservices.deck.uri,
