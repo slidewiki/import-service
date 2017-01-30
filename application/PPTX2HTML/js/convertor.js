@@ -455,9 +455,6 @@ processSingleSlide(zip, sldFileName, index, slideSize) {
         for (var i = 0; i < infos.length; i++  ) {
             res = Object.assign(res, infos[i]);
         }
-        console.log('/////////////////////processSingleSlide');
-        console.log(text);
-        console.log('/////////////////////processSingleSlide');
         // Assign the respective joined html
         res.content = text;
         delete res.text;
@@ -523,7 +520,6 @@ processSingleSlideNotes(zip, sldFileName, index, slideSize) {
     //THIS IS LIKE STEP 3 FOR NOTES
     var notesContent = this.readXmlFile(zip, notesFilename);
     var notesNodes = notesContent["p:notes"]["p:cSld"]["p:spTree"];
-    // console.log(notesNodes);
 
     var notesWarpObj = {
       "zip": zip,
@@ -536,8 +532,6 @@ processSingleSlideNotes(zip, sldFileName, index, slideSize) {
       var that = this;
       if (notesNodes[nodeKey].constructor === Array) {
         for (var i=0; i<notesNodes[nodeKey].length; i++) {
-            console.log('/////////////////////////////////////////////ola1');
-            console.log(that.isNodeNotesPlaceholder(notesNodes[nodeKey][i]));
           // Extract only nodes with notes (disregard Slide Image, Slide Number,... )
         	if (that.isNodeNotesPlaceholder(notesNodes[nodeKey][i])) {
 
@@ -545,9 +539,6 @@ processSingleSlideNotes(zip, sldFileName, index, slideSize) {
           }
         }
       } else {
-
-          console.log('/////////////////////////////////////////////ola2');
-          console.log(that.isNodeNotesPlaceholder(notesNodes[nodeKey]));
         if (that.isNodeNotesPlaceholder(notesNodes[nodeKey])) {
             promises.push(that.processNodesInSlide(nodeKey, notesNodes[nodeKey], notesWarpObj));
         }
@@ -555,9 +546,6 @@ processSingleSlideNotes(zip, sldFileName, index, slideSize) {
     }
 
     return Promise.all(promises).then(function(infos) {
-    		console.log('///////////////////////////////////notas bla');
-			console.log(infos);
-    	    console.log('///////////////////////////////////notas bla');
           	var text =  infos.map((info) => {return info.text}).join('');
 			var res = {};
 			// Merge objects returned by the promises
@@ -578,8 +566,6 @@ processSingleSlideNotes(zip, sldFileName, index, slideSize) {
 
 isNodeNotesPlaceholder(node) {//test if the node is a notes placeholder
   var name;
-  console.log('//////////////////////////isNodesPlaceholder');
-  console.log(JSON.stringify(node));
   if ((node["p:nvSpPr"] !== undefined) &&
     (node["p:nvSpPr"]["p:cNvPr"] !== undefined) &&
     (node["p:nvSpPr"]["p:cNvPr"]["attrs"] !== undefined)) {
@@ -655,23 +641,18 @@ processNodesInSlide(nodeKey, nodeValue, warpObj) {
 
 	switch (nodeKey) {
 		case "p:sp":	// Shape, Text
-			console.log('spnode');
 			return this.processSpNode(nodeValue, warpObj);
 			break;
 		case "p:cxnSp":	// Shape, Text (with connection)
-            console.log('cxnspnode');
 			return this.processCxnSpNode(nodeValue, warpObj);
 			break;
 		case "p:pic":	// Picture
-            console.log('pic');
 	return this.processPicNode(nodeValue, warpObj);
 			break;
 		case "p:graphicFrame":	// Chart, Diagram, Table
-            console.log('graphicframenode');
 			return this.processGraphicFrameNode(nodeValue, warpObj);
 			break;
 		case "p:grpSp":	// 群組
-            console.log('groupSpNode');
 			return this.processGroupSpNode(nodeValue, warpObj);
 			break;
 		default:
@@ -712,7 +693,6 @@ processGroupSpNode(node, warpObj) {
 	}
 
     return Promise.all(promises).then(function(infos){
-    	console.log('///////////////////////////groupSpNode');
     	// Create the new merged html
         var text = "<div class='block group' style='position: absolute;z-index: " + order + "; top: " + (y - chy) + "px; left: " + (x - chx) + "px; width: " + (cx - chcx) + "px; height: " + (cy - chcy) + "px;'>";
         	+ infos.map((info) => {return info.text}).join('') + "</div>";
@@ -1487,15 +1467,7 @@ genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, warpObj, c
             }
 
         }
-		console.log('/////////////////////////text');
-        console.log(text);
-    	console.log('/////////////////////////text');
         if (isTitle && this.currentSlide.title === '') {
-            //this.currentSlide.title = title;
-			console.log('//////////////////////////');
-			console.log('//////////////////-titulo');
-            console.log('//////////////////////////');
-
             resolve({
                title: title,
 			   text: text
