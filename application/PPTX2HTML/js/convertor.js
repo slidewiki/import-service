@@ -96,11 +96,9 @@ class Convertor {
         promises.push(this.processSingleSlideNotes(zip, filename, 0, this.slideSize));
         return Promise.all(promises).then(function(infos){
         	//Merge slide content and notes
-            var res = Object.merge(infos[0], infos[1]);
+            var res = Object.assign(infos[0], infos[1]);
             // Assign the noOfSlides
             res.noOfSlides = noOfSlides;
-            // Assign the text to the content of the slide
-            res.content = res.text;
             return res;
 		}).catch(function(err){console.log("convertFirstSlide " + err)});
 
@@ -438,8 +436,7 @@ processSingleSlide(zip, sldFileName, index, slideSize) {
     var promises = [];
 
 	for (var nodeKey in nodes) {
-        let that = this;
-		if (nodes[nodeKey].constructor === Array) {
+ 		if (nodes[nodeKey].constructor === Array) {
             for (var i=0; i<nodes[nodeKey].length; i++) {
                 promises.push(this.processNodesInSlide(nodeKey, nodes[nodeKey][i], warpObj));
 			}
@@ -452,14 +449,18 @@ processSingleSlide(zip, sldFileName, index, slideSize) {
 	return Promise.all(promises).then(function(infos){
 		var text =
             "<div class='pptx2html' style='position: relative;width:" + slideSize.width + "px; height:" + slideSize.height + "px; background-color: #" + bgColor + "'>" +
-            infos.map((info) => return info.text).join('') + "</div>";
+            infos.map((info) => { return info.text }).join('') + "</div>";
         var res = {};
         // Merge objects returned by the promises
         for (var i = 0; i < infos.length; i++  ) {
-            res = Object.merge(res, infos[i]);
+            res = Object.assign(res, infos[i]);
         }
+        console.log('/////////////////////processSingleSlide');
+        console.log(text);
+        console.log('/////////////////////processSingleSlide');
         // Assign the respective joined html
-        res.text = text;
+        res.content = text;
+        delete res.text;
         return res;
     }).catch(function(err){console.log("processSingleSlide " + err)});
 
@@ -470,8 +471,8 @@ processSingleSlideNotes(zip, sldFileName, index, slideSize) {
 	var resName = sldFileName.replace("slides/slide", "slides/_rels/slide") + ".rels";
 	var resContent = this.readXmlFile(zip, resName);
 	var RelationshipArray = resContent["Relationships"]["Relationship"];
-  var slideResObj = {}; // Added by Luis - this should take another mnemonic name.
-  var notesFilename = "";
+	var slideResObj = {}; // Added by Luis - this should take another mnemonic name.
+	var notesFilename = "";
 
 	if (RelationshipArray.constructor === Array) {
 		for (var i=0; i<RelationshipArray.length; i++) {
@@ -529,6 +530,7 @@ processSingleSlideNotes(zip, sldFileName, index, slideSize) {
       // "slideResObj": slideResObj
       //"slideMasterTables": notesMasterTables// Don't use notes master settings - we probably won't display it as in the PowerPoint Notes Page (with slide image, slide number, date,...)
     };
+	console.log('///////////////////////////////aempila');
 
     var promises = [];
     for (var nodeKey in notesNodes) {
@@ -537,31 +539,36 @@ processSingleSlideNotes(zip, sldFileName, index, slideSize) {
         for (var i=0; i<notesNodes[nodeKey].length; i++) {
           // Extract only nodes with notes (disregard Slide Image, Slide Number,... )
         	if (that.isNodeNotesPlaceholder(notesNodes[nodeKey][i])) {
+        		console.log('ola1');
             promises.push(that.processNodesInSlide(nodeKey, notesNodes[nodeKey][i], notesWarpObj));
           }
         }
       } else {
         if (that.isNodeNotesPlaceholder(notesNodes[nodeKey])) {
+        	console.log('ola2');
           promises.push(that.processNodesInSlide(nodeKey, notesNodes[nodeKey], notesWarpObj));
         }
       }
     }
 
     return Promise.all(promises).then(function(infos) {
-          	var text=  infos.map((info) => return info.text).join('');
+    		console.log('///////////////////////////////////notas bla');
+			console.log(infos);
+    	    console.log('///////////////////////////////////notas bla');
+          	var text =  infos.map((info) => {return info.text}).join('');
 			var res = {};
 			// Merge objects returned by the promises
 			for (var i = 0; i < infos.length; i++  ) {
-				res = Object.merge(res, infos[i]);
+				res = Object.assign(res, infos[i]);
 			}
 			// Assign the respective joined html
 			res.notes = text;
 			return res;
-    }).catch(function(err){console.log("processSingleSlideNotes "+err)});
+    }).catch(function(err){console.log("noSingleSlideNotes "+ err)});
 
   }
 
-  return new Promise((resolve, reject) {
+  return new Promise((resolve, reject) => {
   		resolve({notes: ''});
 	});
 }
@@ -638,24 +645,23 @@ processNodesInSlide(nodeKey, nodeValue, warpObj) {
 
 	switch (nodeKey) {
 		case "p:sp":	// Shape, Text
-
+			console.log('spnode');
 			return this.processSpNode(nodeValue, warpObj);
 			break;
 		case "p:cxnSp":	// Shape, Text (with connection)
-
+            console.log('cxnspnode');
 			return this.processCxnSpNode(nodeValue, warpObj);
 			break;
 		case "p:pic":	// Picture
-
+            console.log('pic');
 	return this.processPicNode(nodeValue, warpObj);
 			break;
 		case "p:graphicFrame":	// Chart, Diagram, Table
-			return this.processGraphicFrameNode(nodeValue, warpObj).then((res) => {
-					res = {text : res};
-            		return res;
-			});
+            console.log('graphicframenode');
+			return this.processGraphicFrameNode(nodeValue, warpObj);
 			break;
 		case "p:grpSp":	// 群組
+            console.log('groupSpNode');
 			return this.processGroupSpNode(nodeValue, warpObj);
 			break;
 		default:
@@ -696,13 +702,14 @@ processGroupSpNode(node, warpObj) {
 	}
 
     return Promise.all(promises).then(function(infos){
+    	console.log('///////////////////////////groupSpNode');
     	// Create the new merged html
         var text = "<div class='block group' style='position: absolute;z-index: " + order + "; top: " + (y - chy) + "px; left: " + (x - chx) + "px; width: " + (cx - chcx) + "px; height: " + (cy - chcy) + "px;'>";
-        	+ infos.map((info) => return info.text).join('') + "</div>";
+        	+ infos.map((info) => {return info.text}).join('') + "</div>";
 		var res = {};
 		// Merge objects returned by the promises
     	for (var i = 0; i < infos.length; i++  ) {
-    		res = Object.merge(res, infos[i]);
+    		res = Object.assign(res, infos[i]);
 		}
 		// Assign the respective joined html
 		res.text = text;
@@ -1100,12 +1107,10 @@ genShape(node, slideLayoutSpNode, slideMasterSpNode, id, name, idx, type, order,
 		if (node["p:txBody"] !== undefined) {
 			return this.genTextBody(node["p:txBody"], slideLayoutSpNode, slideMasterSpNode, type, warpObj, false).then((info) => {
 					info.text = result + info.text + "</div>";
-					console.log(info);
 					return info;
 				}).catch((err) => {console.log('Error generating text: ' + err)});
-			result += this.genTextBody(node["p:txBody"], slideLayoutSpNode, slideMasterSpNode, type, warpObj, false);
 		}
-		result += "</div>";
+
         return new Promise((resolve, reject) => {
                 resolve({text: result});
 		});
@@ -1117,7 +1122,7 @@ genShape(node, slideLayoutSpNode, slideMasterSpNode, id, name, idx, type, order,
     if (node["p:txBody"] !== undefined) {
       return this.genTextBody(node["p:txBody"], slideLayoutSpNode, slideMasterSpNode, type, warpObj, createList).then((info) => {
 
-      	  textbody = info.text;
+      	  textBody = info.text;
 		  if (textBody !== undefined && textBody !== "") {//Dejan added this to prevent creation of some undefined and empty elements
             	result += "<div class='block content " + this.getVerticalAlign(node, slideLayoutSpNode, slideMasterSpNode, type) +
                 "' _id='" + id + "' _idx='" + idx + "' _type='" + type + "' _name='" + name +
@@ -1132,8 +1137,6 @@ genShape(node, slideLayoutSpNode, slideMasterSpNode, id, name, idx, type, order,
                 "</div>";
             	info.text = result;
         }
-        console.log('/////////////////////////info');
-        console.log(info);
         return info;
     }).catch((err) => {console.log('Error generating text: ' + err)});
     }
@@ -1254,10 +1257,14 @@ processGraphicFrameNode(node, warpObj) {
 			return this.genTable(node, warpObj);
 			break;
 		case "http://schemas.openxmlformats.org/drawingml/2006/chart":
-			return this.genChart(node, warpObj);
+			return this.genChart(node, warpObj).then((text) => {
+				return {text: text};
+			});
 			break;
 		case "http://schemas.openxmlformats.org/drawingml/2006/diagram":
-			return this.genDiagram(node, warpObj);
+			return this.genDiagram(node, warpObj).then((text) => {
+                    return {text: text};
+			});
 			break;
 		default:
 	}
@@ -1470,21 +1477,27 @@ genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, warpObj, c
             }
 
         }
-
+		console.log('/////////////////////////text');
+        console.log(text);
+    	console.log('/////////////////////////text');
         if (isTitle && this.currentSlide.title === '') {
-            this.currentSlide.title = title;
+            //this.currentSlide.title = title;
+			console.log('//////////////////////////');
+			console.log('//////////////////-titulo');
+            console.log('//////////////////////////');
+
             resolve({
                title: title,
 			   text: text
             });
         } else if (isCtrTitle && this.currentSlide.ctrTitle === '') {
-            this.currentSlide.ctrTitle = title;
+            //this.currentSlide.ctrTitle = title;
             resolve({
                ctrlTitle: title,
                text: text
             });
         } else if (isSubTitle && this.currentSlide.subTitle === '') {
-            this.currentSlide.subTitle = title;
+            //this.currentSlide.subTitle = title;
             resolve({
                subTitle: title,
                text: text
@@ -1495,7 +1508,6 @@ genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, warpObj, c
             });
         }
 
-        // return text;
     });
 }
 
