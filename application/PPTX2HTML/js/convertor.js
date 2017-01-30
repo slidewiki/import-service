@@ -92,28 +92,16 @@ class Convertor {
 
         const filename = this.filesInfo["slides"][0];
         var promises = [];
-        //this.currentSlide.content = this.processSingleSlide(zip, filename, 0, this.slideSize);
-        //this.currentSlide.notes = this.processSingleSlideNotes(zip, filename, 0, this.slideSize);//Dejan added this to process notes
-
-		promises.push(this.processSingleSlide(zip, filename, 0, this.slideSize));
+        promises.push(this.processSingleSlide(zip, filename, 0, this.slideSize));
         promises.push(this.processSingleSlideNotes(zip, filename, 0, this.slideSize));
-        console.log('////////////////////////');
-        console.log('firstSlideconv');
-        console.log('////////////////////////');
-        return Promise.all(promises).then(function(values){
-            console.log('////////////////////////');
-            console.log('prmoise');
-            console.log('////////////////////////');
-
-            return {
-                title: '',
-                ctrTitle: '',
-                subTitle: '',
-                content: '',
-                notes: values[1],
-                firstSlide: values[0],
-                noOfSlides: noOfSlides
-            }
+        return Promise.all(promises).then(function(infos){
+        	//Merge slide content and notes
+            var res = Object.merge(infos[0], infos[1]);
+            // Assign the noOfSlides
+            res.noOfSlides = noOfSlides;
+            // Assign the text to the content of the slide
+            res.content = res.text;
+            return res;
 		}).catch(function(err){console.log("convertFirstSlide " + err)});
 
 /*
@@ -461,11 +449,18 @@ processSingleSlide(zip, sldFileName, index, slideSize) {
 		}
 	}
 
-	return Promise.all(promises).then(function(values){
-		var result =
+	return Promise.all(promises).then(function(infos){
+		var text =
             "<div class='pptx2html' style='position: relative;width:" + slideSize.width + "px; height:" + slideSize.height + "px; background-color: #" + bgColor + "'>" +
-			values.join('') + "</div>";
-        return result;
+            infos.map((info) => return info.text).join('') + "</div>";
+        var res = {};
+        // Merge objects returned by the promises
+        for (var i = 0; i < infos.length; i++  ) {
+            res = Object.merge(res, infos[i]);
+        }
+        // Assign the respective joined html
+        res.text = text;
+        return res;
     }).catch(function(err){console.log("processSingleSlide " + err)});
 
 }
@@ -552,14 +547,23 @@ processSingleSlideNotes(zip, sldFileName, index, slideSize) {
       }
     }
 
-    return Promise.all(promises).then(function(values) {
-          var result =  values.join('');
-          return result;
+    return Promise.all(promises).then(function(infos) {
+          	var text=  infos.map((info) => return info.text).join('');
+			var res = {};
+			// Merge objects returned by the promises
+			for (var i = 0; i < infos.length; i++  ) {
+				res = Object.merge(res, infos[i]);
+			}
+			// Assign the respective joined html
+			res.notes = text;
+			return res;
     }).catch(function(err){console.log("processSingleSlideNotes "+err)});
 
   }
 
-  return notes;
+  return new Promise((resolve, reject) {
+  		resolve({notes: ''});
+	});
 }
 
 isNodeNotesPlaceholder(node) {//test if the node is a notes placeholder
@@ -634,16 +638,22 @@ processNodesInSlide(nodeKey, nodeValue, warpObj) {
 
 	switch (nodeKey) {
 		case "p:sp":	// Shape, Text
+
 			return this.processSpNode(nodeValue, warpObj);
 			break;
 		case "p:cxnSp":	// Shape, Text (with connection)
+
 			return this.processCxnSpNode(nodeValue, warpObj);
 			break;
 		case "p:pic":	// Picture
-			return this.processPicNode(nodeValue, warpObj);
+
+	return this.processPicNode(nodeValue, warpObj);
 			break;
 		case "p:graphicFrame":	// Chart, Diagram, Table
-			return this.processGraphicFrameNode(nodeValue, warpObj);
+			return this.processGraphicFrameNode(nodeValue, warpObj).then((res) => {
+					res = {text : res};
+            		return res;
+			});
 			break;
 		case "p:grpSp":	// 群組
 			return this.processGroupSpNode(nodeValue, warpObj);
@@ -652,7 +662,7 @@ processNodesInSlide(nodeKey, nodeValue, warpObj) {
 	}
 
 	return new Promise(function(resolve, reject){
-		resolve();
+		resolve({text: ''});
 	});
 	// return result;
 
@@ -661,7 +671,6 @@ processNodesInSlide(nodeKey, nodeValue, warpObj) {
 processGroupSpNode(node, warpObj) {
 
 	var factor = 96 / 914400;
-
 	var xfrmNode = node["p:grpSpPr"]["a:xfrm"];
 	var x = parseInt(xfrmNode["a:off"]["attrs"]["x"]) * factor;
 	var y = parseInt(xfrmNode["a:off"]["attrs"]["y"]) * factor;
@@ -671,12 +680,9 @@ processGroupSpNode(node, warpObj) {
 	var cy = parseInt(xfrmNode["a:ext"]["attrs"]["cy"]) * factor;
 	var chcx = parseInt(xfrmNode["a:chExt"]["attrs"]["cx"]) * factor;
 	var chcy = parseInt(xfrmNode["a:chExt"]["attrs"]["cy"]) * factor;
-
 	var order = node["attrs"]["order"];
 
-	// var result = "<div class='block group' style='position: absolute;z-index: " + order + "; top: " + (y - chy) + "px; left: " + (x - chx) + "px; width: " + (cx - chcx) + "px; height: " + (cy - chcy) + "px;'>";
 	// Process all child nodes
-
 	var promises = [];
 
 	for (var nodeKey in node) {
@@ -689,11 +695,19 @@ processGroupSpNode(node, warpObj) {
 		}
 	}
 
-    return Promise.all(promises).then(function(values){
-        var result = "<div class='block group' style='position: absolute;z-index: " + order + "; top: " + (y - chy) + "px; left: " + (x - chx) + "px; width: " + (cx - chcx) + "px; height: " + (cy - chcy) + "px;'>";
-        	+ values.join('') + "</div>";
-        	console.log(result);
-        return result;
+    return Promise.all(promises).then(function(infos){
+    	// Create the new merged html
+        var text = "<div class='block group' style='position: absolute;z-index: " + order + "; top: " + (y - chy) + "px; left: " + (x - chx) + "px; width: " + (cx - chcx) + "px; height: " + (cy - chcy) + "px;'>";
+        	+ infos.map((info) => return info.text).join('') + "</div>";
+		var res = {};
+		// Merge objects returned by the promises
+    	for (var i = 0; i < infos.length; i++  ) {
+    		res = Object.merge(res, infos[i]);
+		}
+		// Assign the respective joined html
+		res.text = text;
+
+        return res;
     }).catch(function(err){console.log("processGroupSpNode " + err)});
 
 
@@ -761,11 +775,8 @@ processSpNode(node, warpObj) {
 
 	this.debug( {"id": id, "name": name, "idx": idx, "type": type, "order": order} );
 	//debug( JSON.stringify( node ) );
-	var that = this;
-	return new Promise(function(resolve, reject) {
-		resolve(that.genShape(node, slideLayoutSpNode, slideMasterSpNode, id, name, idx, type, order, warpObj));
-	});
-	// return this.genShape(node, slideLayoutSpNode, slideMasterSpNode, id, name, idx, type, order, warpObj);
+
+	return this.genShape(node, slideLayoutSpNode, slideMasterSpNode, id, name, idx, type, order, warpObj);
 }
 
 processCxnSpNode(node, warpObj) {
@@ -778,12 +789,7 @@ processCxnSpNode(node, warpObj) {
 	var order = node["attrs"]["order"];
 
 	this.debug( {"id": id, "name": name, "order": order} );
-	var that = this;
-    return new Promise(function(resolve, reject) {
-        resolve(that.genShape(node, undefined, undefined, id, name, undefined, undefined, order, warpObj));
-    });
-
-    // return this.genShape(node, undefined, undefined, id, name, undefined, undefined, order, warpObj);
+    return this.genShape(node, undefined, undefined, id, name, undefined, undefined, order, warpObj);
 }
 
 genShape(node, slideLayoutSpNode, slideMasterSpNode, id, name, idx, type, order, warpObj) {
@@ -1092,35 +1098,53 @@ genShape(node, slideLayoutSpNode, slideMasterSpNode, id, name, idx, type, order,
 
 		// TextBody
 		if (node["p:txBody"] !== undefined) {
+			return this.genTextBody(node["p:txBody"], slideLayoutSpNode, slideMasterSpNode, type, warpObj, false).then((info) => {
+					info.text = result + info.text + "</div>";
+					console.log(info);
+					return info;
+				}).catch((err) => {console.log('Error generating text: ' + err)});
 			result += this.genTextBody(node["p:txBody"], slideLayoutSpNode, slideMasterSpNode, type, warpObj, false);
 		}
 		result += "</div>";
-
+        return new Promise((resolve, reject) => {
+                resolve({text: result});
+		});
 	} else {
 
     var textBody = "";
     const createList = (slideLayoutSpNode !== undefined);//notes are not bulleted by default as slides are
     // TextBody
     if (node["p:txBody"] !== undefined) {
-      textBody = this.genTextBody(node["p:txBody"], slideLayoutSpNode, slideMasterSpNode, type, warpObj, createList);
+      return this.genTextBody(node["p:txBody"], slideLayoutSpNode, slideMasterSpNode, type, warpObj, createList).then((info) => {
+
+      	  textbody = info.text;
+		  if (textBody !== undefined && textBody !== "") {//Dejan added this to prevent creation of some undefined and empty elements
+            	result += "<div class='block content " + this.getVerticalAlign(node, slideLayoutSpNode, slideMasterSpNode, type) +
+                "' _id='" + id + "' _idx='" + idx + "' _type='" + type + "' _name='" + name +
+                "' style='position: absolute;" +
+                this.getPosition(slideXfrmNode, slideLayoutXfrmNode, slideMasterXfrmNode) +
+                this.getSize(slideXfrmNode, slideLayoutXfrmNode, slideMasterXfrmNode) +
+                this.getBorder(node, false) +
+                this.getFill(node, false) +
+                " z-index: " + order + ";" +
+                "'>" +
+                textBody +
+                "</div>";
+            	info.text = result;
+        }
+        console.log('/////////////////////////info');
+        console.log(info);
+        return info;
+    }).catch((err) => {console.log('Error generating text: ' + err)});
     }
-    if (textBody !== undefined && textBody !== "") {//Dejan added this to prevent creation of some undefined and empty elements
-    		result += "<div class='block content " + this.getVerticalAlign(node, slideLayoutSpNode, slideMasterSpNode, type) +
-    				"' _id='" + id + "' _idx='" + idx + "' _type='" + type + "' _name='" + name +
-    				"' style='position: absolute;" +
-    					this.getPosition(slideXfrmNode, slideLayoutXfrmNode, slideMasterXfrmNode) +
-    					this.getSize(slideXfrmNode, slideLayoutXfrmNode, slideMasterXfrmNode) +
-    					this.getBorder(node, false) +
-    					this.getFill(node, false) +
-    					" z-index: " + order + ";" +
-    				"'>" +
-            textBody +
-            "</div>";
-    }
+
+	result += "</div>";
+	return new Promise((resolve, reject) => {
+			resolve({text: result});
+	});
+
 
 	}
-
-	return result;
 }
 
 processPicNode(node, warpObj) {
