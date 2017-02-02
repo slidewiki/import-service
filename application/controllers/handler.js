@@ -147,13 +147,12 @@ module.exports = {
     var reply = reply;
 
     return convertor.convertFirstSlide(buffer).then(function(result){
-      //var firstSlide = result.firstSlide;
       const noOfSlides = result.noOfSlides;
-        console.log('//////////////////////ola');
-      console.log(result);
-        console.log('//////////////////////ola');
-      return createDeck(user, language, license, deckName, result).then((deck) => {
+      const filesInfo = result.filesInfo;
+      var slides = [result];
+        return createDeck(user, language, license, deckName, result).then((deck) => {
           // let noOfSlides = convertor.getNoOfSlides(buffer);
+
           reply('import completed').header('deckId', deck.id).header('noOfSlides', noOfSlides);
         //Save file
         // fs.writeFile('./' + fileName, buffer, (err) => {
@@ -166,14 +165,14 @@ module.exports = {
         // });
 
         if (noOfSlides > 1) {
+
             //var slides = convertor.processPPTX(buffer);
-            convertor.processPPTX(buffer).then(function(result){
-                var slides = result;
+            convertor.processPPTX(buffer).then((result) => {
+                slides = result;
                 return findFirstSlideOfADeck(deck.id).then((slideId) => {
                     // updateSlide(slideId, user, license, deck.id, slides[0]).then(() => {
-
                     //create the rest of slides
-                    return createNodesRecursive(user, license, deck.id, slideId, slides, 1);
+                    createNodesRecursive(user, license, deck.id, slideId, slides, 1);
 
                 // }).catch((error) => {
                 //   request.log('error', error);
@@ -446,19 +445,21 @@ function saveImageToFile(imgName, file, user) {
 
 
 function createNodesRecursive(user, license, deckId, previousSlideId, slides, index) {
-  let selector = {
+  var selector = {
     'id': String(deckId) + '-1',
     'spath': String(previousSlideId) + '-1:' + String(index + 1),
     'sid': String(previousSlideId) + '-1',
     'stype': 'slide'
   };
-  let nodeSpec = {
+  var nodeSpec = {
     'id': '0',
     'type': 'slide'
   };
+
   // createDeckTreeNode(selector, nodeSpec, user).then((node) => {
   //   updateSlide(node.id, user, license, deckId, slides[index]);
   createSlide(selector, nodeSpec, user, slides[index], String(index + 1), license).then((node) => {
+
     if (index >= slides.length - 1) {//Last one
       return;
     } else {
@@ -557,6 +558,11 @@ function createDeck(user, language, license, deckName, firstSlide) {
 function createSlide(selector, nodeSpec, user, slide, slideNo, license) {
   let myPromise = new Promise((resolve, reject) => {
     let title = (slide.title !== '') ? slide.title : (slide.ctrTitle !== '') ? slide.ctrTitle : slide.subTitle;
+
+    // In case it is undefined.
+    if (slide.title === undefined && slide.ctrTitle === undefined && slide.subTitle === undefined) title = '';
+    title = title.trim();
+
     title = title.trim();
     if (title.length > 100) {
       title = title.substring(0,99) + '...';
