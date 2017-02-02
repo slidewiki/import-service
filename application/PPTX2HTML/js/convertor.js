@@ -65,7 +65,7 @@ class Convertor {
 
     //alert(this.themeContent);
         this.slideHtml;
-        this.totalHtmlResult;
+        // this.totalHtmlResult;
 
         this.eachElement;
 
@@ -86,19 +86,20 @@ class Convertor {
     convertFirstSlide(data) {
         let zip = new JSZip(data);
         this.filesInfo = this.getContentTypes(zip);
+
         this.slideSize = this.getSlideSize(zip);
         this.themeContent = this.loadTheme(zip);
         const noOfSlides = this.filesInfo["slides"].length;
-
         const filename = this.filesInfo["slides"][0];
         var promises = [];
         promises.push(this.processSingleSlide(zip, filename, 0, this.slideSize));
         promises.push(this.processSingleSlideNotes(zip, filename, 0, this.slideSize));
-        return Promise.all(promises).then(function(infos){
+        return Promise.all(promises).then((infos) => {
         	//Merge slide content and notes
             var res = Object.assign(infos[0], infos[1]);
             // Assign the noOfSlides
             res.noOfSlides = noOfSlides;
+            res.filesInfo = this.filesInfo;
             return res;
 		}).catch(function(err){console.log("convertFirstSlide " + err)});
 
@@ -122,20 +123,19 @@ class Convertor {
 
     //var themeContent = null;
 
-    processPPTX(data) {
+    processPPTX(data, filesInfo) {
+		var dateBefore = new Date();
 
-        let dateBefore = new Date();
-
-        let zip = new JSZip(data);
-        let startAtSlide = 1;
-        if (this.filesInfo === undefined) {//if convertFirstSlide was not called
-            this.filesInfo = this.getContentTypes(zip);
+        var zip = new JSZip(data);
+        var startAtSlide = 1;
+        if (filesInfo === undefined) {//if convertFirstSlide was not called
+            filesInfo = this.getContentTypes(zip);
             this.slideSize = this.getSlideSize(zip);
             this.themeContent = this.loadTheme(zip);
             startAtSlide = 0;
         }
 
-        //this.totalHtmlResult = '';
+        // this.totalHtmlResult = '';
 
         if (zip.file('docProps/thumbnail.jpeg') !== null) {
             let pptxThumbImg = functions.base64ArrayBuffer(zip.file('docProps/thumbnail.jpeg').asArrayBuffer());
@@ -147,88 +147,81 @@ class Convertor {
         }
 
 
+		/*
+		this.totalHtmlResult += filesInfo;
+		this.totalHtmlResult += this.slideSize;
+		this.totalHtmlResult += this.themeContent;
+		*/
+    	//console.log('test' + this.totalHtmlResult);
 
-    this.totalHtmlResult += this.filesInfo;
-    this.totalHtmlResult += this.slideSize;
-    this.totalHtmlResult += this.themeContent;
-    //console.log('test' + this.totalHtmlResult);
+		this.slideHtml = ''; //Dejan uncommented this to remove the first 'undefined'
 
-    this.slideHtml = '';//Dejan uncommented this to remove the first 'undefined'
+		var numOfSlides = filesInfo["slides"].length;
+		var promises = [];
+		for (var i=startAtSlide; i<numOfSlides; i++) {
+			var filename = filesInfo["slides"][i];
+			promises.push(
+                this.processSingleSlide(zip, filename, i, this.slideSize),
+                this.processSingleSlideNotes(zip, filename, i, this.slideSize) //Dejan added this to process notes
+			);
 
-	var numOfSlides = this.filesInfo["slides"].length;
-
-	var promises = [];
-
-	for (var i=startAtSlide; i<numOfSlides; i++) {
-		var filename = this.filesInfo["slides"][i];
-
-		var slidePromises =
-			( this.processSingleSlide(zip, filename, i, this.slideSize),
-				this.processSingleSlideNotes(zip, filename, i, this.slideSize) );//Dejan added this to process notes
-
-        promises.push(
-        	Promise.all(slidePromises).then(function(values){
-
-            	var result = values[0] +
-					"<div class='pptx2html' style='position: relative;left:" + (this.slideSize.width + 5) + "px;top:-" + this.slideSize.height + "px;'>" +
-                	values[1] + "</div>";
-
-                return result;
-
-        	}).catch(function(err){console.log("proccessPPTX " + err)})
-		);
-
-
-
-/*
-        this.slideHtml += this.currentSlide.content +
-		"<div class='pptx2html' style='position: relative;left:" + (this.slideSize.width + 5) + "px;top:-" + this.slideSize.height + "px;'>" +
-		this.currentSlide.notes +
-		"</div>";
-*/
-			//self.postMessage({
-			//	"type": "slide",
-			//	"data": slideHtml
-			//});
-			//self.postMessage({
-			//	"type": "progress-update",
-			//	"data": (i + 1) * 100 / numOfSlides
-			//});
+	/*
+			this.slideHtml += this.currentSlide.content +
+			"<div class='pptx2html' style='position: relative;left:" + (this.slideSize.width + 5) + "px;top:-" + this.slideSize.height + "px;'>" +
+			this.currentSlide.notes +
+			"</div>";
+	*/
+				//self.postMessage({
+				//	"type": "slide",
+				//	"data": slideHtml
+				//});
+				//self.postMessage({
+				//	"type": "progress-update",
+				//	"data": (i + 1) * 100 / numOfSlides
+				//});
 
 
-/*		this.slides.push(this.currentSlide);
-		this.currentSlide = {
-		  title: '',
-		  ctrTitle: '',
-		  subTitle: '',
-		  content: '',
-		  notes: ''
-		};*/
+	/*		this.slides.push(this.currentSlide);
+			this.currentSlide = {
+			  title: '',
+			  ctrTitle: '',
+			  subTitle: '',
+			  content: '',
+			  notes: ''
+			};*/
+		}
+
+		// console.log('slideHtml', this.slideHtml);
+
+		//console.log('slideHtml'+this.slideHtml);
+		//console.log('slideHtml'+slideHtml+'this.totalHtmlResult'+this.totalHtmlResult);
+		//this.totalHtmlResult += slideHtml;
+		// return this.slideHtml;
+		//return this.slides;
+		return Promise.all(promises).then(function(values){
+			var i = 0;
+			var slides = [];
+			while( i < values.length) {
+				var slide = Object.assign(values[i], values[i + 1]);
+				slides.push(slide);
+				i = i + 2;
+			}
+            var dateAfter = new Date();
+            //self.postMessage({
+            //	"type": "ExecutionTime",
+            //	"data": dateAfter - dateBefore
+            //});
+            var ExecutionTime = dateAfter - dateBefore;
+            console.log('execution time: '+ExecutionTime);
+            return slides;
+		}).catch(function(err){console.log("proccessPPTX " + err)});
+
+		/*TODO:
+		ALt tags (content placeholders) for images: located in p:sld, p:cSld, p:spTree, p:pic, p:nvPicPr, p:cNvPr, attrs, descr:
+		background-color, see step 3 below
+
+		*/
 	}
-	var dateAfter = new Date();
-	//self.postMessage({
-	//	"type": "ExecutionTime",
-	//	"data": dateAfter - dateBefore
-	//});
-    let ExecutionTime = dateAfter - dateBefore;
-    console.log('execution time: '+ExecutionTime);
-    // console.log('slideHtml', this.slideHtml);
-
-    //console.log('slideHtml'+this.slideHtml);
-    //console.log('slideHtml'+slideHtml+'this.totalHtmlResult'+this.totalHtmlResult);
-    //this.totalHtmlResult += slideHtml;
-    // return this.slideHtml;
-    //return this.slides;
-	return Promise.all(slidePromises).then(function(values){
-		return values.join('');
-	}).catch(function(err){console.log("proccessPPTX " + err)});
-
-    /*TODO:
-    ALt tags (content placeholders) for images: located in p:sld, p:cSld, p:spTree, p:pic, p:nvPicPr, p:cNvPr, attrs, descr:
-    background-color, see step 3 below
-
-    */
-}
 
 readXmlFile(zip, filename) {
     let x = new tXml(zip.file(filename).asText());
