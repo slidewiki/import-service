@@ -151,6 +151,8 @@ module.exports = {
       const filesInfo = result.filesInfo;
       var slides = [result];
         return createDeck(user, language, license, deckName, result).then((deck) => {
+
+
           // let noOfSlides = convertor.getNoOfSlides(buffer);
 
           reply('import completed').header('deckId', deck.id).header('noOfSlides', noOfSlides);
@@ -203,7 +205,7 @@ module.exports = {
         reply(boom.badImplementation());
       });
     }).catch(function(err){
-        console.log('Error converting first slide: ' + err);
+        console.log('Error /first slide: ' + err);
     });
 
 
@@ -475,9 +477,15 @@ function createDeck(user, language, license, deckName, firstSlide) {
 //Send a request to insert a new deck with the first slide
 // console.log('deck', user, license, deckName);
     let myPromise = new Promise((resolve, reject) => {
-    var title = (firstSlide.title !== '') ? firstSlide.title : (firstSlide.ctrTitle !== '') ? firstSlide.ctrTitle : firstSlide.subTitle;
-    // In case it is undefined.
-    if (firstSlide.title === undefined && firstSlide.ctrTitle === undefined && firstSlide.subTitle === undefined) title = '';
+    var title = '';
+    if (firstSlide.title && firstSlide.title !== ''){
+        title = firstSlide.title;
+    } else if (firstSlide.ctrlTitle && firstSlide.ctrlTitle !== ''){
+        title = firstSlide.ctrlTitle;
+    } else if (firstSlide.subTitle && firstSlide.subTitle !== ''){
+        title = firstSlide.subTitle;
+    }
+
     title = title.trim();
 
     if (title.length > 100) {

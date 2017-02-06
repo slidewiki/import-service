@@ -671,7 +671,6 @@ processGroupSpNode(node, warpObj) {
 	var chcx = parseInt(xfrmNode["a:chExt"]["attrs"]["cx"]) * factor;
 	var chcy = parseInt(xfrmNode["a:chExt"]["attrs"]["cy"]) * factor;
 	var order = node["attrs"]["order"];
-
 	// Process all child nodes
 	var promises = [];
 
@@ -1136,7 +1135,6 @@ genShape(node, slideLayoutSpNode, slideMasterSpNode, id, name, idx, type, order,
 processPicNode(node, warpObj) {
 
 	//debug( JSON.stringify( node ) );
-
 	var order = node["attrs"]["order"];
 
 	var rid = node["p:blipFill"]["a:blip"]["attrs"]["r:embed"];
@@ -1148,7 +1146,7 @@ processPicNode(node, warpObj) {
 	var xfrmNode = node["p:spPr"]["a:xfrm"];
 	switch (imgFileExt) {
 		case "jpg":
-		case "jpeg":f
+		case "jpeg":
 			mimeType = "image/jpeg";
 			break;
 		case "png":
@@ -1185,7 +1183,9 @@ processPicNode(node, warpObj) {
           "/></div>";
 
   return new Promise(function(resolve, reject){
-  		resolve(res);
+  		resolve({text: res});
+	}).catch((err) => {
+  		console.log('Error processing Picture node: ' + err);
 	});
 }
 
