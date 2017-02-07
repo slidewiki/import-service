@@ -6,7 +6,7 @@ Handles the requests by executing stuff and replying to the client. Uses promise
 let util = require('util');
 let fs = require('fs');
 let he = require('he');
-let http = require('http');
+let https = require('https');
 
 const Microservices = require('../configs/microservices');
 let Convertor = require('../PPTX2HTML/js/convertor.js');
@@ -442,7 +442,7 @@ function saveImageToFile(imgName, file, user) {
     console.log('upload completed');
   });
 
-  return 'http://' + Microservices.file.uri + '/' + imgUserPath;
+  return 'https://' + Microservices.file.uri + '/' + imgUserPath;
 }
 
 
@@ -533,7 +533,7 @@ function createDeck(user, language, license, deckName, firstSlide) {
         var data = reqData.data;
         var options = reqData.options;
         return new Promise((resolve, reject) => {
-            var req = http.request(options, (res) => {
+            var req = https.request(options, (res) => {
                     // console.log('STATUS: ' + res.statusCode);
                     // console.log('HEADERS: ' + JSON.stringify(res.headers));
                     res.setEncoding('utf8');
@@ -610,7 +610,7 @@ function createSlide(selector, nodeSpec, user, slide, slideNo, license) {
       }
     };
 
-    let req = http.request(options, (res) => {
+    let req = https.request(options, (res) => {
       // console.log('STATUS: ' + res.statusCode);
       // console.log('HEADERS: ' + JSON.stringify(res.headers));
       res.setEncoding('utf8');
@@ -645,7 +645,7 @@ function findFirstSlideOfADeck(deckId) {
       path: '/decktree/' + deckId
     };
 
-    let req = http.get(options, (res) => {
+    let req = https.get(options, (res) => {
       // console.log('STATUS: ' + res.statusCode);
       // console.log('HEADERS: ' + JSON.stringify(res.headers));
       res.setEncoding('utf8');
