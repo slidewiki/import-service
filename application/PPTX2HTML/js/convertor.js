@@ -90,6 +90,7 @@ class Convertor {
         this.slideSize = this.getSlideSize(zip);
         this.themeContent = this.loadTheme(zip);
         const noOfSlides = this.filesInfo["slides"].length;
+
         const filename = this.filesInfo["slides"][0];
         var promises = [];
         promises.push(this.processSingleSlide(zip, filename, 0, this.slideSize));
@@ -159,26 +160,16 @@ class Convertor {
 		var numOfSlides = filesInfo["slides"].length;
 		var promises = [];
 		for (var i=startAtSlide; i<numOfSlides; i++) {
-			var filename = filesInfo["slides"][i];
-			promises.push(
+            var filename = filesInfo["slides"][i];
+            promises.push(
                 this.processSingleSlide(zip, filename, i, this.slideSize),
                 this.processSingleSlideNotes(zip, filename, i, this.slideSize) //Dejan added this to process notes
-			);
+            );
+        }
 
-	/*
-			this.slideHtml += this.currentSlide.content +
-			"<div class='pptx2html' style='position: relative;left:" + (this.slideSize.width + 5) + "px;top:-" + this.slideSize.height + "px;'>" +
-			this.currentSlide.notes +
-			"</div>";
-	*/
-				//self.postMessage({
-				//	"type": "slide",
-				//	"data": slideHtml
-				//});
-				//self.postMessage({
-				//	"type": "progress-update",
-				//	"data": (i + 1) * 100 / numOfSlides
-				//});
+		var numOfSlides = this.filesInfo["slides"].length;
+		for (var i=startAtSlide; i<numOfSlides; i++) {
+			var filename = this.filesInfo["slides"][i];
 
 
 	/*		this.slides.push(this.currentSlide);
@@ -216,12 +207,12 @@ class Convertor {
             return slides;
 		}).catch(function(err){console.log("proccessPPTX " + err)});
 
-		/*TODO:
-		ALt tags (content placeholders) for images: located in p:sld, p:cSld, p:spTree, p:pic, p:nvPicPr, p:cNvPr, attrs, descr:
-		background-color, see step 3 below
+    /*TODO:
+    ALt tags (content placeholders) for images: located in p:sld, p:cSld, p:spTree, p:pic, p:nvPicPr, p:cNvPr, attrs, descr:
+    background-color, see step 3 below
 
-		*/
-	}
+    */
+}
 
 readXmlFile(zip, filename) {
     let x = new tXml(zip.file(filename).asText());
@@ -424,7 +415,7 @@ processSingleSlide(zip, sldFileName, index, slideSize) {
     //var result = "<div style='position: absolute;width:" + slideSize.width + "px; height:" + slideSize.height + "px; background-color: #" + bgColor + "'>"
     //var result = "<div style='position: absolute;border-style: dotted; background-color: #" + bgColor + "' >"
     //var result = "<div style='position: absolute;border-style: dotted; background-color: #" + bgColor + "' >"
-    // var result = "<div class='pptx2html' style='position: relative;width:" + slideSize.width + "px; height:" + slideSize.height + "px; background-color: #" + bgColor + "'>"
+    var result = "<div class='pptx2html' style='position: relative;width:" + slideSize.width + "px; height:" + slideSize.height + "px; background-color: #" + bgColor + "'><div></div>"
 
     var promises = [];
 
@@ -439,7 +430,7 @@ processSingleSlide(zip, sldFileName, index, slideSize) {
 		}
 	}
 
-	return Promise.all(promises).then(function(infos){
+	return Promise.all(promises).then((infos) => {
 		var text =
             "<div class='pptx2html' style='position: relative;width:" + slideSize.width + "px; height:" + slideSize.height + "px; background-color: #" + bgColor + "'>" +
             infos.map((info) => { return info.text }).join('') + "</div>";
@@ -448,8 +439,8 @@ processSingleSlide(zip, sldFileName, index, slideSize) {
         for (var i = 0; i < infos.length; i++  ) {
             res = Object.assign(res, infos[i]);
         }
-        // Assign the respective joined html
-        res.content = text;
+        // Assign the respective joined html inside its container
+        res.content = result + text + "</div>";
         delete res.text;
         return res;
     }).catch(function(err){console.log("processSingleSlide " + err)});
@@ -513,6 +504,7 @@ processSingleSlideNotes(zip, sldFileName, index, slideSize) {
     //THIS IS LIKE STEP 3 FOR NOTES
     var notesContent = this.readXmlFile(zip, notesFilename);
     var notesNodes = notesContent["p:notes"]["p:cSld"]["p:spTree"];
+    // console.log(notesNodes);
 
     var notesWarpObj = {
       "zip": zip,
@@ -566,7 +558,7 @@ isNodeNotesPlaceholder(node) {//test if the node is a notes placeholder
   }
 
     // TODO: this is not a good way to identify if the element is a Note placeholder, the pptx change this attr depending
-	// on its language configuartion.
+    // on its language configuartion.
     return (name !== undefined &&
 			(name.startsWith("Notes Placeholder") // English
 			|| name.startsWith("Marcador de notas"))); //Spanish
@@ -632,6 +624,7 @@ indexNodes(content) {
 processNodesInSlide(nodeKey, nodeValue, warpObj) {
 
 
+
 	switch (nodeKey) {
 		case "p:sp":	// Shape, Text
 			return this.processSpNode(nodeValue, warpObj);
@@ -661,6 +654,7 @@ processNodesInSlide(nodeKey, nodeValue, warpObj) {
 processGroupSpNode(node, warpObj) {
 
 	var factor = 96 / 914400;
+
 	var xfrmNode = node["p:grpSpPr"]["a:xfrm"];
 	var x = parseInt(xfrmNode["a:off"]["attrs"]["x"]) * factor;
 	var y = parseInt(xfrmNode["a:off"]["attrs"]["y"]) * factor;
@@ -670,10 +664,14 @@ processGroupSpNode(node, warpObj) {
 	var cy = parseInt(xfrmNode["a:ext"]["attrs"]["cy"]) * factor;
 	var chcx = parseInt(xfrmNode["a:chExt"]["attrs"]["cx"]) * factor;
 	var chcy = parseInt(xfrmNode["a:chExt"]["attrs"]["cy"]) * factor;
+
 	var order = node["attrs"]["order"];
 	// Process all child nodes
 	var promises = [];
 
+	var result = "<div class='block group' style='position: absolute;z-index: " + order + "; top: " + (y - chy) + "px; left: " + (x - chx) + "px; width: " + (cx - chcx) + "px; height: " + (cy - chcy) + "px;'>";
+
+	// Procsee all child nodes
 	for (var nodeKey in node) {
 		if (node[nodeKey].constructor === Array) {
 			for (var i=0; i<node[nodeKey].length; i++) {
@@ -778,7 +776,8 @@ processCxnSpNode(node, warpObj) {
 	var order = node["attrs"]["order"];
 
 	this.debug( {"id": id, "name": name, "order": order} );
-    return this.genShape(node, undefined, undefined, id, name, undefined, undefined, order, warpObj);
+
+	return this.genShape(node, undefined, undefined, id, name, undefined, undefined, order, warpObj);
 }
 
 genShape(node, slideLayoutSpNode, slideMasterSpNode, id, name, idx, type, order, warpObj) {
@@ -799,19 +798,30 @@ genShape(node, slideLayoutSpNode, slideMasterSpNode, id, name, idx, type, order,
 	if (shapType !== undefined) {
 
 		var off = this.getTextByPathList(slideXfrmNode, ["a:off", "attrs"]);
-		var x = parseInt(off["x"]) * 96 / 914400;
-		var y = parseInt(off["y"]) * 96 / 914400;
+		var x = (off !== undefined) ? parseInt(off["x"]) * 96 / 914400 : 0;
+		var y = (off !== undefined) ? parseInt(off["y"]) * 96 / 914400 : 0;
 
 		var ext = this.getTextByPathList(slideXfrmNode, ["a:ext", "attrs"]);
-		var w = parseInt(ext["cx"]) * 96 / 914400;
-		var h = parseInt(ext["cy"]) * 96 / 914400;
+		var w = (ext !== undefined) ? parseInt(ext["cx"]) * 96 / 914400 : 0;
+		var h = (ext !== undefined) ? parseInt(ext["cy"]) * 96 / 914400 : 0;
 
-		result += "<svg class='drawing' _id='" + id + "' _idx='" + idx + "' _type='" + type + "' _name='" + name +
-				"' style='position: absolute;" +
-					this.getPosition(slideXfrmNode, undefined, undefined) +
-					this.getSize(slideXfrmNode, undefined, undefined) +
-					" z-index: " + order + ";" +
-				"'>";
+    if (ext === undefined) {
+        shapType = '';//prevent it to create a shape
+    }
+
+    let svgPos = this.getPosition(slideXfrmNode, undefined, undefined);
+    let svgSize = this.getSize(slideXfrmNode, undefined, undefined);
+
+    result += "<div class='drawing-container' _id='" + id + "' _idx='" + idx + "' _type='" + type + "' _name='" + name +
+        "' style='position: absolute;"
+             + svgPos
+             + svgSize
+             + " z-index: " + order + ";'>" +
+        "<svg class='drawing' _id='" + id + "' _idx='" + idx + "' _type='" + type + "' _name='" + name +
+        "' style='position: absolute;"
+             + "top:0px; left:0px;"
+             + svgSize
+             + " z-index: " + order + ";'>";
 
 		// Fill Color
 		var fillColor = this.getFill(node, true);
@@ -1075,7 +1085,7 @@ genShape(node, slideLayoutSpNode, slideMasterSpNode, id, name, idx, type, order,
 				console.warn("Undefine shape type.");
 		}
 
-		result += "</svg>";
+		result += "</svg></div>";
 
 		result += "<div class='block content " + this.getVerticalAlign(node, slideLayoutSpNode, slideMasterSpNode, type) +
 				"' _id='" + id + "' _idx='" + idx + "' _type='" + type + "' _name='" + name +
@@ -1135,6 +1145,7 @@ genShape(node, slideLayoutSpNode, slideMasterSpNode, id, name, idx, type, order,
 processPicNode(node, warpObj) {
 
 	//debug( JSON.stringify( node ) );
+
 	var order = node["attrs"]["order"];
 
 	var rid = node["p:blipFill"]["a:blip"]["attrs"]["r:embed"];
@@ -1202,12 +1213,12 @@ saveImageToFile(imgName, zip) {
   const imgUserPath = this.user + '/' + uuidValue + '.' + extension;
 
   // const imgUserPath = this.user + '/' + uuidValue + simpleImgName;
-   const saveTo = '.' + Microservices.file.shareVolume + '/' + imgUserPath;// For localhost testing
-  //const saveTo = Microservices.file.shareVolume + '/' + imgUserPath;
+  // const saveTo = '.' + Microservices.file.shareVolume + '/' + imgUserPath;// For localhost testing
+  const saveTo = Microservices.file.shareVolume + '/' + imgUserPath;
 
   //Create the user dir if does not exist
-   const userDir = '.' + Microservices.file.shareVolume + '/' + this.user;// For localhost testing
-  //const userDir = Microservices.file.shareVolume + '/' + this.user;
+  // const userDir = '.' + Microservices.file.shareVolume + '/' + this.user;// For localhost testing
+  const userDir = Microservices.file.shareVolume + '/' + this.user;
   if (!fs.existsSync(userDir)){
     fs.mkdirSync(userDir, 744, function(err) {
       if(err) {
@@ -1394,10 +1405,12 @@ genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, warpObj, c
                     }
                 }
 
-                // text += (insertListItemTag) ? ((isOrderedList) ? "</ol>" : "</ul>") : "";
-            }
+        if (isOrderedList) {
+          text += (nextNodeIsListItem && nextNodeIsOrderedListItem && (itemLevel === nextItemLevel)) ? "" : "</ol>";
         } else {
-            // one p
+          text += (nextNodeIsListItem && !nextNodeIsOrderedListItem && (itemLevel === nextItemLevel)) ? "" : "</ul>";
+        }
+      }
 
 
 
@@ -1438,6 +1451,7 @@ genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, warpObj, c
 
             const insertListItemTag = (createList && !isSomeKindOfTitle && !isSldNum && (layoutType === undefined) && (pNode["a:pPr"] === undefined || pNode["a:pPr"]["a:buNone"] === undefined));
             const isOrderedList = (pNode["a:pPr"] !== undefined && pNode["a:pPr"]["a:buAutoNum"] !== undefined);
+
 
 
 
@@ -1641,13 +1655,14 @@ __proto__: Array[0]
 
     if (linkID !== undefined && warpObj["slideResObj"] !== undefined) {
       let linkURL = warpObj["slideResObj"][linkID]["target"];
-      return "<span class='text-block " + textStyle + "'><a href='" + linkURL + "' target='_blank'>" + text.replace(/\s/i, "&nbsp;") + "</a></span>";
+      return "<span class='text-block' " + textStyle + "><a href='" + linkURL + "' target='_blank'>" + text.replace(/\s/i, "&nbsp;") + "</a></span>";
   	} else {
-  		return "<span class='text-block " + textStyle + "'>" + text.replace(/\s/i, "&nbsp;") + "</span>";
+  		return "<span class='text-block' " + textStyle + ">" + text.replace(/\s/i, "&nbsp;") + "</span>";
     }
 }
 
 genTable(node, warpObj) {
+
 	var order = node["attrs"]["order"];
 	var tableNode = this.getTextByPathList(node, ["a:graphic", "a:graphicData", "a:tbl"]);
 	var xfrmNode = this.getTextByPathList(node, ["p:xfrm"]);
@@ -2135,7 +2150,10 @@ getBorder(node, isSvgMode) {
 
 	// Border width: 1pt = 12700, default = 0.75pt
 	var borderWidth = parseInt(this.getTextByPathList(lineNode, ["attrs", "w"])) / 12700;
-	if (isNaN(borderWidth) || borderWidth < 1) {
+  if (isNaN(borderWidth)) {
+    borderWidth = 1;
+  }
+	if (borderWidth < 1) {
 		cssText += "1pt ";
 	} else {
 		cssText += borderWidth + "pt ";
