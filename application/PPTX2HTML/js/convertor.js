@@ -1213,12 +1213,12 @@ saveImageToFile(imgName, zip) {
   const imgUserPath = this.user + '/' + uuidValue + '.' + extension;
 
   // const imgUserPath = this.user + '/' + uuidValue + simpleImgName;
-  // const saveTo = '.' + Microservices.file.shareVolume + '/' + imgUserPath;// For localhost testing
-  const saveTo = Microservices.file.shareVolume + '/' + imgUserPath;
+   const saveTo = '.' + Microservices.file.shareVolume + '/' + imgUserPath;// For localhost testing
+  // const saveTo = Microservices.file.shareVolume + '/' + imgUserPath;
 
   //Create the user dir if does not exist
-  // const userDir = '.' + Microservices.file.shareVolume + '/' + this.user;// For localhost testing
-  const userDir = Microservices.file.shareVolume + '/' + this.user;
+   const userDir = '.' + Microservices.file.shareVolume + '/' + this.user;// For localhost testing
+  // const userDir = Microservices.file.shareVolume + '/' + this.user;
   if (!fs.existsSync(userDir)){
     fs.mkdirSync(userDir, 744, function(err) {
       if(err) {
@@ -1405,13 +1405,15 @@ genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, warpObj, c
                     }
                 }
 
-        if (isOrderedList) {
-          text += (nextNodeIsListItem && nextNodeIsOrderedListItem && (itemLevel === nextItemLevel)) ? "" : "</ol>";
-        } else {
-          text += (nextNodeIsListItem && !nextNodeIsOrderedListItem && (itemLevel === nextItemLevel)) ? "" : "</ul>";
-        }
-      }
-
+			if (isOrderedList) {
+			  text += (nextNodeIsListItem && nextNodeIsOrderedListItem && (itemLevel === nextItemLevel)) ? "" : "</ol>";
+			} else {
+			  text += (nextNodeIsListItem && !nextNodeIsOrderedListItem && (itemLevel === nextItemLevel)) ? "" : "</ul>";
+			}
+			// text += (insertListItemTag) ? ((isOrderedList) ? "</ol>" : "</ul>") : "";
+		}
+	} else {
+        // one p
 
 
             var pNode = textBodyNode["a:p"];
@@ -1474,29 +1476,18 @@ genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, warpObj, c
             }
 
         }
-        if (isTitle && this.currentSlide.title === '') {
-            resolve({
-               title: title,
-			   text: text
-            });
-        } else if (isCtrTitle && this.currentSlide.ctrTitle === '') {
-            //this.currentSlide.ctrTitle = title;
-            resolve({
-               ctrlTitle: title,
-               text: text
-            });
-        } else if (isSubTitle && this.currentSlide.subTitle === '') {
-            //this.currentSlide.subTitle = title;
-            resolve({
-               subTitle: title,
-               text: text
-            });
-        } else {
-            resolve({
-                text: text
-            });
-        }
 
+        if(isSomeKindOfTitle){
+    		console.log(text);
+        	resolve({
+        		title: title,
+				text: text
+			});
+		} else {
+        	resolve({
+        		text: text
+			});
+		}
     });
 }
 
