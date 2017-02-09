@@ -461,7 +461,6 @@ function createNodesRecursive(user, license, deckId, previousSlideId, slides, in
   // createDeckTreeNode(selector, nodeSpec, user).then((node) => {
   //   updateSlide(node.id, user, license, deckId, slides[index]);
   createSlide(selector, nodeSpec, user, slides[index], String(index + 1), license).then((node) => {
-
     if (index >= slides.length - 1) {//Last one
       return;
     } else {
@@ -480,8 +479,8 @@ function createDeck(user, language, license, deckName, firstSlide) {
     var title = '';
     if (firstSlide.title && firstSlide.title !== ''){
         title = firstSlide.title;
-    } else if (firstSlide.ctrlTitle && firstSlide.ctrlTitle !== ''){
-        title = firstSlide.ctrlTitle;
+    } else if (firstSlide.ctrTitle && firstSlide.ctrTitle !== ''){
+        title = firstSlide.ctrTitle;
     } else if (firstSlide.subTitle && firstSlide.subTitle !== ''){
         title = firstSlide.subTitle;
     }
@@ -565,16 +564,22 @@ function createDeck(user, language, license, deckName, firstSlide) {
 
 function createSlide(selector, nodeSpec, user, slide, slideNo, license) {
   let myPromise = new Promise((resolve, reject) => {
-    let title = (slide.title !== '') ? slide.title : (slide.ctrTitle !== '') ? slide.ctrTitle : slide.subTitle;
 
-    // In case it is undefined.
-    if (slide.title === undefined && slide.ctrTitle === undefined && slide.subTitle === undefined) title = '';
+    var title = '';
+    if (slide.title && slide.title !== ''){
+        title = slide.title;
+    } else if (slide.ctrTitle && slide.ctrTitle !== ''){
+        title = slide.ctrTitle;
+    } else if (slide.subTitle && slide.subTitle !== ''){
+        title = slide.subTitle;
+    }
+
     title = title.trim();
 
-    title = title.trim();
     if (title.length > 100) {
       title = title.substring(0,99) + '...';
     }
+
     let slideTitle = replaceSpecialSymbols(title);//deck tree does not display some encoded symbols properly
     slideTitle = he.encode(slideTitle, {allowUnsafeSymbols: true});//encode some symbols which were not replaced
     //Encode special characters (e.g. bullets)
