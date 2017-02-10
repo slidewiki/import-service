@@ -147,6 +147,7 @@ module.exports = {
     var reply = reply;
 
     return convertor.convertFirstSlide(buffer).then(function(result){
+
       const noOfSlides = result.noOfSlides;
       const filesInfo = result.filesInfo;
       var slides = [result];

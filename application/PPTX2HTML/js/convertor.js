@@ -431,9 +431,7 @@ processSingleSlide(zip, sldFileName, index, slideSize) {
 	}
 
 	return Promise.all(promises).then((infos) => {
-		var text =
-            "<div class='pptx2html' style='position: relative;width:" + slideSize.width + "px; height:" + slideSize.height + "px; background-color: #" + bgColor + "'>" +
-            infos.map((info) => { return info.text }).join('') + "</div>";
+		var text = infos.map((info) => { return info.text }).join('');
         var res = {};
         // Merge objects returned by the promises
         for (var i = 0; i < infos.length; i++  ) {
@@ -1213,12 +1211,12 @@ saveImageToFile(imgName, zip) {
   const imgUserPath = this.user + '/' + uuidValue + '.' + extension;
 
   // const imgUserPath = this.user + '/' + uuidValue + simpleImgName;
-   const saveTo = '.' + Microservices.file.shareVolume + '/' + imgUserPath;// For localhost testing
-  // const saveTo = Microservices.file.shareVolume + '/' + imgUserPath;
+  // const saveTo = '.' + Microservices.file.shareVolume + '/' + imgUserPath;// For localhost testing
+  const saveTo = Microservices.file.shareVolume + '/' + imgUserPath;
 
   //Create the user dir if does not exist
-   const userDir = '.' + Microservices.file.shareVolume + '/' + this.user;// For localhost testing
-  // const userDir = Microservices.file.shareVolume + '/' + this.user;
+  // const userDir = '.' + Microservices.file.shareVolume + '/' + this.user;// For localhost testing
+  const userDir = Microservices.file.shareVolume + '/' + this.user;
   if (!fs.existsSync(userDir)){
     fs.mkdirSync(userDir, 744, function(err) {
       if(err) {
@@ -1478,7 +1476,6 @@ genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, warpObj, c
         }
 
         if(isSomeKindOfTitle){
-    		console.log(text);
         	resolve({
         		title: title,
 				text: text
@@ -1496,9 +1493,9 @@ getText(node) {//Get raw text from a:r (a:p) node - for the slide title
 	if (typeof text !== 'string') {
     text = this.getTextByPathList(node, ["a:t"]);
 		if (typeof text !== 'string') {
-      if (typeof text !== 'undefined') {
-          text = text[0];
-      }
+		  if (typeof text !== 'undefined') {
+			  text = text[0];
+		  }
 		}
 	}
   return text;
