@@ -705,8 +705,6 @@ function findFirstSlideOfADeck(deckId) {
         reject(e);
       }
 
-      };
-
       // callback(null, {activities: activities, selector: selector, hasMore: (activities.length === 30)});
     }).catch((err) => {
       console.log('Error', err);
