@@ -38,6 +38,7 @@
     "joi": "^10.2.0",
     "mongodb": "^2.2.22",
     "node-uuid": "^1.4.7",
+    "request-promise-native": "^1.0.3",
     "vision": "^4.1.1"
   },
   "engines": {
