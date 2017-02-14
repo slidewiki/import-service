@@ -1656,12 +1656,11 @@ genTable(node, warpObj) {
 	var xfrmNode = this.getTextByPathList(node, ["p:xfrm"]);
 	var rowPromises = [];
 	var tableHtml = "<table style='position: absolute;" + this.getPosition(xfrmNode, undefined, undefined) + this.getSize(xfrmNode, undefined, undefined) + " z-index: " + order + ";'>";
-
 	var trNodes = tableNode["a:tr"];
 	if (trNodes.constructor === Array) {
 		for (var i=0; i<trNodes.length; i++) {
             var colPromises = [];
-			tableHtml += "<tr>";
+
 			var tcNodes = trNodes[i]["a:tc"];
 
 			if (tcNodes.constructor === Array) {
@@ -1716,7 +1715,6 @@ genTable(node, warpObj) {
             }));
 		}
 	} else {
-		tableHtml += "<tr>";
 		var tcNodes = trNodes["a:tc"];
         var colPromises = [];
 		if (tcNodes.constructor === Array) {
@@ -1747,12 +1745,10 @@ genTable(node, warpObj) {
 
 	// Return the promise that return the table HTML
 	return Promise.all(rowPromises).then((rowsInfo) => {
-			var rowsText = "<table>" + rowsInfo.map((rowInfo) => { return rowInfo.text}).join('') + "</table>";
+			var rowsText = tableHtml + rowsInfo.map((rowInfo) => { return rowInfo.text}).join('') + "</table>";
 			return {text: rowsText};
 		});
-    // tableHtml += "</table>";
 
-	// return tableHtml;
 }
 
 renderChart(data, resultContainer) {
