@@ -493,8 +493,7 @@ function createDeck(user, language, license, deckName, firstSlide) {
         let newDeck = JSON.parse(body);
         resolve(newDeck);
       } catch(e) {
-        console.log(e); // error in the above string (in this case, yes)!
-        reject(e);
+        console.log(e);
       }
 
       // callback(null, {activities: activities, selector: selector, hasMore: (activities.length === 30)});
@@ -609,7 +608,7 @@ function createSlide(selector, nodeSpec, user, slide, slideNo, license) {
         let newDeckTreeNode = JSON.parse(body);
         resolve(newDeckTreeNode);
       } catch(e) {
-        console.log(e); // error in the above string (in this case, yes)!
+        console.log(e);
         reject(e);
       }
 
@@ -701,7 +700,7 @@ function findFirstSlideOfADeck(deckId) {
 
         resolve(slideId);
       } catch(e) {
-        console.log(e); // error in the above string (in this case, yes)!
+        console.log(e);
         reject(e);
       }
 
