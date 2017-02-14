@@ -1345,6 +1345,14 @@ genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, warpObj, c
                     }
                 }
 
+                var hasOnlyNsbp0 = spanElement.split('</span>');
+                var hasOnlyNsbp = hasOnlyNsbp0.map((str) => {return str.split('>');});
+
+                var whiteLine = false;
+                if(hasOnlyNsbp[0][1] === '&nbsp;') {
+    				whiteLine = true;
+    			}
+
 
                 const insertListItemTag = (createList && !isSomeKindOfTitle && !isSldNum && (layoutType === undefined) && (pNode["a:pPr"] === undefined || pNode["a:pPr"]["a:buNone"] === undefined));
                 const isOrderedList = (pNode["a:pPr"] !== undefined && pNode["a:pPr"]["a:buAutoNum"] !== undefined);
@@ -1353,7 +1361,7 @@ genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, warpObj, c
                     itemLevel = pNode["a:pPr"]["attrs"]["lvl"];
                 }
 
-                if (spanElement !== "" && insertListItemTag) {//do not show bullets if the text is empty
+                if (spanElement !== "" && insertListItemTag && !whiteLine) {//do not show bullets if the text is empty
                     if (isOrderedList) {
                         const orderedListStyle = (pNode["a:pPr"]["a:buAutoNum"]["attrs"] !== undefined && pNode["a:pPr"]["a:buAutoNum"]["attrs"]["type"] !== undefined) ? pNode["a:pPr"]["a:buAutoNum"]["attrs"]["type"] : '';
                         const orderedListStartAt = (pNode["a:pPr"]["a:buAutoNum"]["attrs"] !== undefined && pNode["a:pPr"]["a:buAutoNum"]["attrs"]["startAt"] !== undefined) ? ' start="' + pNode["a:pPr"]["a:buAutoNum"]["attrs"]["startAt"] + '"' : '';
@@ -1391,7 +1399,7 @@ genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, warpObj, c
                     }
                 }
 
-                if (spanElement !== "" && insertListItemTag) {
+                if (spanElement !== "" && insertListItemTag && !whiteLine) {
                     text += "</li>";//add list tag
 
                     if (isOrderedList) {
@@ -1445,6 +1453,13 @@ genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, warpObj, c
                 }
             }
 
+            var hasOnlyNsbp0 = spanElement.split('</span>');
+            var hasOnlyNsbp = hasOnlyNsbp0.map((str) => {return str.split('>');});
+
+            var whiteLine = false;
+            if(hasOnlyNsbp[0][1] === '&nbsp;') {
+                whiteLine = true;
+            }
 
 
             const insertListItemTag = (createList && !isSomeKindOfTitle && !isSldNum && (layoutType === undefined) && (pNode["a:pPr"] === undefined || pNode["a:pPr"]["a:buNone"] === undefined));
@@ -1453,20 +1468,19 @@ genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, warpObj, c
 
 
 
-            if (spanElement !== "" && insertListItemTag) {
+            if (spanElement !== "" && insertListItemTag && !whiteLine) {
                 text += (isOrderedList) ? "<ol>" : "<ul>";
                 text += "<li>";//add list tag
             }
 
             text += "<div class='" + this.getHorizontalAlign(pNode, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles) + "'>";
 
-
             text += this.genBuChar(pNode);
 
             text += spanElement;
 
             text += "</div>";
-            if (spanElement !== "" && insertListItemTag) {
+            if (spanElement !== "" && insertListItemTag && !whiteLine) {
                 text += "</li>";//add list tag
                 text += (isOrderedList) ? "</ol>" : "</ul>";
             }
