@@ -151,12 +151,12 @@ module.exports = {
       const noOfSlides = result.noOfSlides;
       const filesInfo = result.filesInfo;
       var slides = [result];
-        return createDeck(user, language, license, deckName, result).then((deck) => {
+      return createDeck(user, language, license, deckName, result).then((deck) => {
 
 
           // let noOfSlides = convertor.getNoOfSlides(buffer);
 
-          reply('import completed').header('deckId', deck.id).header('noOfSlides', noOfSlides);
+        reply('import completed').header('deckId', deck.id).header('noOfSlides', noOfSlides);
         //Save file
         // fs.writeFile('./' + fileName, buffer, (err) => {
         //   if (err) {
@@ -167,34 +167,34 @@ module.exports = {
         //   }
         // });
 
-        if (noOfSlides > 1) {
+          if (noOfSlides > 1) {
 
             //var slides = convertor.processPPTX(buffer);
             convertor.processPPTX(buffer).then((result) => {
-                slides = result;
-                return findFirstSlideOfADeck(deck.id).then((slideId) => {
-                    // updateSlide(slideId, user, license, deck.id, slides[0]).then(() => {
-                    //create the rest of slides
-                    createNodesRecursive(user, license, deck.id, slideId, slides, 1);
+              slides = result;
+              return findFirstSlideOfADeck(deck.id).then((slideId) => {
+                // updateSlide(slideId, user, license, deck.id, slides[0]).then(() => {
+                //create the rest of slides
+                createNodesRecursive(user, license, deck.id, slideId, slides, 1);
 
-                // }).catch((error) => {
-                //   request.log('error', error);
-                //   reply(boom.badImplementation());
-                // });
-                // let previousSlideId = slideId;
-                // for (let i = 1; i < slides.length; i++) {
-                //
-                //   createDeckTreeNode(selector, nodeSpec, user).then((node) => {
-                //     console.log(node);
-                //     updateSlide(node.id, user, license, deck.id, slides[i]);
-                //     previousSlideId = node.id;
-                //   });
-                //
-                // }
 
-                }).catch((error) => {
-                        request.log('error', error);
-                        reply(boom.badImplementation());
+          }).catch((error) => {
+                  // }).catch((error) => {
+                  //   request.log('error', error);
+                  //   reply(boom.badImplementation());
+                  // });
+                  // let previousSlideId = slideId;
+                  // for (let i = 1; i < slides.length; i++) {
+                  //
+                  //   createDeckTreeNode(selector, nodeSpec, user).then((node) => {
+                  //     console.log(node);
+                  //     updateSlide(node.id, user, license, deck.id, slides[i]);
+                  //     previousSlideId = node.id;
+                  //   });
+                  //
+                  // }
+                  request.log('error', error);
+                    reply(boom.badImplementation());
                 });
             }).catch((err) => {
                 console.log('Error processingPPTX: ' + err);
