@@ -485,88 +485,21 @@ function createDeck(user, language, license, deckName, firstSlide) {
     }
 
     let data = JSON.stringify(jsonData);
-
     rp.post({uri: Microservices.deck.uri + '/deck/new', body:data}).then((res) => {
-      console.log('Res', res);
 
       try {
-        let newDeck = JSON.parse(body);
+        let newDeck = JSON.parse(res);
         resolve(newDeck);
       } catch(e) {
         console.log(e);
+        reject(e);
       }
 
-      // callback(null, {activities: activities, selector: selector, hasMore: (activities.length === 30)});
     }).catch((err) => {
       console.log('Error', err);
       reject(e);
-      // callback(null, {activities: [], selector: selector, hasMore: false});
     });
   });
-
-
-  // let myPromise = new Promise((resolve, reject) => {
-  //   let title = (firstSlide.title !== '') ? firstSlide.title : (firstSlide.ctrTitle !== '') ? firstSlide.ctrTitle : firstSlide.subTitle;
-  //   title = title.trim();
-  //   if (title.length > 100) {
-  //     title = title.substring(0,99) + '...';
-  //   }
-  //   let firstSlideTitle = replaceSpecialSymbols(title);//deck tree does not display some encoded symbols properly
-  //   firstSlideTitle = he.encode(firstSlideTitle, {allowUnsafeSymbols: true});//encode some symbols which were not replaced
-  //   //Encode special characters (e.g. bullets)
-  //   let encodedFirstSlideContent = he.encode(firstSlide.content, {allowUnsafeSymbols: true});
-  //   let encodedFirstSlideNotes = he.encode(firstSlide.notes, {allowUnsafeSymbols: true});
-  //
-  //   let jsonData = {
-  //     user: user,
-  //     language: language,
-  //     license: license,
-  //     title: deckName,
-  //     first_slide: {
-  //       content: encodedFirstSlideContent,
-  //       title: (firstSlideTitle !== '') ? firstSlideTitle : 'Slide 1',//It is not allowed to be empty
-  //       speakernotes:encodedFirstSlideNotes
-  //     }
-  //   };
-  //
-  //   if (firstSlide.notes === '') {//It is not allowed for speakernotes to be empty
-  //     delete jsonData.speakernotes;
-  //   }
-  //
-  //   let data = JSON.stringify(jsonData);
-  //   let options = {
-  //     host: Microservices.deck.uri,
-  //     port: Microservices.deck.port,
-  //     path: '/deck/new',
-  //     method: 'POST',
-  //     headers : {
-  //       'Content-Type': 'application/json',
-  //       'Cache-Control': 'no-cache',
-  //       'Content-Length': data.length
-  //     }
-  //   };
-  //
-  //   let req = http.request(options, (res) => {
-  //     // console.log('STATUS: ' + res.statusCode);
-  //     // console.log('HEADERS: ' + JSON.stringify(res.headers));
-  //     res.setEncoding('utf8');
-  //     let body = '';
-  //     res.on('data', (chunk) => {
-  //       // console.log('Response: ', chunk);
-  //       body += chunk;
-  //     });
-  //     res.on('end', () => {
-  //       let newDeck = JSON.parse(body);
-  //       resolve(newDeck);
-  //     });
-  //   });
-  //   req.on('error', (e) => {
-  //     console.log('problem with request: ' + e.message);
-  //     reject(e);
-  //   });
-  //   req.write(data);
-  //   req.end();
-  // });
 
   return myPromise;
 }
@@ -581,7 +514,6 @@ function createSlide(selector, nodeSpec, user, slide, slideNo, license) {
     let slideTitle = replaceSpecialSymbols(title);//deck tree does not display some encoded symbols properly
     slideTitle = he.encode(slideTitle, {allowUnsafeSymbols: true});//encode some symbols which were not replaced
     //Encode special characters (e.g. bullets)
-
     let encodedContent = he.encode(slide.content, {allowUnsafeSymbols: true});
     let encodedNotes = he.encode(slide.notes, {allowUnsafeSymbols: true});
 
@@ -600,89 +532,20 @@ function createSlide(selector, nodeSpec, user, slide, slideNo, license) {
     }
 
     let data = JSON.stringify(jsonData);
-
     rp.post({uri: Microservices.deck.uri + '/decktree/node/create', body:data}).then((res) => {
-      console.log('Res', res);
-
       try {
-        let newDeckTreeNode = JSON.parse(body);
+        let newDeckTreeNode = JSON.parse(res);
         resolve(newDeckTreeNode);
       } catch(e) {
         console.log(e);
         reject(e);
       }
 
-      // callback(null, {activities: activities, selector: selector, hasMore: (activities.length === 30)});
     }).catch((err) => {
       console.log('Error', err);
       reject(e);
-      // callback(null, {activities: [], selector: selector, hasMore: false});
     });
   });
-
-
-  // let myPromise = new Promise((resolve, reject) => {
-  //   let title = (slide.title !== '') ? slide.title : (slide.ctrTitle !== '') ? slide.ctrTitle : slide.subTitle;
-  //   title = title.trim();
-  //   if (title.length > 100) {
-  //     title = title.substring(0,99) + '...';
-  //   }
-  //   let slideTitle = replaceSpecialSymbols(title);//deck tree does not display some encoded symbols properly
-  //   slideTitle = he.encode(slideTitle, {allowUnsafeSymbols: true});//encode some symbols which were not replaced
-  //   //Encode special characters (e.g. bullets)
-  //
-  //   let encodedContent = he.encode(slide.content, {allowUnsafeSymbols: true});
-  //   let encodedNotes = he.encode(slide.notes, {allowUnsafeSymbols: true});
-  //
-  //   let jsonData = {
-  //     selector: selector,
-  //     nodeSpec: nodeSpec,
-  //     user: String(user),
-  //     content: encodedContent,
-  //     title: (slideTitle !== '') ? slideTitle : ('Slide ' + slideNo),//It is not allowed to be empty
-  //     speakernotes:encodedNotes,
-  //     license: license
-  //   };
-  //
-  //   if (slide.notes === '') {//It is not allowed for speakernotes to be empty
-  //     delete jsonData.speakernotes;
-  //   }
-  //
-  //   let data = JSON.stringify(jsonData);
-  //
-  //   let options = {
-  //     host: Microservices.deck.uri,
-  //     port: Microservices.deck.port,
-  //     path: '/decktree/node/create',
-  //     method: 'POST',
-  //     headers : {
-  //       'Content-Type': 'application/json',
-  //       'Cache-Control': 'no-cache',
-  //       'Content-Length': data.length
-  //     }
-  //   };
-  //
-  //   let req = http.request(options, (res) => {
-  //     // console.log('STATUS: ' + res.statusCode);
-  //     // console.log('HEADERS: ' + JSON.stringify(res.headers));
-  //     res.setEncoding('utf8');
-  //     let body = '';
-  //     res.on('data', (chunk) => {
-  //       // console.log('Response: ', chunk);
-  //       body += chunk;
-  //     });
-  //     res.on('end', () => {
-  //       let newDeckTreeNode = JSON.parse(body);
-  //       resolve(newDeckTreeNode);
-  //     });
-  //   });
-  //   req.on('error', (e) => {
-  //     console.log('problem with request: ' + e.message);
-  //     reject(e);
-  //   });
-  //   req.write(data);
-  //   req.end();
-  // });
 
   return myPromise;
 }
@@ -690,12 +553,9 @@ function createSlide(selector, nodeSpec, user, slide, slideNo, license) {
 function findFirstSlideOfADeck(deckId) {
   //Find the id of the first slidedata
   let myPromise = new Promise((resolve, reject) => {
-
     rp.get({uri: Microservices.deck.uri + '/decktree/' + deckId}).then((res) => {
-      console.log('Res', res);
-
       try {
-        let parsed = JSON.parse(body);
+        let parsed = JSON.parse(res);
         let slideId = parsed.children[0].id;
 
         resolve(slideId);
@@ -703,46 +563,12 @@ function findFirstSlideOfADeck(deckId) {
         console.log(e);
         reject(e);
       }
-
-      // callback(null, {activities: activities, selector: selector, hasMore: (activities.length === 30)});
     }).catch((err) => {
       console.log('Error', err);
-
       reject(e);
-      // callback(null, {activities: [], selector: selector, hasMore: false});
     });
   });
-
-  // let myPromise = new Promise((resolve, reject) => {
-  //
-  //   let options = {
-  //     host: Microservices.deck.uri,
-  //     port: Microservices.deck.port,
-  //     path: '/decktree/' + deckId
-  //   };
-  //
-  //   let req = http.get(options, (res) => {
-  //     // console.log('STATUS: ' + res.statusCode);
-  //     // console.log('HEADERS: ' + JSON.stringify(res.headers));
-  //     res.setEncoding('utf8');
-  //     let body = '';
-  //     res.on('data', (chunk) => {
-  //       // console.log('Response: ', chunk);
-  //       body += chunk;
-  //     });
-  //     res.on('end', () => {
-  //       let parsed = JSON.parse(body);
-  //       let slideId = parsed.children[0].id;
-  //
-  //       resolve(slideId);
-  //     });
-  //   });
-  //   req.on('error', (e) => {
-  //     console.log('problem with request: ' + e.message);
-  //     reject(e);
-  //   });
-  // });
-
+  
   return myPromise;
 }
 
