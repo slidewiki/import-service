@@ -667,8 +667,6 @@ processGroupSpNode(node, warpObj) {
 	// Process all child nodes
 	var promises = [];
 
-	var result = "<div class='block group' style='position: absolute;z-index: " + order + "; top: " + (y - chy) + "px; left: " + (x - chx) + "px; width: " + (cx - chcx) + "px; height: " + (cy - chcy) + "px;'>";
-
 	// Procsee all child nodes
 	for (var nodeKey in node) {
 		if (node[nodeKey].constructor === Array) {
@@ -680,9 +678,11 @@ processGroupSpNode(node, warpObj) {
 		}
 	}
 
-    return Promise.all(promises).then(function(infos){
+    return Promise.all(promises).then((infos) => {
     	// Create the new merged html
-        var text = "<div class='block group' style='position: absolute;z-index: " + order + "; top: " + (y - chy) + "px; left: " + (x - chx) + "px; width: " + (cx - chcx) + "px; height: " + (cy - chcy) + "px;'>";
+        var text = "<div class='block group' style='position: absolute;z-index: "
+			+ order + "; top: " + (y - chy) + "px; left: " + (x - chx) + "px; width: "
+			+ (cx - chcx) + "px; height: " + (cy - chcy) + "px;'>"
         	+ infos.map((info) => {return info.text}).join('') + "</div>";
 		var res = {};
 		// Merge objects returned by the promises
@@ -691,7 +691,6 @@ processGroupSpNode(node, warpObj) {
 		}
 		// Assign the respective joined html
 		res.text = text;
-
         return res;
     }).catch(function(err){console.log("processGroupSpNode " + err)});
 
@@ -1111,7 +1110,6 @@ genShape(node, slideLayoutSpNode, slideMasterSpNode, id, name, idx, type, order,
     // TextBody
     if (node["p:txBody"] !== undefined) {
       return this.genTextBody(node["p:txBody"], slideLayoutSpNode, slideMasterSpNode, type, warpObj, createList).then((info) => {
-
       	  textBody = info.text;
 		  if (textBody !== undefined && textBody !== "") {//Dejan added this to prevent creation of some undefined and empty elements
             	result += "<div class='block content " + this.getVerticalAlign(node, slideLayoutSpNode, slideMasterSpNode, type) +
@@ -1126,12 +1124,12 @@ genShape(node, slideLayoutSpNode, slideMasterSpNode, id, name, idx, type, order,
                 textBody +
                 "</div>";
             	info.text = result;
+
         }
         return info;
     }).catch((err) => {console.log('Error generating text: ' + err)});
     }
 
-	result += "</div>";
 	return new Promise((resolve, reject) => {
 			resolve({text: result});
 	});
