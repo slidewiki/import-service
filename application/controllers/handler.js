@@ -6,7 +6,8 @@ Handles the requests by executing stuff and replying to the client. Uses promise
 let util = require('util');
 let fs = require('fs');
 let he = require('he');
-let http = require('http');
+// let http = require('http');
+let rp = require('request-promise-native');
 
 const Microservices = require('../configs/microservices');
 let Convertor = require('../PPTX2HTML/js/convertor.js');
@@ -455,7 +456,6 @@ function createNodesRecursive(user, license, deckId, previousSlideId, slides, in
 
 //Send a request to insert a new deck with the first slide
 function createDeck(user, language, license, deckName, firstSlide) {
-  // console.log('deck', user, license, deckName);
   let myPromise = new Promise((resolve, reject) => {
     let title = (firstSlide.title !== '') ? firstSlide.title : (firstSlide.ctrTitle !== '') ? firstSlide.ctrTitle : firstSlide.subTitle;
     title = title.trim();
@@ -485,38 +485,20 @@ function createDeck(user, language, license, deckName, firstSlide) {
     }
 
     let data = JSON.stringify(jsonData);
-    let options = {
-      host: Microservices.deck.uri,
-      port: Microservices.deck.port,
-      path: '/deck/new',
-      method: 'POST',
-      headers : {
-        'Content-Type': 'application/json',
-        'Cache-Control': 'no-cache',
-        'Content-Length': data.length
-      }
-    };
+    rp.post({uri: Microservices.deck.uri + '/deck/new', body:data}).then((res) => {
 
-    let req = http.request(options, (res) => {
-      // console.log('STATUS: ' + res.statusCode);
-      // console.log('HEADERS: ' + JSON.stringify(res.headers));
-      res.setEncoding('utf8');
-      let body = '';
-      res.on('data', (chunk) => {
-        // console.log('Response: ', chunk);
-        body += chunk;
-      });
-      res.on('end', () => {
-        let newDeck = JSON.parse(body);
+      try {
+        let newDeck = JSON.parse(res);
         resolve(newDeck);
-      });
-    });
-    req.on('error', (e) => {
-      console.log('problem with request: ' + e.message);
+      } catch(e) {
+        console.log(e);
+        reject(e);
+      }
+
+    }).catch((err) => {
+      console.log('Error', err);
       reject(e);
     });
-    req.write(data);
-    req.end();
   });
 
   return myPromise;
@@ -532,7 +514,6 @@ function createSlide(selector, nodeSpec, user, slide, slideNo, license) {
     let slideTitle = replaceSpecialSymbols(title);//deck tree does not display some encoded symbols properly
     slideTitle = he.encode(slideTitle, {allowUnsafeSymbols: true});//encode some symbols which were not replaced
     //Encode special characters (e.g. bullets)
-
     let encodedContent = he.encode(slide.content, {allowUnsafeSymbols: true});
     let encodedNotes = he.encode(slide.notes, {allowUnsafeSymbols: true});
 
@@ -551,39 +532,19 @@ function createSlide(selector, nodeSpec, user, slide, slideNo, license) {
     }
 
     let data = JSON.stringify(jsonData);
-
-    let options = {
-      host: Microservices.deck.uri,
-      port: Microservices.deck.port,
-      path: '/decktree/node/create',
-      method: 'POST',
-      headers : {
-        'Content-Type': 'application/json',
-        'Cache-Control': 'no-cache',
-        'Content-Length': data.length
-      }
-    };
-
-    let req = http.request(options, (res) => {
-      // console.log('STATUS: ' + res.statusCode);
-      // console.log('HEADERS: ' + JSON.stringify(res.headers));
-      res.setEncoding('utf8');
-      let body = '';
-      res.on('data', (chunk) => {
-        // console.log('Response: ', chunk);
-        body += chunk;
-      });
-      res.on('end', () => {
-        let newDeckTreeNode = JSON.parse(body);
+    rp.post({uri: Microservices.deck.uri + '/decktree/node/create', body:data}).then((res) => {
+      try {
+        let newDeckTreeNode = JSON.parse(res);
         resolve(newDeckTreeNode);
-      });
-    });
-    req.on('error', (e) => {
-      console.log('problem with request: ' + e.message);
+      } catch(e) {
+        console.log(e);
+        reject(e);
+      }
+
+    }).catch((err) => {
+      console.log('Error', err);
       reject(e);
     });
-    req.write(data);
-    req.end();
   });
 
   return myPromise;
@@ -592,35 +553,22 @@ function createSlide(selector, nodeSpec, user, slide, slideNo, license) {
 function findFirstSlideOfADeck(deckId) {
   //Find the id of the first slidedata
   let myPromise = new Promise((resolve, reject) => {
-
-    let options = {
-      host: Microservices.deck.uri,
-      port: Microservices.deck.port,
-      path: '/decktree/' + deckId
-    };
-
-    let req = http.get(options, (res) => {
-      // console.log('STATUS: ' + res.statusCode);
-      // console.log('HEADERS: ' + JSON.stringify(res.headers));
-      res.setEncoding('utf8');
-      let body = '';
-      res.on('data', (chunk) => {
-        // console.log('Response: ', chunk);
-        body += chunk;
-      });
-      res.on('end', () => {
-        let parsed = JSON.parse(body);
+    rp.get({uri: Microservices.deck.uri + '/decktree/' + deckId}).then((res) => {
+      try {
+        let parsed = JSON.parse(res);
         let slideId = parsed.children[0].id;
 
         resolve(slideId);
-      });
-    });
-    req.on('error', (e) => {
-      console.log('problem with request: ' + e.message);
+      } catch(e) {
+        console.log(e);
+        reject(e);
+      }
+    }).catch((err) => {
+      console.log('Error', err);
       reject(e);
     });
   });
-
+  
   return myPromise;
 }
 
