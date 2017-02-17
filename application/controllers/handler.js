@@ -3,10 +3,10 @@ Handles the requests by executing stuff and replying to the client. Uses promise
 */
 
 'use strict';
-let util = require('util');
 let fs = require('fs');
 let he = require('he');
-let https = require('https');
+// let http = require('http');
+let rp = require('request-promise-native');
 
 const Microservices = require('../configs/microservices');
 let Convertor = require('../PPTX2HTML/js/convertor.js');
@@ -144,13 +144,13 @@ module.exports = {
     //let firstSlide = initialResult.firstSlide;
 
 
-    var reply = reply;
+    let reply = reply;
 
-    return convertor.convertFirstSlide(buffer).then(function(result){
+    return convertor.convertFirstSlide(buffer).then((result) => {
 
       const noOfSlides = result.noOfSlides;
-      const filesInfo = result.filesInfo;
-      var slides = [result];
+      //const filesInfo = result.filesInfo;
+      let slides = [result];
       return createDeck(user, language, license, deckName, result).then((deck) => {
 
 
@@ -176,6 +176,7 @@ module.exports = {
               // updateSlide(slideId, user, license, deck.id, slides[0]).then(() => {
               //create the rest of slides
               createNodesRecursive(user, license, deck.id, slideId, slides, 1);
+
             }).catch((error) => {
               // }).catch((error) => {
               //   request.log('error', error);
@@ -202,10 +203,9 @@ module.exports = {
         request.log('error', error);
         reply(boom.badImplementation());
       });
-    }).catch(function(err){
+    }).catch((err) => {
       console.log('Error /first slide: ' + err);
     });
-
 
 
 
@@ -271,133 +271,133 @@ module.exports = {
 });
 */
 
-//const fileName = request.payload.filename;
-//let saveTo = './' + fileName;
-//let saveTo = './' + request.payload.filename;
-//let saveTo = './uploaded/' + fileName;
-//console.log('saved to:' + saveTo);
-//console.log('request.params.filename'+  request.params.filename);
-//console.log('request.query.filename'+  request.query.filename);
-//console.log('request.payload["filename"]'+  request.payload["filename"]);
-//request.payload["upload"].pipe(fs.createWriteStream("./uploaded/test.png")); //this already works.
-//request.payload["upload"].pipe(fs.createWriteStream('temp.data')); //this already works.
-//request.payload["upload"].pipe(fs.createWriteStream(saveTo));
+    //const fileName = request.payload.filename;
+    //let saveTo = './' + fileName;
+    //let saveTo = './' + request.payload.filename;
+    //let saveTo = './uploaded/' + fileName;
+    //console.log('saved to:' + saveTo);
+    //console.log('request.params.filename'+  request.params.filename);
+    //console.log('request.query.filename'+  request.query.filename);
+    //console.log('request.payload["filename"]'+  request.payload["filename"]);
+    //request.payload["upload"].pipe(fs.createWriteStream("./uploaded/test.png")); //this already works.
+    //request.payload["upload"].pipe(fs.createWriteStream('temp.data')); //this already works.
+    //request.payload["upload"].pipe(fs.createWriteStream(saveTo));
 
-//console.log('request.payload[upload]' + request.payload['upload']);
-//console.log('request.payload.upload' + request.payload.upload);
-//console.log(util.inspect(request.payload.upload, {showHidden: true, depth: 100})); //undefined
-//console.log(util.inspect(request.payload['upload'], {showHidden: true, depth: 100})); //undefined
+    //console.log('request.payload[upload]' + request.payload['upload']);
+    //console.log('request.payload.upload' + request.payload.upload);
+    //console.log(util.inspect(request.payload.upload, {showHidden: true, depth: 100})); //undefined
+    //console.log(util.inspect(request.payload['upload'], {showHidden: true, depth: 100})); //undefined
 
-//console.log(util.inspect(request.payload.upload.data, {showHidden: true, depth: 100})); //undefined
-//console.log(util.inspect(request.payload.upload._data, {showHidden: true, depth: 100})); //undefined
-//console.log(util.inspect(request.payload.upload.hapi.filename, {showHidden: true, depth: 100})); //undefined
-//let fileStream = fs.createWriteStream(saveTo);
-////fileStream.write(request.payload.file.data);
-//fileStream.write(request.payload.file, 'binary');
-//fileStream.end();
-//fileStream.on('error', (err) => {
-/*
-request.payload["upload"].on('error', (err) => {
-reply('error in upload!');
-console.log('error', err);
-});
-//fileStream.on('finish', (res) => {
-request.payload["upload"].on('finish', (res) => {
-// reply('upload completed!');
-console.log('upload completed');
-});
-*/
-
-
-
-// //TODO - create unique filename
-// //let saveTo = './' + request.payload.filename;
-// let saveTo = './uploaded/' + request.payload.upload.hapi.filename;
-// let fileStream = fs.createWriteStream(saveTo);
-// //fileStream.write(request.payload.file.data);
-// //fileStream.write(request.payload.file, 'binary');
-// fileStream.write(request.payload.upload._data); //this saves to file 'undefined'
-// fileStream.end();
-// fileStream.on('error', (err) => {
-//   reply('error in upload!');
-//   console.log('error', err);
-// });
-// fileStream.on('finish', (res) => {
-//     console.log('upload completed');
-//   });
+    //console.log(util.inspect(request.payload.upload.data, {showHidden: true, depth: 100})); //undefined
+    //console.log(util.inspect(request.payload.upload._data, {showHidden: true, depth: 100})); //undefined
+    //console.log(util.inspect(request.payload.upload.hapi.filename, {showHidden: true, depth: 100})); //undefined
+    //let fileStream = fs.createWriteStream(saveTo);
+    ////fileStream.write(request.payload.file.data);
+    //fileStream.write(request.payload.file, 'binary');
+    //fileStream.end();
+    //fileStream.on('error', (err) => {
+    /*
+    request.payload["upload"].on('error', (err) => {
+      reply('error in upload!');
+      console.log('error', err);
+    });
+    //fileStream.on('finish', (res) => {
+    request.payload["upload"].on('finish', (res) => {
+      // reply('upload completed!');
+      console.log('upload completed');
+    });
+    */
 
 
-//Use saveImageToFile function
+
+    // //TODO - create unique filename
+    // //let saveTo = './' + request.payload.filename;
+    // let saveTo = './uploaded/' + request.payload.upload.hapi.filename;
+    // let fileStream = fs.createWriteStream(saveTo);
+    // //fileStream.write(request.payload.file.data);
+    // //fileStream.write(request.payload.file, 'binary');
+    // fileStream.write(request.payload.upload._data); //this saves to file 'undefined'
+    // fileStream.end();
+    // fileStream.on('error', (err) => {
+    //   reply('error in upload!');
+    //   console.log('error', err);
+    // });
+    // fileStream.on('finish', (res) => {
+    //     console.log('upload completed');
+    //   });
+
+
+      //Use saveImageToFile function
 
     const filename = request.payload.upload.hapi.filename;
     const userid = request.params.userid;
     const filePath = saveImageToFile(filename, request.payload.upload._data, userid);
 
 
-///JSON ONLY FOR DRAGGING and dropping
-//let response;
-//response.writeHead(200, {'Content-Type': 'application/json'});
-//let json = JSON.stringify({
-//'uploaded': 1,
-//'fileName': 'logo_full.png',
-//'url': 'http://platform.manfredfris.ch/assets/images/logo_full.png'
-//});
-//response.end(json);
-//console.log(json);
-//reply (json);
-// JSON ONLY FOR DRAGGING and dropping  - http://stackoverflow.com/questions/33197058/ckeditor-can-not-parse-json-response
-//reply ({
-//'uploaded': '1',
-//'fileName': 'logo_full.png',
-//'url': 'http://platform.manfredfris.ch/assets/images/logo_full.png'
-//});
+        ///JSON ONLY FOR DRAGGING and dropping
+      //let response;
+      //response.writeHead(200, {'Content-Type': 'application/json'});
+      //let json = JSON.stringify({
+        //'uploaded': 1,
+        //'fileName': 'logo_full.png',
+        //'url': 'http://platform.manfredfris.ch/assets/images/logo_full.png'
+      //});
+      //response.end(json);
+      //console.log(json);
+      //reply (json);
+      // JSON ONLY FOR DRAGGING and dropping  - http://stackoverflow.com/questions/33197058/ckeditor-can-not-parse-json-response
+      //reply ({
+        //'uploaded': '1',
+        //'fileName': 'logo_full.png',
+        //'url': 'http://platform.manfredfris.ch/assets/images/logo_full.png'
+        //});
 
     let content = '<script type="text/javascript">\n';
-//content += "window.parent.CKEDITOR.tools.callFunction(1, 'http://platform.manfredfris.ch/assets/images/logo_full.png', '' );\n";
-//content += "window.opener.CKEDITOR.tools.callFunction(1, 'http://platform.manfredfris.ch/assets/images/logo_full.png', '' );\n";
-//content += "CKEDITOR.instances.inlineContent.tools.callFunction(1, 'http://platform.manfredfris.ch/assets/images/logo_full.png', '' );\n";
-//content += "window.parent.CKEDITOR.instances.inlineContent.tools.callFunction(1, 'http://platform.manfredfris.ch/assets/images/logo_full.png', '' );\n";
-//window.parent.CKEDITOR
+        //content += "window.parent.CKEDITOR.tools.callFunction(1, 'http://platform.manfredfris.ch/assets/images/logo_full.png', '' );\n";
+        //content += "window.opener.CKEDITOR.tools.callFunction(1, 'http://platform.manfredfris.ch/assets/images/logo_full.png', '' );\n";
+        //content += "CKEDITOR.instances.inlineContent.tools.callFunction(1, 'http://platform.manfredfris.ch/assets/images/logo_full.png', '' );\n";
+        //content += "window.parent.CKEDITOR.instances.inlineContent.tools.callFunction(1, 'http://platform.manfredfris.ch/assets/images/logo_full.png', '' );\n";
+        //window.parent.CKEDITOR
 
-//       Save problem with Same-origin_policy when CKeditor image upload script is returned
-//       https://developer.mozilla.org/en-US/docs/Web/Security/Same-origin_policy
+        //       Save problem with Same-origin_policy when CKeditor image upload script is returned
+        //       https://developer.mozilla.org/en-US/docs/Web/Security/Same-origin_policy
     content += 'document.domain = "slidewiki.org";\n';
 
-//content += request.params.CKEditor + ".tools.callFunction("+ request.params.CKEditorFuncNum + " , 'http://platform.manfredfris.ch/assets/images/logo_full.png', '' );\n";
-//content += "window.parent.CKEDITOR.tools.callFunction("+ request.query.CKEditorFuncNum + " , 'http://platform.manfredfris.ch/assets/images/logo_full.png', '' );\n";
-// content += 'window.parent.CKEDITOR.tools.callFunction('+ request.query.CKEditorFuncNum + ' , "http://platform.manfredfris.ch/assets/images/logo_full.png", "" );\n';
+        //content += request.params.CKEditor + ".tools.callFunction("+ request.params.CKEditorFuncNum + " , 'http://platform.manfredfris.ch/assets/images/logo_full.png', '' );\n";
+        //content += "window.parent.CKEDITOR.tools.callFunction("+ request.query.CKEditorFuncNum + " , 'http://platform.manfredfris.ch/assets/images/logo_full.png', '' );\n";
+        // content += 'window.parent.CKEDITOR.tools.callFunction('+ request.query.CKEditorFuncNum + ' , "http://platform.manfredfris.ch/assets/images/logo_full.png", "" );\n';
     content += 'window.parent.CKEDITOR.tools.callFunction('+ request.query.CKEditorFuncNum + ' , "' + filePath + '", "" );\n';
 
-//CKEDITOR.instances.inlineContent
-//content += "alert('test');\n"; //WORKS!
+        //CKEDITOR.instances.inlineContent
+        //content += "alert('test');\n"; //WORKS!
 
-//SEARCH FOR ALTERNATIVES!!
+        //SEARCH FOR ALTERNATIVES!!
 
     content += '</script>';
-//reply('<script type="text/javascript">window.parent.CKEDITOR.tools.callFunction(1, "http://platform.manfredfris.ch/assets/images/logo_full.png", "");</script>);');
+        //reply('<script type="text/javascript">window.parent.CKEDITOR.tools.callFunction(1, "http://platform.manfredfris.ch/assets/images/logo_full.png", "");</script>);');
     reply(content);
 
-//TODO check if image file is uploaded.
-//TODO send call to media service + user service to store media data of uploaded image file
-// reply('upload completed!');
-//reply(response);
-//reply (pptx2html.convert(request.payload.file));
+        //TODO check if image file is uploaded.
+        //TODO send call to media service + user service to store media data of uploaded image file
+      // reply('upload completed!');
+      //reply(response);
+      //reply (pptx2html.convert(request.payload.file));
 
-//SEE http://docs.ckeditor.com/#!/guide/dev_file_browser_api
-//console.log('upload completed');
-//});
+      //SEE http://docs.ckeditor.com/#!/guide/dev_file_browser_api
+      //console.log('upload completed');
+    //});
 
   }
-// ,testPPTX2HTML: function(request, reply) {// Dejan added this to test pptx2html
-//   if (!request.payload) {
-//     let file = './PPTX2HTML/pptx samples/simple slide - notes - p1,3.pptx';
-//     fs.readFile(file, (err, data) => {
-//       if (err) throw err;
-//       pptx2html.convert(data);
-//     });
-//   }
-//   reply('test completed, look at the console');
-// }
+  // ,testPPTX2HTML: function(request, reply) {// Dejan added this to test pptx2html
+  //   if (!request.payload) {
+  //     let file = './PPTX2HTML/pptx samples/simple slide - notes - p1,3.pptx';
+  //     fs.readFile(file, (err, data) => {
+  //       if (err) throw err;
+  //       pptx2html.convert(data);
+  //     });
+  //   }
+  //   reply('test completed, look at the console');
+  // }
 
 };
 
@@ -419,7 +419,7 @@ function saveImageToFile(imgName, file, user) {
   // const userDir = '.' + Microservices.file.shareVolume + '/' + user;// For localhost testing
   const userDir = Microservices.file.shareVolume + '/' + user;
   if (!fs.existsSync(userDir)){
-    fs.mkdirSync(userDir, 744, function(err) {
+    fs.mkdirSync(userDir, 744, (err) => {
       if(err) {
         console.log(err);
       }
@@ -436,25 +436,26 @@ function saveImageToFile(imgName, file, user) {
     reply('error in upload!');
     console.log('error', err);
   });
-  fileStream.on('finish', (res) => {
+  fileStream.on('finish', () => {
     console.log('upload completed');
   });
 
-  return 'https://' + Microservices.file.uri + '/' + imgUserPath;
+  return 'http://' + Microservices.file.uri + '/' + imgUserPath;
 }
 
+
 function createNodesRecursive(user, license, deckId, previousSlideId, slides, index) {
-  var selector = {
+
+  let selector = {
     'id': String(deckId) + '-1',
     'spath': String(previousSlideId) + '-1:' + String(index + 1),
     'sid': String(previousSlideId) + '-1',
     'stype': 'slide'
   };
-  var nodeSpec = {
+  let nodeSpec = {
     'id': '0',
     'type': 'slide'
   };
-
   // createDeckTreeNode(selector, nodeSpec, user).then((node) => {
   //   updateSlide(node.id, user, license, deckId, slides[index]);
   createSlide(selector, nodeSpec, user, slides[index], String(index + 1), license).then((node) => {
@@ -464,16 +465,18 @@ function createNodesRecursive(user, license, deckId, previousSlideId, slides, in
       createNodesRecursive(user, license, deckId, node.id, slides, (index + 1));
     }
   }).catch((error) => {
+    console.log('Error: ' + error);
     request.log('error', error);
     reply(boom.badImplementation());
   });
 }
 
+//Send a request to insert a new deck with the first slide
 function createDeck(user, language, license, deckName, firstSlide) {
   //Send a request to insert a new deck with the first slide
   // console.log('deck', user, license, deckName);
   let myPromise = new Promise((resolve, reject) => {
-    var title = '';
+    let title = '';
     if (firstSlide.title && firstSlide.title !== ''){
       title = firstSlide.title;
     } else if (firstSlide.ctrTitle && firstSlide.ctrTitle !== ''){
@@ -493,6 +496,7 @@ function createDeck(user, language, license, deckName, firstSlide) {
     //Encode special characters (e.g. bullets)
     let encodedFirstSlideContent = he.encode(firstSlide.content, {allowUnsafeSymbols: true});
     let encodedFirstSlideNotes = he.encode(firstSlide.notes, {allowUnsafeSymbols: true});
+
     let jsonData = {
       user: user,
       language: language,
@@ -501,7 +505,7 @@ function createDeck(user, language, license, deckName, firstSlide) {
       first_slide: {
         content: encodedFirstSlideContent,
         title: (firstSlideTitle !== '') ? firstSlideTitle : 'Slide 1',//It is not allowed to be empty
-        speakernotes: encodedFirstSlideNotes
+        speakernotes:encodedFirstSlideNotes
       }
     };
 
@@ -510,56 +514,27 @@ function createDeck(user, language, license, deckName, firstSlide) {
     }
 
     let data = JSON.stringify(jsonData);
-    let options = {
-      host: Microservices.deck.uri,
-      port: Microservices.deck.port,
-      path: '/deck/new',
-      method: 'POST',
-      headers : {
-        'Content-Type': 'application/json',
-        'Cache-Control': 'no-cache',
-        'Content-Length': data.length
-      }
-    };
-    var reqData = {};
-    reqData.data = data;
-    reqData.options = options;
-    resolve(reqData);
-  }).then((reqData) => {
-    var data = reqData.data;
-    var options = reqData.options;
-    return new Promise((resolve, reject) => {
-      var req = https.request(options, (res) => {
-        // console.log('STATUS: ' + res.statusCode);
-        // console.log('HEADERS: ' + JSON.stringify(res.headers));
-        res.setEncoding('utf8');
-        let body = '';
-        res.on('data', (chunk) => {
-          // console.log('Response: ', chunk);
-          body += chunk;
-        });
-        res.on('end', () => {
-          var newDeck = JSON.parse(body);
-          resolve(newDeck);
-        });
-      });
-      req.on('error', (e) => {
-        console.log('problem with request: ' + e.message);
+    rp.post({uri: Microservices.deck.uri + '/deck/new', body:data}).then((res) => {
+      try {
+        let newDeck = JSON.parse(res);
+        resolve(newDeck);
+      } catch(e) {
+        console.log(e);
         reject(e);
-      });
-      req.write(data);
-      req.end();
+      }
     }).catch((err) => {
-      console.log('Error creating deck: ' + err);
+      console.log('Error', err);
+      reject(e);
     });
   });
+
   return myPromise;
 }
 
 function createSlide(selector, nodeSpec, user, slide, slideNo, license) {
   let myPromise = new Promise((resolve, reject) => {
 
-    var title = '';
+    let title = '';
     if (slide.title && slide.title !== ''){
       title = slide.title;
     } else if (slide.ctrTitle && slide.ctrTitle !== ''){
@@ -567,7 +542,6 @@ function createSlide(selector, nodeSpec, user, slide, slideNo, license) {
     } else if (slide.subTitle && slide.subTitle !== ''){
       title = slide.subTitle;
     }
-
     title = title.trim();
 
     if (title.length > 100) {
@@ -595,40 +569,24 @@ function createSlide(selector, nodeSpec, user, slide, slideNo, license) {
       delete jsonData.speakernotes;
     }
 
+
     let data = JSON.stringify(jsonData);
+    rp.post({uri: Microservices.deck.uri + '/decktree/node/create', body:data}).then((res) => {
+      try {
+        let newDeckTreeNode = JSON.parse(res);
 
-    let options = {
-      host: Microservices.deck.uri,
-      port: Microservices.deck.port,
-      path: '/decktree/node/create',
-      method: 'POST',
-      headers : {
-        'Content-Type': 'application/json',
-        'Cache-Control': 'no-cache',
-        'Content-Length': data.length
-      }
-    };
-
-    let req = https.request(options, (res) => {
-      // console.log('STATUS: ' + res.statusCode);
-      // console.log('HEADERS: ' + JSON.stringify(res.headers));
-      res.setEncoding('utf8');
-      let body = '';
-      res.on('data', (chunk) => {
-        // console.log('Response: ', chunk);
-        body += chunk;
-      });
-      res.on('end', () => {
-        let newDeckTreeNode = JSON.parse(body);
         resolve(newDeckTreeNode);
-      });
-    });
-    req.on('error', (e) => {
-      console.log('problem with request: ' + e.message);
+      } catch(e) {
+        console.log(e);
+        reject(e);
+      }
+    }).catch((err) => {
+      console.log('Error: ' + error);
+      console.log('Error', err);
       reject(e);
     });
-    req.write(data);
-    req.end();
+    //req.write(data);
+    //req.end();
   });
 
   return myPromise;
@@ -636,34 +594,23 @@ function createSlide(selector, nodeSpec, user, slide, slideNo, license) {
 
 function findFirstSlideOfADeck(deckId) {
   //Find the id of the first slidedata
-  var myPromise = new Promise((resolve, reject) => {
-
-    let options = {
-      host: Microservices.deck.uri,
-      port: Microservices.deck.port,
-      path: '/decktree/' + deckId
-    };
-
-    let req = https.get(options, (res) => {
-      // console.log('STATUS: ' + res.statusCode);
-      // console.log('HEADERS: ' + JSON.stringify(res.headers));
-      res.setEncoding('utf8');
-      let body = '';
-      res.on('data', (chunk) => {
-        // console.log('Response: ', chunk);
-        body += chunk;
-      });
-      res.on('end', () => {
-        let parsed = JSON.parse(body);
+  let myPromise = new Promise((resolve, reject) => {
+    rp.get({uri: Microservices.deck.uri + '/decktree/' + deckId}).then((res) => {
+      try {
+        let parsed = JSON.parse(res);
         let slideId = parsed.children[0].id;
+
         resolve(slideId);
-      });
-    });
-    req.on('error', (e) => {
-      console.log('problem with request: ' + e.message);
+      } catch(e) {
+        console.log(e);
+        reject(e);
+      }
+    }).catch((err) => {
+      console.log('Error', err);
       reject(e);
     });
   });
+
   return myPromise;
 }
 
