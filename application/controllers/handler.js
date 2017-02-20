@@ -116,7 +116,9 @@ module.exports = {
     }
     const license = request.payload.license;
     const fileName = he.encode(request.payload.filename, {allowUnsafeSymbols: true});//encode special characters
-    const deckName = fileName.split('.')[0];
+    const fileNameSplit = fileName.split('.');
+    const deckName = fileNameSplit[0];
+    const fileType = fileNameSplit[fileNameSplit.length - 1];
 
     //
     // let saveTo = './' + fileName;
@@ -138,59 +140,111 @@ module.exports = {
 
     let data_url = request.payload.file;
     let buffer = new Buffer(data_url.split(',')[1], 'base64');
-    let convertor = new Convertor.Convertor();
-    convertor.user = user;
 
-    let initialResult = convertor.convertFirstSlide(buffer);
-    let firstSlide = initialResult.firstSlide;
-    const noOfSlides = initialResult.noOfSlides;
+    if (fileType.toLowerCase() === 'odp' ) {
+      let formdata = require('form-data');
+      //SEND TO docker-unoconv-webservice
+      let form = new formdata();
 
-    return createDeck(user, language, license, deckName, firstSlide).then((deck) => {
-      // let noOfSlides = convertor.getNoOfSlides(buffer);
-      reply('import completed').header('deckId', deck.id).header('noOfSlides', noOfSlides);
+      //let keys = [];
+      //for(let k in params) keys.push(k);
+      //console.log('import service', keys, params.file, params.base64.length);
 
-      //Save file
-      // fs.writeFile('./' + fileName, buffer, (err) => {
-      //   if (err) {
-      //     reply('error in upload!');
-      //     console.log('error', err);
-      //   } else {
-      //     console.log('upload completed');
-      //   }
-      // });
+      //create a HTTP POST form request
+      let fs = require('fs');
 
-      if (noOfSlides > 1) {
-        let slides = convertor.processPPTX(buffer);
-        findFirstSlideOfADeck(deck.id).then((slideId) => {
-        // updateSlide(slideId, user, license, deck.id, slides[0]).then(() => {
+      form.append('file', fs.createReadStream('/home/osboxes/Development/docker-unoconv-webservice-master/g1.odp'));
+      form.append('contentType', 'application/vnd.oasis.opendocument.presentation');
 
-          //create the rest of slides
-          createNodesRecursive(user, license, deck.id, slideId, slides, 1);
+      let request1 = form.submit({
+          port: 80,
+          host: 'localhost',
+          path: '/unoconv/pptx',
+          protocol: 'http:',
+          timeout: 20 * 1000
+      }, (err, res) => {
+          if (err) {
+              console.error(err);
+              //only callback if no timeout
+              // if (err.toString() !== 'Error: XMLHttpRequest timeout')
+              //     callback(err, null);
+              // return;
+          }
+          var data = ''
+            res.setEncoding('binary')
 
-        // }).catch((error) => {
-        //   request.log('error', error);
-        //   reply(boom.badImplementation());
-        // });
-        // let previousSlideId = slideId;
-        // for (let i = 1; i < slides.length; i++) {
-        //
-        //   createDeckTreeNode(selector, nodeSpec, user).then((node) => {
-        //     console.log(node);
-        //     updateSlide(node.id, user, license, deck.id, slides[i]);
-        //     previousSlideId = node.id;
-        //   });
-        //
-        // }
+            res.on('data', function(chunk){
+                data += chunk
+            })
 
-        }).catch((error) => {
-          request.log('error', error);
-          reply(boom.badImplementation());
-        });
-      }
-    }).catch((error) => {
-      request.log('error', error);
-      reply(boom.badImplementation());
-    });
+            res.on('end', function(){
+                fs.writeFile('/home/osboxes/Development/docker-unoconv-webservice-master/aa.pptx', data, 'binary', function(err){
+                    if (err) throw err
+                    console.log('File saved.')
+                })
+            })
+          console.log('result of call to unoconv service', res.headers, res.statusCode);
+          //res does not contain any data ...
+
+      });
+
+
+      // buffer =
+    }
+    //
+    // let convertor = new Convertor.Convertor();
+    // convertor.user = user;
+    //
+    // let initialResult = convertor.convertFirstSlide(buffer);
+    // let firstSlide = initialResult.firstSlide;
+    // const noOfSlides = initialResult.noOfSlides;
+
+    // return createDeck(user, language, license, deckName, firstSlide).then((deck) => {
+    //   // let noOfSlides = convertor.getNoOfSlides(buffer);
+    //   reply('import completed').header('deckId', deck.id).header('noOfSlides', noOfSlides);
+    //
+    //   //Save file
+    //   // fs.writeFile('./' + fileName, buffer, (err) => {
+    //   //   if (err) {
+    //   //     reply('error in upload!');
+    //   //     console.log('error', err);
+    //   //   } else {
+    //   //     console.log('upload completed');
+    //   //   }
+    //   // });
+    //
+    //   if (noOfSlides > 1) {
+    //     let slides = convertor.processPPTX(buffer);
+    //     findFirstSlideOfADeck(deck.id).then((slideId) => {
+    //     // updateSlide(slideId, user, license, deck.id, slides[0]).then(() => {
+    //
+    //       //create the rest of slides
+    //       createNodesRecursive(user, license, deck.id, slideId, slides, 1);
+    //
+    //     // }).catch((error) => {
+    //     //   request.log('error', error);
+    //     //   reply(boom.badImplementation());
+    //     // });
+    //     // let previousSlideId = slideId;
+    //     // for (let i = 1; i < slides.length; i++) {
+    //     //
+    //     //   createDeckTreeNode(selector, nodeSpec, user).then((node) => {
+    //     //     console.log(node);
+    //     //     updateSlide(node.id, user, license, deck.id, slides[i]);
+    //     //     previousSlideId = node.id;
+    //     //   });
+    //     //
+    //     // }
+    //
+    //     }).catch((error) => {
+    //       request.log('error', error);
+    //       reply(boom.badImplementation());
+    //     });
+    //   }
+    // }).catch((error) => {
+    //   request.log('error', error);
+    //   reply(boom.badImplementation());
+    // });
 
 
 
@@ -568,7 +622,7 @@ function findFirstSlideOfADeck(deckId) {
       reject(e);
     });
   });
-  
+
   return myPromise;
 }
 
