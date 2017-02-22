@@ -144,8 +144,6 @@ module.exports = {
     //let firstSlide = initialResult.firstSlide;
 
 
-    let reply = reply;
-
     return convertor.convertFirstSlide(buffer).then((result) => {
 
       const noOfSlides = result.noOfSlides;
