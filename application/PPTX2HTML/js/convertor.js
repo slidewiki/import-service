@@ -68,19 +68,21 @@ class Convertor {
 
         this.slides = [];
 
-        this.currentSlide = {
-          title: '',
-          ctrTitle: '',
-          subTitle: '',
-          content: '',
-          notes: ''
-        };
+        // this.currentSlide = {
+        //   title: '',
+        //   ctrTitle: '',
+        //   subTitle: '',
+        //   content: '',
+        //   notes: ''
+        // };
         //return this.processPPTX(data);
 
         this.user = '';
+        this.jwt = '';
     }
 
     convertFirstSlide(data) {
+      let myPromise = new Promise((resolve, reject) => {
         let zip = new JSZip(data);
         this.filesInfo = this.getContentTypes(zip);
         this.slideSize = this.getSlideSize(zip);
@@ -88,110 +90,172 @@ class Convertor {
         const noOfSlides = this.filesInfo["slides"].length;
 
         const filename = this.filesInfo["slides"][0];
-        this.currentSlide.content = this.processSingleSlide(zip, filename, 0, this.slideSize);
-        this.currentSlide.notes = this.processSingleSlideNotes(zip, filename, 0, this.slideSize);//Dejan added this to process notes
+        // let currentSlide = {
+        //   title: '',
+        //   ctrTitle: '',
+        //   subTitle: '',
+        //   content: '',
+        //   notes: ''
+        // };
+        this.processSingleSlide(zip, filename, 0, this.slideSize).then((res) => {
+          let currentSlide = {
+            title: (res.title !== undefined) ? res.title : '',
+            ctrTitle: (res.ctrTitle !== undefined) ? res.ctrTitle : '',
+            subTitle: (res.subTitle !== undefined) ? res.subTitle : '',
+            content: res.result,
+            notes: ''
+          };
+          this.processSingleSlideNotes(zip, filename, 0, this.slideSize).then((res) => {
+            currentSlide.notes = res;
+            this.slides.push(currentSlide);
+            resolve({
+              firstSlide: this.slides[0],
+              noOfSlides: noOfSlides
+            });
+          }).catch((err) => {
+            console.log('Error', err);
+            reject(err);
+          });
+        }).catch((err) => {
+          console.log('Error', err);
+          reject(err);
+        });
+        // this.currentSlide.notes = this.processSingleSlideNotes(zip, filename, 0, this.slideSize);//Dejan added this to process notes
 
-        this.slides.push(this.currentSlide);
-        this.currentSlide = {
-          title: '',
-          ctrTitle: '',
-          subTitle: '',
-          content: '',
-          notes: ''
-        };
 
-        return {
-          firstSlide: this.slides[0],
-          noOfSlides: noOfSlides
-        }
+        // this.currentSlide = {
+        //   title: '',
+        //   ctrTitle: '',
+        //   subTitle: '',
+        //   content: '',
+        //   notes: ''
+        // };
+
+        // return {
+        //   firstSlide: this.slides[0],
+        //   noOfSlides: noOfSlides
+        // }
+      });
+      return myPromise;
     }
     //var MsgQueue = new Array();
 
     //var themeContent = null;
 
-    processPPTX(data) {
+  processPPTX(data) {
+    let myPromise = new Promise((resolve, reject) => {
 
-        let dateBefore = new Date();
+      let dateBefore = new Date();
 
-        let zip = new JSZip(data);
-        let startAtSlide = 1;
-        if (this.filesInfo === undefined) {//if convertFirstSlide was not called
-            this.filesInfo = this.getContentTypes(zip);
-            this.slideSize = this.getSlideSize(zip);
-            this.themeContent = this.loadTheme(zip);
-            startAtSlide = 0;
+      let zip = new JSZip(data);
+      let startAtSlide = 1;
+      if (this.filesInfo === undefined) {//if convertFirstSlide was not called
+          this.filesInfo = this.getContentTypes(zip);
+          this.slideSize = this.getSlideSize(zip);
+          this.themeContent = this.loadTheme(zip);
+          startAtSlide = 0;
+      }
+
+      //this.totalHtmlResult = '';
+
+      if (zip.file('docProps/thumbnail.jpeg') !== null) {
+          let pptxThumbImg = functions.base64ArrayBuffer(zip.file('docProps/thumbnail.jpeg').asArrayBuffer());
+  		//self.postMessage({
+  		//	"type": "pptx-thumb",
+  		//	"data": pptxThumbImg
+  		//});
+          //this.totalHtmlResult += pptxThumbImg;
+      }
+
+
+
+      this.totalHtmlResult += this.filesInfo;
+      this.totalHtmlResult += this.slideSize;
+      this.totalHtmlResult += this.themeContent;
+      //console.log('test' + this.totalHtmlResult);
+
+      this.slideHtml = '';//Dejan uncommented this to remove the first 'undefined'
+
+    	var numOfSlides = this.filesInfo["slides"].length;
+      let arrayOfPromisses = [];
+      for (let i=startAtSlide; i<numOfSlides; i++) {
+        let filename = this.filesInfo["slides"][i];
+
+        let promiseContentAndTitles = this.processSingleSlide(zip, filename, i, this.slideSize);
+        arrayOfPromisses.push(promiseContentAndTitles);
+        let promiseNotes = this.processSingleSlideNotes(zip, filename, i, this.slideSize);//Dejan added this to process notes
+        arrayOfPromisses.push(promiseNotes);
+      }
+
+      Promise.all(arrayOfPromisses).then((res) => {
+        for (let i = 0; i < res.length; i += 2) {
+          let currentSlide = {
+            title: (res[i].title !== undefined) ? res[i].title : '',
+            ctrTitle: (res[i].ctrTitle !== undefined) ? res[i].ctrTitle : '',
+            subTitle: (res[i].subTitle !== undefined) ? res[i].subTitle : '',
+            content: res[i].result,
+            notes: res[i + 1]
+          };
+          this.slides.push(currentSlide);
         }
-
-        //this.totalHtmlResult = '';
-
-        if (zip.file('docProps/thumbnail.jpeg') !== null) {
-            let pptxThumbImg = functions.base64ArrayBuffer(zip.file('docProps/thumbnail.jpeg').asArrayBuffer());
-    		//self.postMessage({
-    		//	"type": "pptx-thumb",
-    		//	"data": pptxThumbImg
-    		//});
-            //this.totalHtmlResult += pptxThumbImg;
-        }
+        resolve(this.slides);
+      }).catch((err) => {
+        console.log('Error', err);
+        reject(err);
+      });
 
 
+    	// for (var i=startAtSlide; i<numOfSlides; i++) {
+    	// 	var filename = this.filesInfo["slides"][i];
+      //
+      //   this.currentSlide.content = this.processSingleSlide(zip, filename, i, this.slideSize);
+      //   this.currentSlide.notes = this.processSingleSlideNotes(zip, filename, i, this.slideSize);//Dejan added this to process notes
+      //
+      //   // this.slideHtml += this.currentSlide.content +
+      //   // "<div class='pptx2html' style='position: relative;left:" + (this.slideSize.width + 5) + "px;top:-" + this.slideSize.height + "px;'><div></div>" +
+      //   // this.currentSlide.notes +
+      //   // "</div>";
+    	// 	//self.postMessage({
+    	// 	//	"type": "slide",
+    	// 	//	"data": slideHtml
+    	// 	//});
+    	// 	//self.postMessage({
+    	// 	//	"type": "progress-update",
+    	// 	//	"data": (i + 1) * 100 / numOfSlides
+    	// 	//});
+      //
+      //   this.slides.push(this.currentSlide);
+      //   this.currentSlide = {
+      //     title: '',
+      //     ctrTitle: '',
+      //     subTitle: '',
+      //     content: '',
+      //     notes: ''
+      //   };
+    	// }
+    // 	var dateAfter = new Date();
+  	// //self.postMessage({
+  	// //	"type": "ExecutionTime",
+  	// //	"data": dateAfter - dateBefore
+  	// //});
+    //   let ExecutionTime = dateAfter - dateBefore;
+    //   console.log('execution time: '+ExecutionTime);
+    //   // console.log('slideHtml', this.slideHtml);
+    //
+    //   //console.log('slideHtml'+this.slideHtml);
+    //   //console.log('slideHtml'+slideHtml+'this.totalHtmlResult'+this.totalHtmlResult);
+    //   //this.totalHtmlResult += slideHtml;
+    //   // return this.slideHtml;
+    //   return this.slides;
 
-    this.totalHtmlResult += this.filesInfo;
-    this.totalHtmlResult += this.slideSize;
-    this.totalHtmlResult += this.themeContent;
-    //console.log('test' + this.totalHtmlResult);
+      /*TODO:
+      ALt tags (content placeholders) for images: located in p:sld, p:cSld, p:spTree, p:pic, p:nvPicPr, p:cNvPr, attrs, descr:
+      background-color, see step 3 below
 
-    this.slideHtml = '';//Dejan uncommented this to remove the first 'undefined'
-
-	var numOfSlides = this.filesInfo["slides"].length;
-	for (var i=startAtSlide; i<numOfSlides; i++) {
-		var filename = this.filesInfo["slides"][i];
-
-    this.currentSlide.content = this.processSingleSlide(zip, filename, i, this.slideSize);
-    this.currentSlide.notes = this.processSingleSlideNotes(zip, filename, i, this.slideSize);//Dejan added this to process notes
-
-    this.slideHtml += this.currentSlide.content +
-    "<div class='pptx2html' style='position: relative;left:" + (this.slideSize.width + 5) + "px;top:-" + this.slideSize.height + "px;'><div></div>" +
-    this.currentSlide.notes +
-    "</div>";
-		//self.postMessage({
-		//	"type": "slide",
-		//	"data": slideHtml
-		//});
-		//self.postMessage({
-		//	"type": "progress-update",
-		//	"data": (i + 1) * 100 / numOfSlides
-		//});
-
-    this.slides.push(this.currentSlide);
-    this.currentSlide = {
-      title: '',
-      ctrTitle: '',
-      subTitle: '',
-      content: '',
-      notes: ''
-    };
-	}
-	var dateAfter = new Date();
-	//self.postMessage({
-	//	"type": "ExecutionTime",
-	//	"data": dateAfter - dateBefore
-	//});
-    let ExecutionTime = dateAfter - dateBefore;
-    console.log('execution time: '+ExecutionTime);
-    // console.log('slideHtml', this.slideHtml);
-
-    //console.log('slideHtml'+this.slideHtml);
-    //console.log('slideHtml'+slideHtml+'this.totalHtmlResult'+this.totalHtmlResult);
-    //this.totalHtmlResult += slideHtml;
-    // return this.slideHtml;
-    return this.slides;
-
-    /*TODO:
-    ALt tags (content placeholders) for images: located in p:sld, p:cSld, p:spTree, p:pic, p:nvPicPr, p:cNvPr, attrs, descr:
-    background-color, see step 3 below
-
-    */
-}
+      */
+    });
+    return myPromise;
+  }
 
 readXmlFile(zip, filename) {
     let x = new tXml(zip.file(filename).asText());
@@ -265,238 +329,294 @@ loadTheme(zip) {
 }
 
 processSingleSlide(zip, sldFileName, index, slideSize) {
+  let myPromise = new Promise((resolve, reject) => {
+  	//self.postMessage({
+  	//	"type": "INFO",
+  	//	"data": "Processing slide" + (index + 1)
+  	//});
 
-	//self.postMessage({
-	//	"type": "INFO",
-	//	"data": "Processing slide" + (index + 1)
-	//});
+  	// =====< Step 1 >=====
+  	// Read relationship filename of the slide (Get slideLayoutXX.xml)
+  	// @sldFileName: ppt/slides/slide1.xml
+  	// @resName: ppt/slides/_rels/slide1.xml.rels
 
-	// =====< Step 1 >=====
-	// Read relationship filename of the slide (Get slideLayoutXX.xml)
-	// @sldFileName: ppt/slides/slide1.xml
-	// @resName: ppt/slides/_rels/slide1.xml.rels
-	var resName = sldFileName.replace("slides/slide", "slides/_rels/slide") + ".rels";
-	var resContent = this.readXmlFile(zip, resName);
-	var RelationshipArray = resContent["Relationships"]["Relationship"];
-	var layoutFilename = "";
-	var slideResObj = {};
-	if (RelationshipArray.constructor === Array) {
-		for (var i=0; i<RelationshipArray.length; i++) {
-			switch (RelationshipArray[i]["attrs"]["Type"]) {
-				case "http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideLayout":
-					layoutFilename = RelationshipArray[i]["attrs"]["Target"].replace("../", "ppt/");
-					break;
-				case "http://schemas.openxmlformats.org/officeDocument/2006/relationships/notesSlide":
-				case "http://schemas.openxmlformats.org/officeDocument/2006/relationships/image":
-				case "http://schemas.openxmlformats.org/officeDocument/2006/relationships/chart":
-				case "http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink":
-				default:
-					slideResObj[RelationshipArray[i]["attrs"]["Id"]] = {
-						"type": RelationshipArray[i]["attrs"]["Type"].replace("http://schemas.openxmlformats.org/officeDocument/2006/relationships/", ""),
-						"target": RelationshipArray[i]["attrs"]["Target"].replace("../", "ppt/")
-					};
-			}
-		}
-	} else {
-		layoutFilename = RelationshipArray["attrs"]["Target"].replace("../", "ppt/");
-	}
+    let title = '';
+    let ctrTitle = '';
+    let subTitle = '';
 
-	// Open slideLayoutXX.xml
-	var slideLayoutContent = this.readXmlFile(zip, layoutFilename);
-	var slideLayoutTables = this.indexNodes(slideLayoutContent);
-	//debug(slideLayoutTables);
+  	var resName = sldFileName.replace("slides/slide", "slides/_rels/slide") + ".rels";
+  	var resContent = this.readXmlFile(zip, resName);
+  	var RelationshipArray = resContent["Relationships"]["Relationship"];
+  	var layoutFilename = "";
+  	var slideResObj = {};
+  	if (RelationshipArray.constructor === Array) {
+  		for (var i=0; i<RelationshipArray.length; i++) {
+  			switch (RelationshipArray[i]["attrs"]["Type"]) {
+  				case "http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideLayout":
+  					layoutFilename = RelationshipArray[i]["attrs"]["Target"].replace("../", "ppt/");
+  					break;
+  				case "http://schemas.openxmlformats.org/officeDocument/2006/relationships/notesSlide":
+  				case "http://schemas.openxmlformats.org/officeDocument/2006/relationships/image":
+  				case "http://schemas.openxmlformats.org/officeDocument/2006/relationships/chart":
+  				case "http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink":
+  				default:
+  					slideResObj[RelationshipArray[i]["attrs"]["Id"]] = {
+  						"type": RelationshipArray[i]["attrs"]["Type"].replace("http://schemas.openxmlformats.org/officeDocument/2006/relationships/", ""),
+  						"target": RelationshipArray[i]["attrs"]["Target"].replace("../", "ppt/")
+  					};
+  			}
+  		}
+  	} else {
+  		layoutFilename = RelationshipArray["attrs"]["Target"].replace("../", "ppt/");
+  	}
 
-	// =====< Step 2 >=====
-	// Read slide master filename of the slidelayout (Get slideMasterXX.xml)
-	// @resName: ppt/slideLayouts/slideLayout1.xml
-	// @masterName: ppt/slideLayouts/_rels/slideLayout1.xml.rels
-	var slideLayoutResFilename = layoutFilename.replace("slideLayouts/slideLayout", "slideLayouts/_rels/slideLayout") + ".rels";
-	var slideLayoutResContent = this.readXmlFile(zip, slideLayoutResFilename);
-	RelationshipArray = slideLayoutResContent["Relationships"]["Relationship"];
-	var masterFilename = "";
-	if (RelationshipArray.constructor === Array) {
-		for (var i=0; i<RelationshipArray.length; i++) {
-			switch (RelationshipArray[i]["attrs"]["Type"]) {
-				case "http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideMaster":
-					masterFilename = RelationshipArray[i]["attrs"]["Target"].replace("../", "ppt/");
-					break;
-				default:
-			}
-		}
-	} else {
-		masterFilename = RelationshipArray["attrs"]["Target"].replace("../", "ppt/");
-	}
-	// Open slideMasterXX.xml
-	var slideMasterContent = this.readXmlFile(zip, masterFilename);
-	var slideMasterTextStyles = this.getTextByPathList(slideMasterContent, ["p:sldMaster", "p:txStyles"]);
-	var slideMasterTables = this.indexNodes(slideMasterContent);
-	//debug(slideMasterTables);
+  	// Open slideLayoutXX.xml
+  	var slideLayoutContent = this.readXmlFile(zip, layoutFilename);
+  	var slideLayoutTables = this.indexNodes(slideLayoutContent);
+  	//debug(slideLayoutTables);
+
+  	// =====< Step 2 >=====
+  	// Read slide master filename of the slidelayout (Get slideMasterXX.xml)
+  	// @resName: ppt/slideLayouts/slideLayout1.xml
+  	// @masterName: ppt/slideLayouts/_rels/slideLayout1.xml.rels
+  	var slideLayoutResFilename = layoutFilename.replace("slideLayouts/slideLayout", "slideLayouts/_rels/slideLayout") + ".rels";
+  	var slideLayoutResContent = this.readXmlFile(zip, slideLayoutResFilename);
+  	RelationshipArray = slideLayoutResContent["Relationships"]["Relationship"];
+  	var masterFilename = "";
+  	if (RelationshipArray.constructor === Array) {
+  		for (var i=0; i<RelationshipArray.length; i++) {
+  			switch (RelationshipArray[i]["attrs"]["Type"]) {
+  				case "http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideMaster":
+  					masterFilename = RelationshipArray[i]["attrs"]["Target"].replace("../", "ppt/");
+  					break;
+  				default:
+  			}
+  		}
+  	} else {
+  		masterFilename = RelationshipArray["attrs"]["Target"].replace("../", "ppt/");
+  	}
+  	// Open slideMasterXX.xml
+  	var slideMasterContent = this.readXmlFile(zip, masterFilename);
+  	var slideMasterTextStyles = this.getTextByPathList(slideMasterContent, ["p:sldMaster", "p:txStyles"]);
+  	var slideMasterTables = this.indexNodes(slideMasterContent);
+  	//debug(slideMasterTables);
 
 
-	// =====< Step 3 >=====
-	var content = this.readXmlFile(zip, sldFileName);
-    //console.log('bgcolor check, content = ' + content+ ', path = ' + ["p:sld", "p:cSld", "p:bg", "p:bgPr", "a:solidFill", "a:srgbClr", "attrs", "val"] );
-    //console.log(content);
-	var bgColor = this.getTextByPathList(content, ["p:sld", "p:cSld", "p:bg", "p:bgPr", "a:solidFill", "a:srgbClr", "attrs", "val"]);
-	if (bgColor === undefined) {
-        //klaas: try scheme color == needs convertion to HEX RGB!!! e.g. accent2 is dark-red in default schemeClr
-        //this is an improvement over PPTX2HTML, however, the drawback is that the colors can be incorrect if a different scheme is assigned.
-        bgColor = this.getTextByPathList(content, ["p:sld", "p:cSld", "p:bg", "p:bgPr", "a:solidFill", "a:schemeClr", "attrs", "val"]);
+  	// =====< Step 3 >=====
+  	var content = this.readXmlFile(zip, sldFileName);
+      //console.log('bgcolor check, content = ' + content+ ', path = ' + ["p:sld", "p:cSld", "p:bg", "p:bgPr", "a:solidFill", "a:srgbClr", "attrs", "val"] );
+      //console.log(content);
+  	var bgColor = this.getTextByPathList(content, ["p:sld", "p:cSld", "p:bg", "p:bgPr", "a:solidFill", "a:srgbClr", "attrs", "val"]);
+  	if (bgColor === undefined) {
+          //klaas: try scheme color == needs convertion to HEX RGB!!! e.g. accent2 is dark-red in default schemeClr
+          //this is an improvement over PPTX2HTML, however, the drawback is that the colors can be incorrect if a different scheme is assigned.
+          bgColor = this.getTextByPathList(content, ["p:sld", "p:cSld", "p:bg", "p:bgPr", "a:solidFill", "a:schemeClr", "attrs", "val"]);
 
-        //assign default scheme RGB color codes for powerpoint 2016 for mac
-        //this does not work well if people change the default color scheme, or if they apply a different theme
-        switch(bgColor){
-        case 'bg1':
-            bgColor = "FFFFFF";
-            break;
-        case 'tx1':
-            bgColor = "000000";
-            break;
-        case 'bg2':
-            bgColor = "E7E6E6";
-            break;
-        case 'tx2':
-            bgColor = "44546A";
-            break;
-        case 'accent1':
-            bgColor = "5B9BD5";
-            break;
-        case 'accent2':
-            bgColor = "ED7D31";
-            break;
-        case 'accent3':
-            bgColor = "A5A5A5";
-            break;
-        case 'accent4':
-            bgColor = "FFC000";
-            break;
-        case 'accent5':
-            bgColor = "4472C4";
-            break;
-        case 'accent6':
-            bgColor = "70AD47";
-            break;
-        }
-        if (bgColor === undefined) {
-		    bgColor = "FFFFFF";
-        }
-	}
-	var nodes = content["p:sld"]["p:cSld"]["p:spTree"];
-	var warpObj = {
-		"zip": zip,
-		"slideLayoutTables": slideLayoutTables,
-		"slideMasterTables": slideMasterTables,
-		"slideResObj": slideResObj,
-		"slideMasterTextStyles": slideMasterTextStyles
-	};
+          //assign default scheme RGB color codes for powerpoint 2016 for mac
+          //this does not work well if people change the default color scheme, or if they apply a different theme
+          switch(bgColor){
+          case 'bg1':
+              bgColor = "FFFFFF";
+              break;
+          case 'tx1':
+              bgColor = "000000";
+              break;
+          case 'bg2':
+              bgColor = "E7E6E6";
+              break;
+          case 'tx2':
+              bgColor = "44546A";
+              break;
+          case 'accent1':
+              bgColor = "5B9BD5";
+              break;
+          case 'accent2':
+              bgColor = "ED7D31";
+              break;
+          case 'accent3':
+              bgColor = "A5A5A5";
+              break;
+          case 'accent4':
+              bgColor = "FFC000";
+              break;
+          case 'accent5':
+              bgColor = "4472C4";
+              break;
+          case 'accent6':
+              bgColor = "70AD47";
+              break;
+          }
+          if (bgColor === undefined) {
+  		    bgColor = "FFFFFF";
+          }
+  	}
+  	var nodes = content["p:sld"]["p:cSld"]["p:spTree"];
+  	var warpObj = {
+  		"zip": zip,
+  		"slideLayoutTables": slideLayoutTables,
+  		"slideMasterTables": slideMasterTables,
+  		"slideResObj": slideResObj,
+  		"slideMasterTextStyles": slideMasterTextStyles
+  	};
 
-	//var result = "<section style='position: absolute;width:" + slideSize.width + "px; height:" + slideSize.height + "px; background-color: #" + bgColor + "'>"
+  	//var result = "<section style='position: absolute;width:" + slideSize.width + "px; height:" + slideSize.height + "px; background-color: #" + bgColor + "'>"
     //var result = "<div style='position: absolute;width:" + slideSize.width + "px; height:" + slideSize.height + "px; background-color: #" + bgColor + "'>"
     //var result = "<div style='position: absolute;border-style: dotted; background-color: #" + bgColor + "' >"
     //var result = "<div style='position: absolute;border-style: dotted; background-color: #" + bgColor + "' >"
     var result = "<div class='pptx2html' style='position: relative;width:" + slideSize.width + "px; height:" + slideSize.height + "px; background-color: #" + bgColor + "'><div></div>"
 
+    let arrayOfPromisses = [];
+  	for (var nodeKey in nodes) {
+          let that = this;
+  		if (nodes[nodeKey].constructor === Array) {
 
-	for (var nodeKey in nodes) {
-        let that = this;
-		if (nodes[nodeKey].constructor === Array) {
-			for (var i=0; i<nodes[nodeKey].length; i++) {
-                //console.log('nodeinslide' . nodes);
-				result += that.processNodesInSlide(nodeKey, nodes[nodeKey][i], warpObj);
-			}
-		} else {
-			result += that.processNodesInSlide(nodeKey, nodes[nodeKey], warpObj);
-            //console.log('nodeinslide');
-		}
-	}
+        for (var i=0; i<nodes[nodeKey].length; i++) {
+          let promise = this.processNodesInSlide(nodeKey, nodes[nodeKey][i], warpObj);
+          arrayOfPromisses.push(promise);
+  			}
+
+  		} else {
+        let promise = this.processNodesInSlide(nodeKey, nodes[nodeKey], warpObj)
+        arrayOfPromisses.push(promise);
+                      //console.log('nodeinslide');
+  		}
+  	}
+
+    Promise.all(arrayOfPromisses).then((res) => {
+      for (let i = 0; i < res.length; i++) {
+        let resultAndTitles = res[i];
+
+        if (title === '') {
+          title = resultAndTitles.title;
+        }
+        if (ctrTitle === '') {
+          ctrTitle = resultAndTitles.ctrTitle;
+        }
+        if (subTitle === '') {
+          subTitle = resultAndTitles.subTitle;
+        }
+        result += resultAndTitles.result;
+      }
+      result += "</div>";
+      resolve({
+        result: result,
+        title: title,
+        ctrTitle: ctrTitle,
+        subTitle: subTitle
+      });
+    }).catch((err) => {
+      console.log('Error', err);
+      reject(err);
+    });
+
 
 	//return result + "</section>";
-    return result + "</div>";
+
+  });
+  return myPromise;
 }
 
 processSingleSlideNotes(zip, sldFileName, index, slideSize) {
+  let myPromise = new Promise((resolve, reject) => {
+  	var resName = sldFileName.replace("slides/slide", "slides/_rels/slide") + ".rels";
+  	var resContent = this.readXmlFile(zip, resName);
+  	var RelationshipArray = resContent["Relationships"]["Relationship"];
+    var slideResObj = {}; // Added by Luis - this should take another mnemonic name.
+    var notesFilename = "";
 
-	var resName = sldFileName.replace("slides/slide", "slides/_rels/slide") + ".rels";
-	var resContent = this.readXmlFile(zip, resName);
-	var RelationshipArray = resContent["Relationships"]["Relationship"];
-  var slideResObj = {}; // Added by Luis - this should take another mnemonic name.
-  var notesFilename = "";
-
-	if (RelationshipArray.constructor === Array) {
-		for (var i=0; i<RelationshipArray.length; i++) {
-			switch (RelationshipArray[i]["attrs"]["Type"]) {
-				case "http://schemas.openxmlformats.org/officeDocument/2006/relationships/notesSlide":
-					notesFilename = RelationshipArray[i]["attrs"]["Target"].replace("../", "ppt/");
-					break;
-				default:
-          slideResObj[RelationshipArray[i]["attrs"]["Id"]] = {
-            "type": RelationshipArray[i]["attrs"]["Type"].replace("http://schemas.openxmlformats.org/officeDocument/2006/relationships/", ""),
-            "target": RelationshipArray[i]["attrs"]["Target"].replace("../", "ppt/")
-          };
-			}
-		}
-	}
-
-  var notes = "";
-  if (notesFilename !== "") {
-    // Open notesSlideXX.xml
-    // var notesSlideContent = this.readXmlFile(zip, notesFilename);
-    // var notesSlideTables = this.indexNodes(notesSlideContent);
-
-    //THIS IS LIKE STEP 2 FOR NOTES
-    // var notesSlideResFilename = notesFilename.replace("notesSlides/notesSlide", "notesSlides/_rels/notesSlide") + ".rels";
-  	// var notesSlideResContent = this.readXmlFile(zip, notesSlideResFilename);
-  	// RelationshipArray = notesSlideResContent["Relationships"]["Relationship"];
+  	if (RelationshipArray.constructor === Array) {
+  		for (var i=0; i<RelationshipArray.length; i++) {
+  			switch (RelationshipArray[i]["attrs"]["Type"]) {
+  				case "http://schemas.openxmlformats.org/officeDocument/2006/relationships/notesSlide":
+  					notesFilename = RelationshipArray[i]["attrs"]["Target"].replace("../", "ppt/");
+  					break;
+  				default:
+            slideResObj[RelationshipArray[i]["attrs"]["Id"]] = {
+              "type": RelationshipArray[i]["attrs"]["Type"].replace("http://schemas.openxmlformats.org/officeDocument/2006/relationships/", ""),
+              "target": RelationshipArray[i]["attrs"]["Target"].replace("../", "ppt/")
+            };
+  			}
+  		}
+  	}
 
 
-  	// var notesMasterFilename = "";
-  	// if (RelationshipArray.constructor === Array) {
-  	// 	for (var i=0; i<RelationshipArray.length; i++) {
-  	// 		switch (RelationshipArray[i]["attrs"]["Type"]) {
-  	// 			case "http://schemas.openxmlformats.org/officeDocument/2006/relationships/notesMaster":
-  	// 				notesMasterFilename = RelationshipArray[i]["attrs"]["Target"].replace("../", "ppt/");
-  	// 				break;
-  	// 			default:
-  	// 		}
-  	// 	}
-  	// } else {
-  	// 	notesMasterFilename = RelationshipArray["attrs"]["Target"].replace("../", "ppt/");
-  	// }
-  	// Open notesMasterXX.xml
-  	// var notesMasterContent = this.readXmlFile(zip, notesMasterFilename);
-    //THERE ARE NO TXSTYLES IN THE FILE
-  	// var notesMasterTextStyles = this.getTextByPathList(notesMasterContent, ["p:sldMaster", "p:txStyles"]);
-  	// var notesMasterTables = this.indexNodes(notesMasterContent);
+    var notes = "";
+    if (notesFilename !== "") {
+      // Open notesSlideXX.xml
+      // var notesSlideContent = this.readXmlFile(zip, notesFilename);
+      // var notesSlideTables = this.indexNodes(notesSlideContent);
 
-    //THIS IS LIKE STEP 3 FOR NOTES
-    var notesContent = this.readXmlFile(zip, notesFilename);
-    var notesNodes = notesContent["p:notes"]["p:cSld"]["p:spTree"];
-    // console.log(notesNodes);
+      //THIS IS LIKE STEP 2 FOR NOTES
+      // var notesSlideResFilename = notesFilename.replace("notesSlides/notesSlide", "notesSlides/_rels/notesSlide") + ".rels";
+    	// var notesSlideResContent = this.readXmlFile(zip, notesSlideResFilename);
+    	// RelationshipArray = notesSlideResContent["Relationships"]["Relationship"];
 
-    var notesWarpObj = {
-      "zip": zip,
-      // "slideResObj": slideResObj
-      //"slideMasterTables": notesMasterTables// Don't use notes master settings - we probably won't display it as in the PowerPoint Notes Page (with slide image, slide number, date,...)
-    };
 
-    for (var nodeKey in notesNodes) {
-      let that = this;
-      if (notesNodes[nodeKey].constructor === Array) {
-        for (var i=0; i<notesNodes[nodeKey].length; i++) {
-          // Extract only nodes with notes (disregard Slide Image, Slide Number,... )
-        	if (that.isNodeNotesPlaceholder(notesNodes[nodeKey][i])) {
-            notes += that.processNodesInSlide(nodeKey, notesNodes[nodeKey][i], notesWarpObj);
+    	// var notesMasterFilename = "";
+    	// if (RelationshipArray.constructor === Array) {
+    	// 	for (var i=0; i<RelationshipArray.length; i++) {
+    	// 		switch (RelationshipArray[i]["attrs"]["Type"]) {
+    	// 			case "http://schemas.openxmlformats.org/officeDocument/2006/relationships/notesMaster":
+    	// 				notesMasterFilename = RelationshipArray[i]["attrs"]["Target"].replace("../", "ppt/");
+    	// 				break;
+    	// 			default:
+    	// 		}
+    	// 	}
+    	// } else {
+    	// 	notesMasterFilename = RelationshipArray["attrs"]["Target"].replace("../", "ppt/");
+    	// }
+    	// Open notesMasterXX.xml
+    	// var notesMasterContent = this.readXmlFile(zip, notesMasterFilename);
+      //THERE ARE NO TXSTYLES IN THE FILE
+    	// var notesMasterTextStyles = this.getTextByPathList(notesMasterContent, ["p:sldMaster", "p:txStyles"]);
+    	// var notesMasterTables = this.indexNodes(notesMasterContent);
+
+      //THIS IS LIKE STEP 3 FOR NOTES
+      var notesContent = this.readXmlFile(zip, notesFilename);
+      var notesNodes = notesContent["p:notes"]["p:cSld"]["p:spTree"];
+      // console.log(notesNodes);
+
+      var notesWarpObj = {
+        "zip": zip,
+        // "slideResObj": slideResObj
+        //"slideMasterTables": notesMasterTables// Don't use notes master settings - we probably won't display it as in the PowerPoint Notes Page (with slide image, slide number, date,...)
+      };
+      let arrayOfPromisses = [];
+      for (var nodeKey in notesNodes) {
+        let that = this;
+        if (notesNodes[nodeKey].constructor === Array) {
+
+          for (var i=0; i<notesNodes[nodeKey].length; i++) {
+            // Extract only nodes with notes (disregard Slide Image, Slide Number,... )
+            if (that.isNodeNotesPlaceholder(notesNodes[nodeKey][i])) {
+              let promise = that.processNodesInSlide(nodeKey, notesNodes[nodeKey][i], notesWarpObj);
+              arrayOfPromisses.push(promise);
+            }
+    			}
+
+        } else {
+          if (that.isNodeNotesPlaceholder(notesNodes[nodeKey])) {
+            let promise = that.processNodesInSlide(nodeKey, notesNodes[nodeKey], notesWarpObj);
+            arrayOfPromisses.push(promise);
           }
         }
-      } else {
-        if (that.isNodeNotesPlaceholder(notesNodes[nodeKey])) {
-          notes += that.processNodesInSlide(nodeKey, notesNodes[nodeKey], notesWarpObj);
-        }
       }
+      Promise.all(arrayOfPromisses).then((res) => {
+        for (let i = 0; i < res.length; i++) {
+          notes += res.result;
+        }
+        notes += "</div>";
+        resolve(notes);
+      }).catch((err) => {
+        console.log('Error', err);
+        reject(err);
+      });
+    } else {
+      resolve (notes);
     }
-  }
 
-  return notes;
+  });
+  return myPromise;
 }
 
 isNodeNotesPlaceholder(node) {//test if the node is a notes placeholder
@@ -567,64 +687,180 @@ indexNodes(content) {
 }
 
 processNodesInSlide(nodeKey, nodeValue, warpObj) {
+  let myPromise = new Promise((resolve, reject) => {
+  	var result = "";
 
-	var result = "";
-
-	switch (nodeKey) {
-		case "p:sp":	// Shape, Text
-			result = this.processSpNode(nodeValue, warpObj);
-			break;
-		case "p:cxnSp":	// Shape, Text (with connection)
-			result = this.processCxnSpNode(nodeValue, warpObj);
-			break;
-		case "p:pic":	// Picture
-			result = this.processPicNode(nodeValue, warpObj);
-			break;
-		case "p:graphicFrame":	// Chart, Diagram, Table
-			result = this.processGraphicFrameNode(nodeValue, warpObj);
-			break;
-		case "p:grpSp":	// 群組
-			result = this.processGroupSpNode(nodeValue, warpObj);
-			break;
-		default:
-	}
-
-	return result;
+    let title = '';
+    let ctrTitle = '';
+    let subTitle = '';
+    let resultAndTitles;
+  	switch (nodeKey) {
+  		case "p:sp":	// Shape, Text
+        resultAndTitles = this.processSpNode(nodeValue, warpObj);
+        var result = resultAndTitles.result;
+        if (title === '') {
+          title = resultAndTitles.title;
+        }
+        if (ctrTitle === '') {
+          ctrTitle = resultAndTitles.ctrTitle;
+        }
+        if (subTitle === '') {
+          subTitle = resultAndTitles.subTitle;
+        }
+        resolve ({
+          result: result,
+          title: title,
+          ctrTitle: ctrTitle,
+          subTitle: subTitle
+        });
+  			break;
+  		case "p:cxnSp":	// Shape, Text (with connection)
+        resultAndTitles = this.processCxnSpNode(nodeValue, warpObj);
+        var result = resultAndTitles.result;
+        if (title === '') {
+          title = resultAndTitles.title;
+        }
+        if (ctrTitle === '') {
+          ctrTitle = resultAndTitles.ctrTitle;
+        }
+        if (subTitle === '') {
+          subTitle = resultAndTitles.subTitle;
+        }
+        resolve ({
+          result: result,
+          title: title,
+          ctrTitle: ctrTitle,
+          subTitle: subTitle
+        });
+  			break;
+  		case "p:pic":	// Picture
+  			this.processPicNode(nodeValue, warpObj).then((res) => {
+          resolve ({result: res});
+        }).catch((err) => {
+          console.log('Error', err);
+          reject(err);
+        });
+  			break;
+  		case "p:graphicFrame":	// Chart, Diagram, Table
+        resultAndTitles = this.processGraphicFrameNode(nodeValue, warpObj);
+        var result = resultAndTitles.result;
+        if (title === '') {
+          title = resultAndTitles.title;
+        }
+        if (ctrTitle === '') {
+          ctrTitle = resultAndTitles.ctrTitle;
+        }
+        if (subTitle === '') {
+          subTitle = resultAndTitles.subTitle;
+        }
+        resolve ({
+          result: result,
+          title: title,
+          ctrTitle: ctrTitle,
+          subTitle: subTitle
+        });
+  			break;
+  		case "p:grpSp":	// 群組
+        resultAndTitles = this.processGroupSpNode(nodeValue, warpObj);
+        var result = resultAndTitles.result;
+        if (title === '') {
+          title = resultAndTitles.title;
+        }
+        if (ctrTitle === '') {
+          ctrTitle = resultAndTitles.ctrTitle;
+        }
+        if (subTitle === '') {
+          subTitle = resultAndTitles.subTitle;
+        }
+        resolve ({
+          result: result,
+          title: title,
+          ctrTitle: ctrTitle,
+          subTitle: subTitle
+        });
+  			break;
+  		default:
+        resolve ({
+          result: result,
+          title: title,
+          ctrTitle: ctrTitle,
+          subTitle: subTitle
+        });
+  	}
+  });
+  return myPromise;
 
 }
 
 processGroupSpNode(node, warpObj) {
+  let myPromise = new Promise((resolve, reject) => {
+  	var factor = 96 / 914400;
 
-	var factor = 96 / 914400;
+  	var xfrmNode = node["p:grpSpPr"]["a:xfrm"];
+  	var x = parseInt(xfrmNode["a:off"]["attrs"]["x"]) * factor;
+  	var y = parseInt(xfrmNode["a:off"]["attrs"]["y"]) * factor;
+  	var chx = parseInt(xfrmNode["a:chOff"]["attrs"]["x"]) * factor;
+  	var chy = parseInt(xfrmNode["a:chOff"]["attrs"]["y"]) * factor;
+  	var cx = parseInt(xfrmNode["a:ext"]["attrs"]["cx"]) * factor;
+  	var cy = parseInt(xfrmNode["a:ext"]["attrs"]["cy"]) * factor;
+  	var chcx = parseInt(xfrmNode["a:chExt"]["attrs"]["cx"]) * factor;
+  	var chcy = parseInt(xfrmNode["a:chExt"]["attrs"]["cy"]) * factor;
 
-	var xfrmNode = node["p:grpSpPr"]["a:xfrm"];
-	var x = parseInt(xfrmNode["a:off"]["attrs"]["x"]) * factor;
-	var y = parseInt(xfrmNode["a:off"]["attrs"]["y"]) * factor;
-	var chx = parseInt(xfrmNode["a:chOff"]["attrs"]["x"]) * factor;
-	var chy = parseInt(xfrmNode["a:chOff"]["attrs"]["y"]) * factor;
-	var cx = parseInt(xfrmNode["a:ext"]["attrs"]["cx"]) * factor;
-	var cy = parseInt(xfrmNode["a:ext"]["attrs"]["cy"]) * factor;
-	var chcx = parseInt(xfrmNode["a:chExt"]["attrs"]["cx"]) * factor;
-	var chcy = parseInt(xfrmNode["a:chExt"]["attrs"]["cy"]) * factor;
+  	var order = node["attrs"]["order"];
 
-	var order = node["attrs"]["order"];
+  	var result = "<div class='block group' style='position: absolute;z-index: " + order + "; top: " + (y - chy) + "px; left: " + (x - chx) + "px; width: " + (cx - chcx) + "px; height: " + (cy - chcy) + "px;'>";
 
-	var result = "<div class='block group' style='position: absolute;z-index: " + order + "; top: " + (y - chy) + "px; left: " + (x - chx) + "px; width: " + (cx - chcx) + "px; height: " + (cy - chcy) + "px;'>";
+    let title = '';
+    let ctrTitle = '';
+    let subTitle = '';
 
-	// Procsee all child nodes
-	for (var nodeKey in node) {
-		if (node[nodeKey].constructor === Array) {
-			for (var i=0; i<node[nodeKey].length; i++) {
-				result += this.processNodesInSlide(nodeKey, node[nodeKey][i], warpObj);
-			}
-		} else {
-			result += this.processNodesInSlide(nodeKey, node[nodeKey], warpObj);
-		}
-	}
+    let arrayOfPromisses = [];
+  	// Procsee all child nodes
+  	for (var nodeKey in node) {
+  		if (node[nodeKey].constructor === Array) {
 
-	result += "</div>";
+        for (var i=0; i<node[nodeKey].length; i++) {
+          let promise = this.processNodesInSlide(nodeKey, node[nodeKey][i], warpObj);
+          arrayOfPromisses.push(promise);
+  			}
 
-	return result;
+  		} else {
+        let promise = this.processNodesInSlide(nodeKey, node[nodeKey], warpObj);
+        arrayOfPromisses.push(promise);
+  		}
+  	}
+
+    Promise.all(arrayOfPromisses).then((res) => {
+      for (let i = 0; i < res.length; i++) {
+        let resultAndTitles = res[i];
+
+        if (title === '') {
+          title = resultAndTitles.title;
+        }
+        if (ctrTitle === '') {
+          ctrTitle = resultAndTitles.ctrTitle;
+        }
+        if (subTitle === '') {
+          subTitle = resultAndTitles.subTitle;
+        }
+        result += resultAndTitles.result;
+      }
+
+      result += "</div>";
+      resolve({
+        result: result,
+        title: title,
+        ctrTitle: ctrTitle,
+        subTitle: subTitle
+      });
+    }).catch((err) => {
+      console.log('Error', err);
+      reject(err);
+    });
+
+  });
+
+  return myPromise;
 }
 
 processSpNode(node, warpObj) {
@@ -649,6 +885,10 @@ processSpNode(node, warpObj) {
 
 	var slideLayoutSpNode = undefined;
 	var slideMasterSpNode = undefined;
+
+  let title = '';
+  let ctrTitle = '';
+  let subTitle = '';
 
 	if (type !== undefined) {
 		if (idx !== undefined) {//Dejan thinks there might be something wrong with this below (same assignment in both cases)
@@ -689,7 +929,23 @@ processSpNode(node, warpObj) {
 	this.debug( {"id": id, "name": name, "idx": idx, "type": type, "order": order} );
 	//debug( JSON.stringify( node ) );
 
-	return this.genShape(node, slideLayoutSpNode, slideMasterSpNode, id, name, idx, type, order, warpObj);
+  let resultAndTitles = this.genShape(node, slideLayoutSpNode, slideMasterSpNode, id, name, idx, type, order, warpObj);
+  var result = resultAndTitles.result;
+  if (title === '') {
+    title = resultAndTitles.title;
+  }
+  if (ctrTitle === '') {
+    ctrTitle = resultAndTitles.ctrTitle;
+  }
+  if (subTitle === '') {
+    subTitle = resultAndTitles.subTitle;
+  }
+	return {
+    result: result,
+    title: title,
+    ctrTitle: ctrTitle,
+    subTitle: subTitle
+  };
 }
 
 processCxnSpNode(node, warpObj) {
@@ -702,8 +958,28 @@ processCxnSpNode(node, warpObj) {
 	var order = node["attrs"]["order"];
 
 	this.debug( {"id": id, "name": name, "order": order} );
+  let title = '';
+  let ctrTitle = '';
+  let subTitle = '';
 
-	return this.genShape(node, undefined, undefined, id, name, undefined, undefined, order, warpObj);
+  let resultAndTitles = this.genShape(node, undefined, undefined, id, name, undefined, undefined, order, warpObj);
+  var result = resultAndTitles.result;
+  if (title === '') {
+    title = resultAndTitles.title;
+  }
+  if (ctrTitle === '') {
+    ctrTitle = resultAndTitles.ctrTitle;
+  }
+  if (subTitle === '') {
+    subTitle = resultAndTitles.subTitle;
+  }
+	return {
+    result: result,
+    title: title,
+    ctrTitle: ctrTitle,
+    subTitle: subTitle
+  };
+
 }
 
 genShape(node, slideLayoutSpNode, slideMasterSpNode, id, name, idx, type, order, warpObj) {
@@ -720,6 +996,10 @@ genShape(node, slideLayoutSpNode, slideMasterSpNode, id, name, idx, type, order,
 	if ( this.getTextByPathList(slideXfrmNode, ["attrs", "flipV"]) === "1" || this.getTextByPathList(slideXfrmNode, ["attrs", "flipH"]) === "1") {
 		isFlipV = true;
 	}
+
+  let title = '';
+  let ctrTitle = '';
+  let subTitle = '';
 
 	if (shapType !== undefined) {
 
@@ -1023,7 +1303,18 @@ genShape(node, slideLayoutSpNode, slideMasterSpNode, id, name, idx, type, order,
 
 		// TextBody
 		if (node["p:txBody"] !== undefined) {
-			result += this.genTextBody(node["p:txBody"], slideLayoutSpNode, slideMasterSpNode, type, warpObj, false);
+      let resultAndTitles = this.genTextBody(node["p:txBody"], slideLayoutSpNode, slideMasterSpNode, type, warpObj, false);
+      var text = resultAndTitles.result;
+      if (title === '') {
+        title = resultAndTitles.title;
+      }
+      if (ctrTitle === '') {
+        ctrTitle = resultAndTitles.ctrTitle;
+      }
+      if (subTitle === '') {
+        subTitle = resultAndTitles.subTitle;
+      }
+			result += text
 		}
 		result += "</div>";
 
@@ -1033,7 +1324,18 @@ genShape(node, slideLayoutSpNode, slideMasterSpNode, id, name, idx, type, order,
     const createList = (slideLayoutSpNode !== undefined);//notes are not bulleted by default as slides are
     // TextBody
     if (node["p:txBody"] !== undefined) {
-      textBody = this.genTextBody(node["p:txBody"], slideLayoutSpNode, slideMasterSpNode, type, warpObj, createList);
+      let resultAndTitles = this.genTextBody(node["p:txBody"], slideLayoutSpNode, slideMasterSpNode, type, warpObj, createList);
+      var textBody = resultAndTitles.result;
+      if (title === '') {
+        title = resultAndTitles.title;
+      }
+      if (ctrTitle === '') {
+        ctrTitle = resultAndTitles.ctrTitle;
+      }
+      if (subTitle === '') {
+        subTitle = resultAndTitles.subTitle;
+      }
+
     }
     if (textBody !== undefined && textBody !== "") {//Dejan added this to prevent creation of some undefined and empty elements
     		result += "<div class='block content " + this.getVerticalAlign(node, slideLayoutSpNode, slideMasterSpNode, type) +
@@ -1051,59 +1353,139 @@ genShape(node, slideLayoutSpNode, slideMasterSpNode, id, name, idx, type, order,
 
 	}
 
-	return result;
+	return {
+    result: result,
+    title: title,
+    ctrTitle: ctrTitle,
+    subTitle: subTitle
+  };
 }
 
 processPicNode(node, warpObj) {
 
 	//debug( JSON.stringify( node ) );
+  let myPromise = new Promise((resolve, reject) => {
+  	var order = node["attrs"]["order"];
 
-	var order = node["attrs"]["order"];
+  	var rid = node["p:blipFill"]["a:blip"]["attrs"]["r:embed"];
+  	var imgName = warpObj["slideResObj"][rid]["target"];
+  	var imgFileExt = functions.extractFileExtension(imgName).toLowerCase();
+  	var zip = warpObj["zip"];
+  	var imgArrayBuffer = zip.file(imgName).asArrayBuffer();
+  	var mimeType = "";
+  	var xfrmNode = node["p:spPr"]["a:xfrm"];
+  	switch (imgFileExt) {
+  		case "jpg":
+  		case "jpeg":
+  			mimeType = "image/jpeg";
+  			break;
+  		case "png":
+  			mimeType = "image/png";
+  			break;
+  		case "gif":
+  			mimeType = "image/gif";
+  			break;
+  		case "emf": // Not native support
+  			mimeType = "image/x-emf";
+  			break;
+  		case "wmf": // Not native support
+  			mimeType = "image/x-wmf";
+  			break;
+  		default:
+  			mimeType = "image/*";
+  	}
 
-	var rid = node["p:blipFill"]["a:blip"]["attrs"]["r:embed"];
-	var imgName = warpObj["slideResObj"][rid]["target"];
-	var imgFileExt = functions.extractFileExtension(imgName).toLowerCase();
-	var zip = warpObj["zip"];
-	var imgArrayBuffer = zip.file(imgName).asArrayBuffer();
-	var mimeType = "";
-	var xfrmNode = node["p:spPr"]["a:xfrm"];
-	switch (imgFileExt) {
-		case "jpg":
-		case "jpeg":
-			mimeType = "image/jpeg";
-			break;
-		case "png":
-			mimeType = "image/png";
-			break;
-		case "gif":
-			mimeType = "image/gif";
-			break;
-		case "emf": // Not native support
-			mimeType = "image/x-emf";
-			break;
-		case "wmf": // Not native support
-			mimeType = "image/x-wmf";
-			break;
-		default:
-			mimeType = "image/*";
-	}
+    // const imagePath = this.saveImageToFile(imgName, zip);
+    this.sendImageToFileService(imgName, zip).then((imagePath) => {
+      //Dejan added this to create the img alt tag
+      var descr = node["p:nvPicPr"]["p:cNvPr"]["attrs"]["descr"];
+      var altTag = "";
+      if (descr !== undefined) {
+        altTag = " alt=\"" + descr + "\"";
+      }
 
-  const imagePath = this.saveImageToFile(imgName, zip);
+    	resolve ("<div class='block content' style='position: absolute;" + this.getPosition(xfrmNode, undefined, undefined) + this.getSize(xfrmNode, undefined, undefined) +
+    			" z-index: " + order + ";" +
+    			// "'><img src=\"data:" + mimeType + ";base64," + functions.base64ArrayBuffer(imgArrayBuffer) + "\" style='position: absolute;width: 100%; height: 100%'" +
+          // "'><img src=\"http://" + imagePath + "\" style='position: absolute;width: 100%; height: 100%'" +
+          "'><img src=\"" + imagePath + "\" style='width: 100%; height: 100%'" +
+              altTag +
+              "/></div>");
 
-  //Dejan added this to create the img alt tag
-  var descr = node["p:nvPicPr"]["p:cNvPr"]["attrs"]["descr"];
-  var altTag = "";
-  if (descr !== undefined) {
-    altTag = " alt=\"" + descr + "\"";
-  }
+    }).catch((err) => {
+      console.log('Error', err);
+      reject(err);
+    });
+  });
 
-	return "<div class='block content' style='position: absolute;" + this.getPosition(xfrmNode, undefined, undefined) + this.getSize(xfrmNode, undefined, undefined) +
-			" z-index: " + order + ";" +
-			// "'><img src=\"data:" + mimeType + ";base64," + functions.base64ArrayBuffer(imgArrayBuffer) + "\" style='position: absolute;width: 100%; height: 100%'" +
-      // "'><img src=\"http://" + imagePath + "\" style='position: absolute;width: 100%; height: 100%'" +
-      "'><img src=\"http://" + imagePath + "\" style='width: 100%; height: 100%'" +
-          altTag +
-          "/></div>";
+  return myPromise;
+}
+
+sendImageToFileService(imgName, zip) {
+  let Microservices = require('../../configs/microservices');
+  let rp = require('request-promise-native');
+
+  let myPromise = new Promise((resolve, reject) => {
+    //Get file extension
+    const imgNameArray = imgName.split('.');
+    const extension = imgNameArray[imgNameArray.length - 1];
+    let imageName = '';
+
+    let contentType = 'image/png';
+    switch (extension.toLowerCase()) {
+      case 'bmp' :
+        contentType = 'image/bmp';
+        break;
+      case 'tiff' :
+        contentType = 'image/tiff';
+        break;
+      case 'jpg' :
+        contentType = 'image/jpeg';
+        break;
+      case 'jpeg' :
+        contentType = 'image/jpeg';
+        break;
+    }
+
+    var options = {
+      method: 'POST',
+      uri: Microservices.file.uri + '/picture?license=CC0',
+      // body: zip.file(imgName).asBinary(),
+      // contentType: 'image/png',
+      // body: JSZip.base64.encode(zip.file(imgName).asBinary()),
+      // body: functions.base64ArrayBuffer(zip.file(imgName).asArrayBuffer()),
+      body: new Buffer(zip.file(imgName).asArrayBuffer(), 'base64'),
+      headers: {
+          '----jwt----': this.jwt,
+          // '----jwt----': 'eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJ1c2VyaWQiOjMzLCJ1c2VybmFtZSI6InJtZWlzc24iLCJpYXQiOjE0Nzg2OTI3MDZ9.5h-UKLioMYK9OBfoNQVuQ25DhZCJ5PzUYlDXT6SFfBpaKLhpYVmK8w0xE5dOSNzw58qLmxuQHGba_CVI-rPnNQ',
+          'content-type': contentType,
+          // 'content-type': 'image/png',
+          'Accept':  'application/json'
+
+      }
+    };
+
+    rp(options)
+      .then( (body) => {
+        imageName = JSON.parse(body).fileName;
+
+        resolve(Microservices.file.uri + '/picture/' + imageName);
+      })
+      .catch( (err) => {
+        const errorString = String(err);
+        // console.log('eRROR', err);
+        let index1 = errorString.indexOf('File already exists and is stored under ');
+        let index2 = errorString.indexOf('\"}"');
+        if (index1 > -1 && index2 > -1) {
+          imageName = errorString.substring(index1 + 40, index2 - 1);
+        }
+
+        // console.log('image name', imageName);
+        resolve(Microservices.file.uri + '/picture/' + imageName);
+      });
+    });
+
+    return myPromise;
 }
 
 saveImageToFile(imgName, zip) {
@@ -1152,9 +1534,24 @@ processGraphicFrameNode(node, warpObj) {
 	var result = "";
 	var graphicTypeUri = this.getTextByPathList(node, ["a:graphic", "a:graphicData", "attrs", "uri"]);
 
+  let title = '';
+  let ctrTitle = '';
+  let subTitle = '';
+
 	switch (graphicTypeUri) {
 		case "http://schemas.openxmlformats.org/drawingml/2006/table":
-			result = this.genTable(node, warpObj);
+      let resultAndTitles = this.genTable(node, warpObj);
+      var result = resultAndTitles.result;
+      if (title === '') {
+        title = resultAndTitles.title;
+      }
+      if (ctrTitle === '') {
+        ctrTitle = resultAndTitles.ctrTitle;
+      }
+      if (subTitle === '') {
+        subTitle = resultAndTitles.subTitle;
+      }
+
 			break;
 		case "http://schemas.openxmlformats.org/drawingml/2006/chart":
 			result = this.genChart(node, warpObj);
@@ -1165,7 +1562,12 @@ processGraphicFrameNode(node, warpObj) {
 		default:
 	}
 
-	return result;
+	return {
+    result: result,
+    title: title,
+    ctrTitle: ctrTitle,
+    subTitle: subTitle
+  };
 }
 
 processSpPrNode(node, warpObj) {
@@ -1372,15 +1774,12 @@ genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, warpObj, c
 
 	}
 
-  if (isTitle && this.currentSlide.title === '') {
-    this.currentSlide.title = title;
-  } else if (isCtrTitle && this.currentSlide.ctrTitle === '') {
-    this.currentSlide.ctrTitle = title;
-  } else if (isSubTitle && this.currentSlide.subTitle === '') {
-    this.currentSlide.subTitle = title;
-  }
-
-	return text;
+	return {
+    result: text,
+    title: (isTitle) ? title : '',
+    ctrTitle: (isCtrTitle) ? title : '',
+    subTitle: (isSubTitle) ? title : ''
+  };
 }
 
 getText(node) {//Get raw text from a:r (a:p) node - for the slide title
@@ -1554,6 +1953,10 @@ genTable(node, warpObj) {
 	var xfrmNode = this.getTextByPathList(node, ["p:xfrm"]);
 	var tableHtml = "<table style='position: absolute;" + this.getPosition(xfrmNode, undefined, undefined) + this.getSize(xfrmNode, undefined, undefined) + " z-index: " + order + ";'>";
 
+  let title = '';
+  let ctrTitle = '';
+  let subTitle = '';
+
 	var trNodes = tableNode["a:tr"];
 	if (trNodes.constructor === Array) {
 		for (var i=0; i<trNodes.length; i++) {
@@ -1562,7 +1965,18 @@ genTable(node, warpObj) {
 
 			if (tcNodes.constructor === Array) {
 				for (var j=0; j<tcNodes.length; j++) {
-					var text = this.genTextBody(tcNodes[j]["a:txBody"], undefined, undefined, undefined, warpObj);
+          let resultAndTitles = this.genTextBody(tcNodes[j]["a:txBody"], undefined, undefined, undefined, warpObj);
+					var text = resultAndTitles.result;
+          if (title === '') {
+            title = resultAndTitles.title;
+          }
+          if (ctrTitle === '') {
+            ctrTitle = resultAndTitles.ctrTitle;
+          }
+          if (subTitle === '') {
+            subTitle = resultAndTitles.subTitle;
+          }
+
 					var rowSpan = this.getTextByPathList(tcNodes[j], ["attrs", "rowSpan"]);
 					var colSpan = this.getTextByPathList(tcNodes[j], ["attrs", "gridSpan"]);
 					var vMerge = this.getTextByPathList(tcNodes[j], ["attrs", "vMerge"]);
@@ -1576,7 +1990,18 @@ genTable(node, warpObj) {
 					}
 				}
 			} else {
-				var text = this.genTextBody(tcNodes["a:txBody"]);
+        let resultAndTitles = this.genTextBody(tcNodes["a:txBody"]);
+        var text = resultAndTitles.result;
+        if (title === '') {
+          title = resultAndTitles.title;
+        }
+        if (ctrTitle === '') {
+          ctrTitle = resultAndTitles.ctrTitle;
+        }
+        if (subTitle === '') {
+          subTitle = resultAndTitles.subTitle;
+        }
+
 				tableHtml += "<td>" + text + "</td>";
 			}
 			tableHtml += "</tr>";
@@ -1586,11 +2011,33 @@ genTable(node, warpObj) {
 		var tcNodes = trNodes["a:tc"];
 		if (tcNodes.constructor === Array) {
 			for (var j=0; j<tcNodes.length; j++) {
-				var text = this.genTextBody(tcNodes[j]["a:txBody"]);
+        let resultAndTitles = this.genTextBody(tcNodes[j]["a:txBody"]);
+        var text = resultAndTitles.result;
+        if (title === '') {
+          title = resultAndTitles.title;
+        }
+        if (ctrTitle === '') {
+          ctrTitle = resultAndTitles.ctrTitle;
+        }
+        if (subTitle === '') {
+          subTitle = resultAndTitles.subTitle;
+        }
+
 				tableHtml += "<td>" + text + "</td>";
 			}
 		} else {
-			var text = this.genTextBody(tcNodes["a:txBody"]);
+      let resultAndTitles = this.genTextBody(tcNodes["a:txBody"]);
+      var text = resultAndTitles.result;
+      if (title === '') {
+        title = resultAndTitles.title;
+      }
+      if (ctrTitle === '') {
+        ctrTitle = resultAndTitles.ctrTitle;
+      }
+      if (subTitle === '') {
+        subTitle = resultAndTitles.subTitle;
+      }
+
 			tableHtml += "<td>" + text + "</td>";
 		}
 		tableHtml += "</tr>";
@@ -1598,7 +2045,12 @@ genTable(node, warpObj) {
 
   tableHtml += "</table>";
 
-	return tableHtml;
+	return {
+    result: tableHtml,
+    title: title,
+    ctrTitle: ctrTitle,
+    subTitle: subTitle
+  };
 }
 
 genChart(node, warpObj) {
