@@ -484,11 +484,11 @@ function sendImageToFileService(imgName, file, jwt) {
       uri: Microservices.file.uri + '/picture?license=CC0',
       body: new Buffer(file.asArrayBuffer(), 'base64'),
       headers: {
-          '----jwt----': jwt,
-          // '----jwt----': 'eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJ1c2VyaWQiOjMzLCJ1c2VybmFtZSI6InJtZWlzc24iLCJpYXQiOjE0Nzg2OTI3MDZ9.5h-UKLioMYK9OBfoNQVuQ25DhZCJ5PzUYlDXT6SFfBpaKLhpYVmK8w0xE5dOSNzw58qLmxuQHGba_CVI-rPnNQ',
-          // 'content-type': 'image/png',
-          'content-type': contentType,
-          'Accept':  'application/json'
+        '----jwt----': jwt,
+        // '----jwt----': 'eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJ1c2VyaWQiOjMzLCJ1c2VybmFtZSI6InJtZWlzc24iLCJpYXQiOjE0Nzg2OTI3MDZ9.5h-UKLioMYK9OBfoNQVuQ25DhZCJ5PzUYlDXT6SFfBpaKLhpYVmK8w0xE5dOSNzw58qLmxuQHGba_CVI-rPnNQ',
+        // 'content-type': 'image/png',
+        'content-type': contentType,
+        'Accept':  'application/json'
       }
     };
 
@@ -510,9 +510,9 @@ function sendImageToFileService(imgName, file, jwt) {
         // console.log('image name', imageName);
         resolve(Microservices.file.uri + '/picture/' + imageName);
       });
-    });
+  });
 
-    return myPromise;
+  return myPromise;
 }
 
 function createNodesRecursive(user, license, deckId, previousSlideId, slides, index) {
