@@ -486,13 +486,13 @@ processSingleSlide(zip, sldFileName, index, slideSize) {
       for (let i = 0; i < res.length; i++) {
         let resultAndTitles = res[i];
 
-        if (title === '') {
+        if (title === '' && resultAndTitles.title !== undefined) {
           title = resultAndTitles.title;
         }
-        if (ctrTitle === '') {
+        if (ctrTitle === '' && resultAndTitles.ctrTitle !== undefined) {
           ctrTitle = resultAndTitles.ctrTitle;
         }
-        if (subTitle === '') {
+        if (subTitle === '' && resultAndTitles.subTitle !== undefined) {
           subTitle = resultAndTitles.subTitle;
         }
         result += resultAndTitles.result;
@@ -698,13 +698,13 @@ processNodesInSlide(nodeKey, nodeValue, warpObj) {
   		case "p:sp":	// Shape, Text
         resultAndTitles = this.processSpNode(nodeValue, warpObj);
         var result = resultAndTitles.result;
-        if (title === '') {
+        if (title === '' && resultAndTitles.title !== undefined) {
           title = resultAndTitles.title;
         }
-        if (ctrTitle === '') {
+        if (ctrTitle === '' && resultAndTitles.ctrTitle !== undefined) {
           ctrTitle = resultAndTitles.ctrTitle;
         }
-        if (subTitle === '') {
+        if (subTitle === '' && resultAndTitles.subTitle !== undefined) {
           subTitle = resultAndTitles.subTitle;
         }
         resolve ({
@@ -717,13 +717,13 @@ processNodesInSlide(nodeKey, nodeValue, warpObj) {
   		case "p:cxnSp":	// Shape, Text (with connection)
         resultAndTitles = this.processCxnSpNode(nodeValue, warpObj);
         var result = resultAndTitles.result;
-        if (title === '') {
+        if (title === '' && resultAndTitles.title !== undefined) {
           title = resultAndTitles.title;
         }
-        if (ctrTitle === '') {
+        if (ctrTitle === '' && resultAndTitles.ctrTitle !== undefined) {
           ctrTitle = resultAndTitles.ctrTitle;
         }
-        if (subTitle === '') {
+        if (subTitle === '' && resultAndTitles.subTitle !== undefined) {
           subTitle = resultAndTitles.subTitle;
         }
         resolve ({
@@ -735,7 +735,12 @@ processNodesInSlide(nodeKey, nodeValue, warpObj) {
   			break;
   		case "p:pic":	// Picture
   			this.processPicNode(nodeValue, warpObj).then((res) => {
-          resolve ({result: res});
+          resolve ({
+            result: res,
+            title: '',
+            ctrTitle: '',
+            subTitle: ''
+          });
         }).catch((err) => {
           console.log('Error', err);
           reject(err);
@@ -744,13 +749,13 @@ processNodesInSlide(nodeKey, nodeValue, warpObj) {
   		case "p:graphicFrame":	// Chart, Diagram, Table
         resultAndTitles = this.processGraphicFrameNode(nodeValue, warpObj);
         var result = resultAndTitles.result;
-        if (title === '') {
+        if (title === '' && resultAndTitles.title !== undefined) {
           title = resultAndTitles.title;
         }
-        if (ctrTitle === '') {
+        if (ctrTitle === '' && resultAndTitles.ctrTitle !== undefined) {
           ctrTitle = resultAndTitles.ctrTitle;
         }
-        if (subTitle === '') {
+        if (subTitle === '' && resultAndTitles.subTitle !== undefined) {
           subTitle = resultAndTitles.subTitle;
         }
         resolve ({
@@ -763,13 +768,13 @@ processNodesInSlide(nodeKey, nodeValue, warpObj) {
   		case "p:grpSp":	// 群組
         resultAndTitles = this.processGroupSpNode(nodeValue, warpObj);
         var result = resultAndTitles.result;
-        if (title === '') {
+        if (title === '' && resultAndTitles.title !== undefined) {
           title = resultAndTitles.title;
         }
-        if (ctrTitle === '') {
+        if (ctrTitle === '' && resultAndTitles.ctrTitle !== undefined) {
           ctrTitle = resultAndTitles.ctrTitle;
         }
-        if (subTitle === '') {
+        if (subTitle === '' && resultAndTitles.subTitle !== undefined) {
           subTitle = resultAndTitles.subTitle;
         }
         resolve ({
@@ -834,13 +839,13 @@ processGroupSpNode(node, warpObj) {
       for (let i = 0; i < res.length; i++) {
         let resultAndTitles = res[i];
 
-        if (title === '') {
+        if (title === '' && resultAndTitles.title !== undefined) {
           title = resultAndTitles.title;
         }
-        if (ctrTitle === '') {
+        if (ctrTitle === '' && resultAndTitles.ctrTitle !== undefined) {
           ctrTitle = resultAndTitles.ctrTitle;
         }
-        if (subTitle === '') {
+        if (subTitle === '' && resultAndTitles.subTitle !== undefined) {
           subTitle = resultAndTitles.subTitle;
         }
         result += resultAndTitles.result;
@@ -931,13 +936,13 @@ processSpNode(node, warpObj) {
 
   let resultAndTitles = this.genShape(node, slideLayoutSpNode, slideMasterSpNode, id, name, idx, type, order, warpObj);
   var result = resultAndTitles.result;
-  if (title === '') {
+  if (title === '' && resultAndTitles.title !== undefined) {
     title = resultAndTitles.title;
   }
-  if (ctrTitle === '') {
+  if (ctrTitle === '' && resultAndTitles.ctrTitle !== undefined) {
     ctrTitle = resultAndTitles.ctrTitle;
   }
-  if (subTitle === '') {
+  if (subTitle === '' && resultAndTitles.subTitle !== undefined) {
     subTitle = resultAndTitles.subTitle;
   }
 	return {
@@ -964,15 +969,15 @@ processCxnSpNode(node, warpObj) {
 
   let resultAndTitles = this.genShape(node, undefined, undefined, id, name, undefined, undefined, order, warpObj);
   var result = resultAndTitles.result;
-  if (title === '') {
-    title = resultAndTitles.title;
-  }
-  if (ctrTitle === '') {
-    ctrTitle = resultAndTitles.ctrTitle;
-  }
-  if (subTitle === '') {
-    subTitle = resultAndTitles.subTitle;
-  }
+  // if (title === '' && resultAndTitles.title !== undefined) {
+  title = resultAndTitles.title;
+  // }
+  // if (ctrTitle === '' && resultAndTitles.ctrTitle !== undefined) {
+  ctrTitle = resultAndTitles.ctrTitle;
+  // }
+  // if (subTitle === '' && resultAndTitles.subTitle !== undefined) {
+  subTitle = resultAndTitles.subTitle;
+  // }
 	return {
     result: result,
     title: title,
@@ -1305,13 +1310,13 @@ genShape(node, slideLayoutSpNode, slideMasterSpNode, id, name, idx, type, order,
 		if (node["p:txBody"] !== undefined) {
       let resultAndTitles = this.genTextBody(node["p:txBody"], slideLayoutSpNode, slideMasterSpNode, type, warpObj, false);
       var text = resultAndTitles.result;
-      if (title === '') {
+      if (title === '' && resultAndTitles.title !== undefined) {
         title = resultAndTitles.title;
       }
-      if (ctrTitle === '') {
+      if (ctrTitle === '' && resultAndTitles.ctrTitle !== undefined) {
         ctrTitle = resultAndTitles.ctrTitle;
       }
-      if (subTitle === '') {
+      if (subTitle === '' && resultAndTitles.subTitle !== undefined) {
         subTitle = resultAndTitles.subTitle;
       }
 			result += text
@@ -1326,13 +1331,13 @@ genShape(node, slideLayoutSpNode, slideMasterSpNode, id, name, idx, type, order,
     if (node["p:txBody"] !== undefined) {
       let resultAndTitles = this.genTextBody(node["p:txBody"], slideLayoutSpNode, slideMasterSpNode, type, warpObj, createList);
       var textBody = resultAndTitles.result;
-      if (title === '') {
+      if (title === '' && resultAndTitles.title !== undefined) {
         title = resultAndTitles.title;
       }
-      if (ctrTitle === '') {
+      if (ctrTitle === '' && resultAndTitles.ctrTitle !== undefined) {
         ctrTitle = resultAndTitles.ctrTitle;
       }
-      if (subTitle === '') {
+      if (subTitle === '' && resultAndTitles.subTitle !== undefined) {
         subTitle = resultAndTitles.subTitle;
       }
 
@@ -1542,13 +1547,13 @@ processGraphicFrameNode(node, warpObj) {
 		case "http://schemas.openxmlformats.org/drawingml/2006/table":
       let resultAndTitles = this.genTable(node, warpObj);
       var result = resultAndTitles.result;
-      if (title === '') {
+      if (title === '' && resultAndTitles.title !== undefined) {
         title = resultAndTitles.title;
       }
-      if (ctrTitle === '') {
+      if (ctrTitle === '' && resultAndTitles.ctrTitle !== undefined) {
         ctrTitle = resultAndTitles.ctrTitle;
       }
-      if (subTitle === '') {
+      if (subTitle === '' && resultAndTitles.subTitle !== undefined) {
         subTitle = resultAndTitles.subTitle;
       }
 
@@ -1967,13 +1972,13 @@ genTable(node, warpObj) {
 				for (var j=0; j<tcNodes.length; j++) {
           let resultAndTitles = this.genTextBody(tcNodes[j]["a:txBody"], undefined, undefined, undefined, warpObj);
 					var text = resultAndTitles.result;
-          if (title === '') {
+          if (title === '' && resultAndTitles.title !== undefined) {
             title = resultAndTitles.title;
           }
-          if (ctrTitle === '') {
+          if (ctrTitle === '' && resultAndTitles.ctrTitle !== undefined) {
             ctrTitle = resultAndTitles.ctrTitle;
           }
-          if (subTitle === '') {
+          if (subTitle === '' && resultAndTitles.subTitle !== undefined) {
             subTitle = resultAndTitles.subTitle;
           }
 
@@ -1992,13 +1997,13 @@ genTable(node, warpObj) {
 			} else {
         let resultAndTitles = this.genTextBody(tcNodes["a:txBody"]);
         var text = resultAndTitles.result;
-        if (title === '') {
+        if (title === '' && resultAndTitles.title !== undefined) {
           title = resultAndTitles.title;
         }
-        if (ctrTitle === '') {
+        if (ctrTitle === '' && resultAndTitles.ctrTitle !== undefined) {
           ctrTitle = resultAndTitles.ctrTitle;
         }
-        if (subTitle === '') {
+        if (subTitle === '' && resultAndTitles.subTitle !== undefined) {
           subTitle = resultAndTitles.subTitle;
         }
 
@@ -2013,13 +2018,13 @@ genTable(node, warpObj) {
 			for (var j=0; j<tcNodes.length; j++) {
         let resultAndTitles = this.genTextBody(tcNodes[j]["a:txBody"]);
         var text = resultAndTitles.result;
-        if (title === '') {
+        if (title === '' && resultAndTitles.title !== undefined) {
           title = resultAndTitles.title;
         }
-        if (ctrTitle === '') {
+        if (ctrTitle === '' && resultAndTitles.ctrTitle !== undefined) {
           ctrTitle = resultAndTitles.ctrTitle;
         }
-        if (subTitle === '') {
+        if (subTitle === '' && resultAndTitles.subTitle !== undefined) {
           subTitle = resultAndTitles.subTitle;
         }
 
@@ -2028,13 +2033,13 @@ genTable(node, warpObj) {
 		} else {
       let resultAndTitles = this.genTextBody(tcNodes["a:txBody"]);
       var text = resultAndTitles.result;
-      if (title === '') {
+      if (title === '' && resultAndTitles.title !== undefined) {
         title = resultAndTitles.title;
       }
-      if (ctrTitle === '') {
+      if (ctrTitle === '' && resultAndTitles.ctrTitle !== undefined) {
         ctrTitle = resultAndTitles.ctrTitle;
       }
-      if (subTitle === '') {
+      if (subTitle === '' && resultAndTitles.subTitle !== undefined) {
         subTitle = resultAndTitles.subTitle;
       }
 
