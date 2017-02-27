@@ -1101,7 +1101,7 @@ processPicNode(node, warpObj) {
 			" z-index: " + order + ";" +
 			// "'><img src=\"data:" + mimeType + ";base64," + functions.base64ArrayBuffer(imgArrayBuffer) + "\" style='position: absolute;width: 100%; height: 100%'" +
       // "'><img src=\"http://" + imagePath + "\" style='position: absolute;width: 100%; height: 100%'" +
-      "'><img src=\"http://" + imagePath + "\" style='width: 100%; height: 100%'" +
+      "'><img src=\"" + imagePath + "\" style='width: 100%; height: 100%'" +
           altTag +
           "/></div>";
 }
