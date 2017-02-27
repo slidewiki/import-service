@@ -1669,9 +1669,9 @@ genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, warpObj, c
           const orderedListStyle = (pNode["a:pPr"]["a:buAutoNum"]["attrs"] !== undefined && pNode["a:pPr"]["a:buAutoNum"]["attrs"]["type"] !== undefined) ? pNode["a:pPr"]["a:buAutoNum"]["attrs"]["type"] : '';
           const orderedListStartAt = (pNode["a:pPr"]["a:buAutoNum"]["attrs"] !== undefined && pNode["a:pPr"]["a:buAutoNum"]["attrs"]["startAt"] !== undefined) ? ' start="' + pNode["a:pPr"]["a:buAutoNum"]["attrs"]["startAt"] + '"' : '';
 
-          text += (previousNodeIsListItem && previousNodeIsOrderedListItem && (itemLevel === previousItemLevel)) ? "" : "<ol " + this.getOrderedListStyle(orderedListStyle, itemLevel) + orderedListStartAt + ">";
+          text += (previousNodeIsListItem && previousNodeIsOrderedListItem && (itemLevel === previousItemLevel)) ? "" : "<ol" + this.getOrderedListStyle(orderedListStyle, itemLevel) + orderedListStartAt + ">";
         } else {
-          text += (previousNodeIsListItem && !previousNodeIsOrderedListItem && (itemLevel === previousItemLevel)) ? "" : "<ul " + this.getUnorderedListStyle(itemLevel) + ">";
+          text += (previousNodeIsListItem && !previousNodeIsOrderedListItem && (itemLevel === previousItemLevel)) ? "" : "<ul" + this.getUnorderedListStyle(itemLevel) + ">";
         }
 
         text += "<li>";//add list tag
@@ -1804,13 +1804,13 @@ getOrderedListStyle(type, level) {
   const singleIndent = 30;
   let style = '';//arabic is default
   if(type.startsWith('alphaLc')) {
-    style = 'type="a"';
+    style = ' type="a"';
   } else if(type.startsWith('alphaUc')) {
-    style = 'type="A"';
+    style = ' type="A"';
   } else if(type.startsWith('romanLc')) {
-    style = 'type="i"';
+    style = ' type="i"';
   } else if(type.startsWith('romanUc')) {
-    style = 'type="I"';
+    style = ' type="I"';
   }
 
   if (level > 0) {//add indent
@@ -1823,12 +1823,14 @@ getUnorderedListStyle(level) {
   const singleIndent = 30;
   let style = '';//disc is default
   if (level === '1' || level === '4') {//set bullet type
-    style = 'style="list-style-type:circle;';
+    style = ' style="list-style-type:circle;';
   } else if (level === '2' || level === '5') {
-    style =  'style="list-style-type:square;';
+    style = ' style="list-style-type:square;';
   }
   if (level > 0) {//add indent
-    style += (style === '') ? 'style="' : '';
+    if (style === '') {
+      style = ' style="';
+    }
     style += 'margin-left:' + (singleIndent * level) + 'px;"';
   }
 
