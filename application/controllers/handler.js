@@ -157,34 +157,34 @@ module.exports = {
       form.append('contentType', 'application/vnd.oasis.opendocument.presentation');
 
       let request1 = form.submit({
-          port: 80,
-          host: 'localhost',
-          path: '/unoconv/pptx',
-          protocol: 'http:',
-          timeout: 20 * 1000
+        port: 80,
+        host: 'localhost',
+        path: '/unoconv/pptx',
+        protocol: 'http:',
+        timeout: 20 * 1000
       }, (err, res) => {
-          if (err) {
-              console.error(err);
-              //only callback if no timeout
-              // if (err.toString() !== 'Error: XMLHttpRequest timeout')
-              //     callback(err, null);
-              // return;
-          }
-          var data = ''
-            res.setEncoding('binary')
+        if (err) {
+          console.error(err);
+          //only callback if no timeout
+          // if (err.toString() !== 'Error: XMLHttpRequest timeout')
+          //     callback(err, null);
+          // return;
+        }
+        let data = '';
+        res.setEncoding('binary');
 
-            res.on('data', function(chunk){
-                data += chunk
-            })
+        res.on('data', function(chunk){
+          data += chunk;
+        });
 
-            res.on('end', function(){
-                fs.writeFile('/home/osboxes/Development/docker-unoconv-webservice-master/aa.pptx', data, 'binary', function(err){
-                    if (err) throw err
-                    console.log('File saved.')
-                })
-            })
-          console.log('result of call to unoconv service', res.headers, res.statusCode);
-          //res does not contain any data ...
+        res.on('end', function(){
+          fs.writeFile('/home/osboxes/Development/docker-unoconv-webservice-master/aa.pptx', data, 'binary', function(err){
+            if (err) throw err;
+            console.log('File saved.');
+          });
+        });
+        console.log('result of call to unoconv service', res.headers, res.statusCode);
+        //res does not contain any data ...
 
       });
 
