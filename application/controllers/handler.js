@@ -323,27 +323,12 @@ module.exports = {
     //   });
 
 
-      //Use saveImageToFile function
+    //Use saveImageToFile function
 
     const filename = request.payload.upload.hapi.filename;
-    const jwt = request.params.jwt;
-    // const filePath = saveImageToFile(filename, request.payload.upload._data, userid);
+    const userid = request.params.userid;
+    const filePath = saveImageToFile(filename, request.payload.upload._data, userid);
 
-    sendImageToFileService(filename, request.payload.upload._data, jwt).then((filePath) => {
-      let content = '<script type="text/javascript">\n';
-
-      content += 'document.domain = "slidewiki.org";\n';
-
-      content += 'window.parent.CKEDITOR.tools.callFunction('+ request.query.CKEditorFuncNum + ' , "' + filePath + '", "" );\n';
-
-      content += '</script>';
-
-      reply(content);
-
-    }).catch((error) => {
-      request.log(request, 'error', error);
-      reply(boom.badImplementation());
-    });
 
         ///JSON ONLY FOR DRAGGING and dropping
       //let response;
@@ -363,7 +348,7 @@ module.exports = {
         //'url': 'http://platform.manfredfris.ch/assets/images/logo_full.png'
         //});
 
-    // let content = '<script type="text/javascript">\n';
+    let content = '<script type="text/javascript">\n';
         //content += "window.parent.CKEDITOR.tools.callFunction(1, 'http://platform.manfredfris.ch/assets/images/logo_full.png', '' );\n";
         //content += "window.opener.CKEDITOR.tools.callFunction(1, 'http://platform.manfredfris.ch/assets/images/logo_full.png', '' );\n";
         //content += "CKEDITOR.instances.inlineContent.tools.callFunction(1, 'http://platform.manfredfris.ch/assets/images/logo_full.png', '' );\n";
@@ -372,21 +357,21 @@ module.exports = {
 
         //       Save problem with Same-origin_policy when CKeditor image upload script is returned
         //       https://developer.mozilla.org/en-US/docs/Web/Security/Same-origin_policy
-    // content += 'document.domain = "slidewiki.org";\n';
+    content += 'document.domain = "slidewiki.org";\n';
 
         //content += request.params.CKEditor + ".tools.callFunction("+ request.params.CKEditorFuncNum + " , 'http://platform.manfredfris.ch/assets/images/logo_full.png', '' );\n";
         //content += "window.parent.CKEDITOR.tools.callFunction("+ request.query.CKEditorFuncNum + " , 'http://platform.manfredfris.ch/assets/images/logo_full.png', '' );\n";
         // content += 'window.parent.CKEDITOR.tools.callFunction('+ request.query.CKEditorFuncNum + ' , "http://platform.manfredfris.ch/assets/images/logo_full.png", "" );\n';
-    // content += 'window.parent.CKEDITOR.tools.callFunction('+ request.query.CKEditorFuncNum + ' , "' + filePath + '", "" );\n';
+    content += 'window.parent.CKEDITOR.tools.callFunction('+ request.query.CKEditorFuncNum + ' , "' + filePath + '", "" );\n';
 
         //CKEDITOR.instances.inlineContent
         //content += "alert('test');\n"; //WORKS!
 
         //SEARCH FOR ALTERNATIVES!!
 
-    // content += '</script>';
+    content += '</script>';
         //reply('<script type="text/javascript">window.parent.CKEDITOR.tools.callFunction(1, "http://platform.manfredfris.ch/assets/images/logo_full.png", "");</script>);');
-    // reply(content);
+    reply(content);
 
         //TODO check if image file is uploaded.
         //TODO send call to media service + user service to store media data of uploaded image file
@@ -413,107 +398,47 @@ module.exports = {
 };
 
 
-// function saveImageToFile(imgName, file, user) {
-//   //Create UUID
-//   let uuid = require('node-uuid');
-//   const uuidValue = uuid.v1();// Generate a v1 (time-based) id
-//
-//   //Get file extension
-//   const imgNameArray = imgName.split('.');
-//   const extension = imgNameArray[imgNameArray.length - 1];
-//
-//   const imgUserPath = user + '/' + uuidValue + '.' + extension;
-//   // const saveTo = '.' + Microservices.file.shareVolume + '/' + imgUserPath;// For localhost testing
-//   const saveTo = Microservices.file.shareVolume + '/' + imgUserPath;
-//
-//   //Create the user dir if does not exist
-//   // const userDir = '.' + Microservices.file.shareVolume + '/' + user;// For localhost testing
-//   const userDir = Microservices.file.shareVolume + '/' + user;
-//   if (!fs.existsSync(userDir)){
-//     fs.mkdirSync(userDir, 744, function(err) {
-//       if(err) {
-//         console.log(err);
-//       }
-//     });
-//   }
-//
-//   //Save file
-//   let fileStream = fs.createWriteStream(saveTo);
-//
-//   //fileStream.write(request.payload.file.data);
-//   fileStream.write(file, 'binary');
-//   fileStream.end();
-//   fileStream.on('error', (err) => {
-//     reply('error in upload!');
-//     console.log('error', err);
-//   });
-//   fileStream.on('finish', (res) => {
-//     console.log('upload completed');
-//   });
-//
-//   return 'http://' + Microservices.file.uri + '/' + imgUserPath;
-// }
+function saveImageToFile(imgName, file, user) {
+  //Create UUID
+  let uuid = require('node-uuid');
+  const uuidValue = uuid.v1();// Generate a v1 (time-based) id
 
-function sendImageToFileService(imgName, file, jwt) {
-  let Microservices = require('../../configs/microservices');
-  let rp = require('request-promise-native');
+  //Get file extension
+  const imgNameArray = imgName.split('.');
+  const extension = imgNameArray[imgNameArray.length - 1];
 
-  let myPromise = new Promise((resolve, reject) => {
-    //Get file extension
-    const imgNameArray = imgName.split('.');
-    const extension = imgNameArray[imgNameArray.length - 1];
-    let imageName = '';
+  const imgUserPath = user + '/' + uuidValue + '.' + extension;
+  // const saveTo = '.' + Microservices.file.shareVolume + '/' + imgUserPath;// For localhost testing
+  const saveTo = Microservices.file.shareVolume + '/' + imgUserPath;
 
-    let contentType = 'image/png';
-    switch (extension.toLowerCase()) {
-      case 'bmp' :
-        contentType = 'image/bmp';
-        break;
-      case 'tiff' :
-        contentType = 'image/tiff';
-        break;
-      case 'jpg' :
-        contentType = 'image/jpeg';
-        break;
-      case 'jpeg' :
-        contentType = 'image/jpeg';
-        break;
-    }
-    var options = {
-      method: 'POST',
-      uri: Microservices.file.uri + '/picture?license=CC0',
-      body: new Buffer(file.asArrayBuffer(), 'base64'),
-      headers: {
-        '----jwt----': jwt,
-        // '----jwt----': 'eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJ1c2VyaWQiOjMzLCJ1c2VybmFtZSI6InJtZWlzc24iLCJpYXQiOjE0Nzg2OTI3MDZ9.5h-UKLioMYK9OBfoNQVuQ25DhZCJ5PzUYlDXT6SFfBpaKLhpYVmK8w0xE5dOSNzw58qLmxuQHGba_CVI-rPnNQ',
-        // 'content-type': 'image/png',
-        'content-type': contentType,
-        'Accept':  'application/json'
+  //Create the user dir if does not exist
+  // const userDir = '.' + Microservices.file.shareVolume + '/' + user;// For localhost testing
+  const userDir = Microservices.file.shareVolume + '/' + user;
+  if (!fs.existsSync(userDir)){
+    fs.mkdirSync(userDir, 744, function(err) {
+      if(err) {
+        console.log(err);
       }
-    };
+    });
+  }
 
-    rp(options)
-      .then( (body) => {
-        imageName = JSON.parse(body).fileName;
+  //Save file
+  let fileStream = fs.createWriteStream(saveTo);
 
-        resolve(Microservices.file.uri + '/picture/' + imageName);
-      })
-      .catch( (err) => {
-        const errorString = String(err);
-        // console.log('eRROR', err);
-        let index1 = errorString.indexOf('File already exists and is stored under ');
-        let index2 = errorString.indexOf('\"}"');
-        if (index1 > -1 && index2 > -1) {
-          imageName = errorString.substring(index1 + 40, index2 - 1);
-        }
-
-        // console.log('image name', imageName);
-        resolve(Microservices.file.uri + '/picture/' + imageName);
-      });
+  //fileStream.write(request.payload.file.data);
+  fileStream.write(file, 'binary');
+  fileStream.end();
+  fileStream.on('error', (err) => {
+    reply('error in upload!');
+    console.log('error', err);
+  });
+  fileStream.on('finish', (res) => {
+    console.log('upload completed');
   });
 
-  return myPromise;
+  return 'http://' + Microservices.file.uri + '/' + imgUserPath;
 }
+
 
 function createNodesRecursive(user, license, deckId, previousSlideId, slides, index) {
   let selector = {
