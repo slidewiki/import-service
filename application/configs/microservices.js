@@ -9,5 +9,13 @@ module.exports = {
   'file': {
     uri: (!co.isEmpty(process.env.SERVICE_URL_FILE)) ? process.env.SERVICE_URL_FILE : 'http://fileservice',
     shareVolume: '/data/files'
+  }  ,
+  'unoconv': {
+    uri: (!co.isEmpty(process.env.SERVICE_URL_UNOCONV)) ? process.env.SERVICE_URL_UNOCONV : 'http://unoconvservice',
+    protocol: 'http:',
+    host: 'localhost',
+    //host: (!co.isEmpty(process.env.SERVICE_HOST_UNOCONV)) ? process.env.SERVICE_HOST_UNOCONV : 'unoconvservice'
+    path: '/unoconv/pptx',
+    port: 80,
   }
 };
