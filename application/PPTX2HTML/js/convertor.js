@@ -603,7 +603,7 @@ processSingleSlideNotes(zip, sldFileName, index, slideSize) {
       }
       Promise.all(arrayOfPromisses).then((res) => {
         for (let i = 0; i < res.length; i++) {
-          notes += res.result;
+          notes += res[i].result;
         }
         notes += "</div>";
         resolve(notes);
