@@ -90,51 +90,31 @@ class Convertor {
         const noOfSlides = this.filesInfo["slides"].length;
 
         const filename = this.filesInfo["slides"][0];
-        // let currentSlide = {
-        //   title: '',
-        //   ctrTitle: '',
-        //   subTitle: '',
-        //   content: '',
-        //   notes: ''
-        // };
-        this.processSingleSlide(zip, filename, 0, this.slideSize).then((res) => {
+
+        let arrayOfPromisses = [];
+        let promiseContentAndTitles = this.processSingleSlide(zip, filename, 0, this.slideSize);
+        arrayOfPromisses.push(promiseContentAndTitles);
+        let promiseNotes = this.processSingleSlideNotes(zip, filename, 0, this.slideSize);//Dejan added this to process notes
+        arrayOfPromisses.push(promiseNotes);
+
+        Promise.all(arrayOfPromisses).then((res) => {
           let currentSlide = {
-            title: (res.title !== undefined) ? res.title : '',
-            ctrTitle: (res.ctrTitle !== undefined) ? res.ctrTitle : '',
-            subTitle: (res.subTitle !== undefined) ? res.subTitle : '',
-            content: res.result,
-            notes: ''
+            title: (res[0].title !== undefined) ? res[0].title : '',
+            ctrTitle: (res[0].ctrTitle !== undefined) ? res[0].ctrTitle : '',
+            subTitle: (res[0].subTitle !== undefined) ? res[0].subTitle : '',
+            content: res[0].result,
+            notes: res[1]
           };
-          this.processSingleSlideNotes(zip, filename, 0, this.slideSize).then((res) => {
-            currentSlide.notes = res;
-            this.slides.push(currentSlide);
-            resolve({
-              firstSlide: this.slides[0],
-              noOfSlides: noOfSlides
-            });
-          }).catch((err) => {
-            console.log('Error', err);
-            reject(err);
+          this.slides.push(currentSlide);
+
+          resolve({
+            firstSlide: this.slides[0],
+            noOfSlides: noOfSlides
           });
         }).catch((err) => {
           console.log('Error', err);
           reject(err);
         });
-        // this.currentSlide.notes = this.processSingleSlideNotes(zip, filename, 0, this.slideSize);//Dejan added this to process notes
-
-
-        // this.currentSlide = {
-        //   title: '',
-        //   ctrTitle: '',
-        //   subTitle: '',
-        //   content: '',
-        //   notes: ''
-        // };
-
-        // return {
-        //   firstSlide: this.slides[0],
-        //   noOfSlides: noOfSlides
-        // }
       });
       return myPromise;
     }
@@ -463,7 +443,7 @@ processSingleSlide(zip, sldFileName, index, slideSize) {
     //var result = "<div style='position: absolute;width:" + slideSize.width + "px; height:" + slideSize.height + "px; background-color: #" + bgColor + "'>"
     //var result = "<div style='position: absolute;border-style: dotted; background-color: #" + bgColor + "' >"
     //var result = "<div style='position: absolute;border-style: dotted; background-color: #" + bgColor + "' >"
-    var result = "<div class='pptx2html' style='position: relative;width:" + slideSize.width + "px; height:" + slideSize.height + "px; background-color: #" + bgColor + "'><div></div>"
+    var result = "<div class='pptx2html' style='position: relative;width:" + slideSize.width + "px; height:" + slideSize.height + "px; background-color: #" + bgColor + "'><div></div>";
 
     let arrayOfPromisses = [];
   	for (var nodeKey in nodes) {
@@ -766,22 +746,26 @@ processNodesInSlide(nodeKey, nodeValue, warpObj) {
         });
   			break;
   		case "p:grpSp":	// 群組
-        resultAndTitles = this.processGroupSpNode(nodeValue, warpObj);
-        var result = resultAndTitles.result;
-        if (title === '' && resultAndTitles.title !== undefined) {
-          title = resultAndTitles.title;
-        }
-        if (ctrTitle === '' && resultAndTitles.ctrTitle !== undefined) {
-          ctrTitle = resultAndTitles.ctrTitle;
-        }
-        if (subTitle === '' && resultAndTitles.subTitle !== undefined) {
-          subTitle = resultAndTitles.subTitle;
-        }
-        resolve ({
-          result: result,
-          title: title,
-          ctrTitle: ctrTitle,
-          subTitle: subTitle
+        this.processGroupSpNode(nodeValue, warpObj).then((resultAndTitles) => {
+          var result = resultAndTitles.result;
+          if (title === '' && resultAndTitles.title !== undefined) {
+            title = resultAndTitles.title;
+          }
+          if (ctrTitle === '' && resultAndTitles.ctrTitle !== undefined) {
+            ctrTitle = resultAndTitles.ctrTitle;
+          }
+          if (subTitle === '' && resultAndTitles.subTitle !== undefined) {
+            subTitle = resultAndTitles.subTitle;
+          }
+          resolve ({
+            result: result,
+            title: title,
+            ctrTitle: ctrTitle,
+            subTitle: subTitle
+          });
+        }).catch((err) => {
+          console.log('Error', err);
+          reject(err);
         });
   			break;
   		default:
