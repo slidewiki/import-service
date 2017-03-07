@@ -438,7 +438,8 @@ function saveImageToFile(imgName, file, user) {
     console.log('upload completed');
   });
 
-  return 'http://' + Microservices.file.uri + '/' + imgUserPath;
+    //  return 'http://' + Microservices.file.uri + '/' + imgUserPath;
+  return Microservices.file.uri + '/' + imgUserPath;
 }
 
 
