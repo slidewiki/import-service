@@ -1468,8 +1468,9 @@ sendImageToFileService(imgName, zip) {
         if (index1 > -1 && index2 > -1) {
           imageName = errorString.substring(index1 + 40, index2 - 1);
         }
-
-        // console.log('image name', imageName);
+        if (imageName === '') {
+          console.log('Error while saving image', err);
+        }
         resolve(Microservices.file.uri + '/picture/' + imageName);
       });
     });
