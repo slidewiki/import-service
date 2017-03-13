@@ -1219,6 +1219,15 @@ genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, warpObj, c
 			var pNode = textBodyNode["a:p"][i];
 			var rNode = pNode["a:r"];
 
+      let brNode = pNode["a:br"];
+
+      if (brNode !== undefined) {
+        if (brNode.constructor !== Array) {
+          brNode = [brNode];
+        }
+      } else {
+        brNode = [];
+      }
       let spanElement = "";
 
 			if (rNode === undefined) {
@@ -1232,7 +1241,18 @@ genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, warpObj, c
 			} else if (rNode.constructor === Array) {
 				// with multi r
 				for (var j=0; j<rNode.length; j++) {
-					spanElement += this.genSpanElement(rNode[j], slideLayoutSpNode, slideMasterSpNode, type, warpObj);
+          const order = rNode[j].attrs.order;
+          console.log('rNode['+j+']', order);
+          for (var k=0; k<brNode.length; k++) {
+            console.log('brNode', brNode);
+            if (brNode[k].attrs.order < order) {//there is a br element before this rNode
+              spanElement += '<br>';
+              brNode.splice(k--);//remove just used br element
+              console.log(brNode);
+            }
+          }
+
+          spanElement += this.genSpanElement(rNode[j], slideLayoutSpNode, slideMasterSpNode, type, warpObj);
 
           if (isSomeKindOfTitle) {
             const text = this.getText(rNode[j]);
@@ -1379,7 +1399,7 @@ genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, warpObj, c
   } else if (isSubTitle && this.currentSlide.subTitle === '') {
     this.currentSlide.subTitle = title;
   }
-
+console.log('text', text);
 	return text;
 }
 
