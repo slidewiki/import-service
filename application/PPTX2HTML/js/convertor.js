@@ -65,32 +65,23 @@ class Convertor {
 
     //alert(this.themeContent);
         this.slideHtml;
-        // this.totalHtmlResult;
 
         this.eachElement;
 
         this.slides = [];
 
-        this.currentSlide = {
-          title: '',
-          ctrTitle: '',
-          subTitle: '',
-          content: '',
-          notes: ''
-        };
         //return this.processPPTX(data);
 
         this.user = '';
+        this.jwt = '';
     }
 
     convertFirstSlide(data) {
         let zip = new JSZip(data);
         this.filesInfo = this.getContentTypes(zip);
-
         this.slideSize = this.getSlideSize(zip);
         this.themeContent = this.loadTheme(zip);
         const noOfSlides = this.filesInfo["slides"].length;
-
         const filename = this.filesInfo["slides"][0];
         var promises = [];
         promises.push(this.processSingleSlide(zip, filename, 0, this.slideSize));
@@ -99,6 +90,7 @@ class Convertor {
         	//Merge slide content and notes
             var res = Object.assign(infos[0], infos[1]);
             // Assign the noOfSlides
+            console.log(noOfSlides);
             res.noOfSlides = noOfSlides;
             res.filesInfo = this.filesInfo;
             return res;
@@ -119,7 +111,7 @@ class Convertor {
           firstSlide: this.slides[0],
           noOfSlides: noOfSlides
         }*/
-    }
+	}
     //var MsgQueue = new Array();
 
     //var themeContent = null;
@@ -1141,59 +1133,129 @@ genShape(node, slideLayoutSpNode, slideMasterSpNode, id, name, idx, type, order,
 processPicNode(node, warpObj) {
 
 	//debug( JSON.stringify( node ) );
+  let myPromise = new Promise((resolve, reject) => {
+  	var order = node["attrs"]["order"];
 
-	var order = node["attrs"]["order"];
+  	var rid = node["p:blipFill"]["a:blip"]["attrs"]["r:embed"];
+  	var imgName = warpObj["slideResObj"][rid]["target"];
+  	var imgFileExt = functions.extractFileExtension(imgName).toLowerCase();
+  	var zip = warpObj["zip"];
+  	var imgArrayBuffer = zip.file(imgName).asArrayBuffer();
+  	var mimeType = "";
+  	var xfrmNode = node["p:spPr"]["a:xfrm"];
+  	switch (imgFileExt) {
+  		case "jpg":
+  		case "jpeg":
+  			mimeType = "image/jpeg";
+  			break;
+  		case "png":
+  			mimeType = "image/png";
+  			break;
+  		case "gif":
+  			mimeType = "image/gif";
+  			break;
+  		case "emf": // Not native support
+  			mimeType = "image/x-emf";
+  			break;
+  		case "wmf": // Not native support
+  			mimeType = "image/x-wmf";
+  			break;
+  		default:
+  			mimeType = "image/*";
+  	}
 
-	var rid = node["p:blipFill"]["a:blip"]["attrs"]["r:embed"];
-	var imgName = warpObj["slideResObj"][rid]["target"];
-	var imgFileExt = functions.extractFileExtension(imgName).toLowerCase();
-	var zip = warpObj["zip"];
-	var imgArrayBuffer = zip.file(imgName).asArrayBuffer();
-	var mimeType = "";
-	var xfrmNode = node["p:spPr"]["a:xfrm"];
-	switch (imgFileExt) {
-		case "jpg":
-		case "jpeg":
-			mimeType = "image/jpeg";
-			break;
-		case "png":
-			mimeType = "image/png";
-			break;
-		case "gif":
-			mimeType = "image/gif";
-			break;
-		case "emf": // Not native support
-			mimeType = "image/x-emf";
-			break;
-		case "wmf": // Not native support
-			mimeType = "image/x-wmf";
-			break;
-		default:
-			mimeType = "image/*";
-	}
+    // const imagePath = this.saveImageToFile(imgName, zip);
+    this.sendImageToFileService(imgName, zip).then((imagePath) => {
+      //Dejan added this to create the img alt tag
+      var descr = node["p:nvPicPr"]["p:cNvPr"]["attrs"]["descr"];
+      var altTag = "";
+      if (descr !== undefined) {
+        altTag = " alt=\"" + descr + "\"";
+      }
 
-  const imagePath = this.saveImageToFile(imgName, zip);
+    	resolve ({text: "<div class='block content' style='position: absolute;" + this.getPosition(xfrmNode, undefined, undefined) + this.getSize(xfrmNode, undefined, undefined) +
+    			" z-index: " + order + ";" +
+    			// "'><img src=\"data:" + mimeType + ";base64," + functions.base64ArrayBuffer(imgArrayBuffer) + "\" style='position: absolute;width: 100%; height: 100%'" +
+          // "'><img src=\"http://" + imagePath + "\" style='position: absolute;width: 100%; height: 100%'" +
+          "'><img src=\"" + imagePath + "\" style='width: 100%; height: 100%'" +
+              altTag +
+              "/></div>"});
 
-  //Dejan added this to create the img alt tag
-  var descr = node["p:nvPicPr"]["p:cNvPr"]["attrs"]["descr"];
-  var altTag = "";
-  if (descr !== undefined) {
-    altTag = " alt=\"" + descr + "\"";
-  }
+    }).catch((err) => {
+      console.log('Error', err);
+      reject(err);
+    });
+  });
 
-	var res = "<div class='block content' style='position: absolute;" + this.getPosition(xfrmNode, undefined, undefined) + this.getSize(xfrmNode, undefined, undefined) +
-			" z-index: " + order + ";" +
-			// "'><img src=\"data:" + mimeType + ";base64," + functions.base64ArrayBuffer(imgArrayBuffer) + "\" style='position: absolute;width: 100%; height: 100%'" +
-      // "'><img src=\"http://" + imagePath + "\" style='position: absolute;width: 100%; height: 100%'" +
-      "'><img src=\"" + imagePath + "\" style='width: 100%; height: 100%'" +
-          altTag +
-          "/></div>";
+  return myPromise;
+}
 
-  return new Promise(function(resolve, reject){
-  		resolve({text: res});
-	}).catch((err) => {
-  		console.log('Error processing Picture node: ' + err);
-	});
+sendImageToFileService(imgName, zip) {
+  let Microservices = require('../../configs/microservices');
+  let rp = require('request-promise-native');
+
+  let myPromise = new Promise((resolve, reject) => {
+    //Get file extension
+    const imgNameArray = imgName.split('.');
+    const extension = imgNameArray[imgNameArray.length - 1];
+    let imageName = '';
+
+    let contentType = 'image/png';
+    switch (extension.toLowerCase()) {
+      case 'bmp' :
+        contentType = 'image/bmp';
+        break;
+      case 'tiff' :
+        contentType = 'image/tiff';
+        break;
+      case 'jpg' :
+        contentType = 'image/jpeg';
+        break;
+      case 'jpeg' :
+        contentType = 'image/jpeg';
+        break;
+    }
+
+    var options = {
+      method: 'POST',
+      uri: Microservices.file.uri + '/picture?license=CC0',
+      // body: zip.file(imgName).asBinary(),
+      // contentType: 'image/png',
+      // body: JSZip.base64.encode(zip.file(imgName).asBinary()),
+      // body: functions.base64ArrayBuffer(zip.file(imgName).asArrayBuffer()),
+      body: new Buffer(zip.file(imgName).asArrayBuffer(), 'base64'),
+      headers: {
+          '----jwt----': this.jwt,
+          // '----jwt----': 'eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJ1c2VyaWQiOjMzLCJ1c2VybmFtZSI6InJtZWlzc24iLCJpYXQiOjE0Nzg2OTI3MDZ9.5h-UKLioMYK9OBfoNQVuQ25DhZCJ5PzUYlDXT6SFfBpaKLhpYVmK8w0xE5dOSNzw58qLmxuQHGba_CVI-rPnNQ',
+          'content-type': contentType,
+          // 'content-type': 'image/png',
+          'Accept':  'application/json'
+
+      }
+    };
+
+    rp(options)
+      .then( (body) => {
+        imageName = JSON.parse(body).fileName;
+
+        resolve(Microservices.file.uri + '/picture/' + imageName);
+      })
+      .catch( (err) => {
+        const errorString = String(err);
+        // console.log('eRROR', err);
+        let index1 = errorString.indexOf('File already exists and is stored under ');
+        let index2 = errorString.indexOf('\"}"');
+        if (index1 > -1 && index2 > -1) {
+          imageName = errorString.substring(index1 + 40, index2 - 1);
+        }
+        if (imageName === '') {
+          console.log('Error while saving image', err);
+        }
+        resolve(Microservices.file.uri + '/picture/' + imageName);
+      });
+    });
+
+    return myPromise;
 }
 
 saveImageToFile(imgName, zip) {
@@ -1209,7 +1271,7 @@ saveImageToFile(imgName, zip) {
   const imgUserPath = this.user + '/' + uuidValue + '.' + extension;
 
   // const imgUserPath = this.user + '/' + uuidValue + simpleImgName;
-  // const saveTo = '.' + Microservices.file.shareVolume + '/' + imgUserPath;// For localhost testing
+  //const saveTo = '.' + Microservices.file.shareVolume + '/' + imgUserPath;// For localhost testing
   const saveTo = Microservices.file.shareVolume + '/' + imgUserPath;
 
   //Create the user dir if does not exist
@@ -1239,7 +1301,6 @@ saveImageToFile(imgName, zip) {
 
 processGraphicFrameNode(node, warpObj) {
 
-	// var result = "";
 	var graphicTypeUri = this.getTextByPathList(node, ["a:graphic", "a:graphicData", "attrs", "uri"]);
 
 	switch (graphicTypeUri) {
@@ -1259,7 +1320,6 @@ processGraphicFrameNode(node, warpObj) {
 		default:
 	}
 
-	// return result;
 }
 
 processSpPrNode(node, warpObj) {
@@ -2394,6 +2454,9 @@ extractChartData(serNode) {
 
 	}
 
+  //console.log("///////////////////////////////////////////////////////");
+  //console.log(util.inspect(dataMat, false, null));
+  //console.log("///////////////////////////////////////////////////////");
 	return dataMat;
 }
 

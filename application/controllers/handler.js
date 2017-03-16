@@ -3,6 +3,7 @@ Handles the requests by executing stuff and replying to the client. Uses promise
 */
 
 'use strict';
+let util = require('util');
 let fs = require('fs');
 let he = require('he');
 // let http = require('http');
@@ -109,6 +110,7 @@ module.exports = {
     //console.log(pptx2html.convert(request.payload.files.files)); Cannot read property 'files' of undefined
 
     const user = request.payload.user;
+    const jwt = request.payload.jwt;
     let language = request.payload.language;
     if (language === undefined || language === null || language === '') {
       language = 'en_GB';
@@ -139,13 +141,12 @@ module.exports = {
     let buffer = new Buffer(data_url.split(',')[1], 'base64');
     let convertor = new Convertor.Convertor();
     convertor.user = user;
+    convertor.jwt = jwt;
 
     //let initialResult = convertor.convertFirstSlide(buffer);
     //let firstSlide = initialResult.firstSlide;
 
-
     return convertor.convertFirstSlide(buffer).then((result) => {
-
       const noOfSlides = result.noOfSlides;
       //const filesInfo = result.filesInfo;
       let slides = [result];
@@ -206,7 +207,6 @@ module.exports = {
     });
 
 
-
     //console.log(pptx2html.convert(request.params));
 
     //TODO: give HTML ouput of PPTX2HTML
@@ -260,14 +260,14 @@ module.exports = {
     fileStream.write(request.payload.upload);
     fileStream.end();
     fileStream.on('error', (err) => {
-    reply('error in upload!');
-    console.log('error', err);
-  });
-  fileStream.on('finish', (res) => {
-  // reply('upload completed!');
-  console.log('upload completed');
-});
-*/
+      reply('error in upload!');
+      console.log('error', err);
+    });
+    fileStream.on('finish', (res) => {
+      // reply('upload completed!');
+      console.log('upload completed');
+    });
+    */
 
     //const fileName = request.payload.filename;
     //let saveTo = './' + fileName;
@@ -325,7 +325,7 @@ module.exports = {
     //   });
 
 
-      //Use saveImageToFile function
+    //Use saveImageToFile function
 
     const filename = request.payload.upload.hapi.filename;
     const userid = request.params.userid;
@@ -579,6 +579,7 @@ function createSlide(selector, nodeSpec, user, slide, slideNo, license) {
         console.log(e);
         reject(e);
       }
+
     }).catch((err) => {
       console.log('Error: ' + error);
       console.log('Error', err);
