@@ -3,10 +3,8 @@ Handles the requests by executing stuff and replying to the client. Uses promise
 */
 
 'use strict';
-let util = require('util');
 let fs = require('fs');
 let he = require('he');
-// let http = require('http');
 let rp = require('request-promise-native');
 
 const Microservices = require('../configs/microservices');
@@ -118,24 +116,6 @@ module.exports = {
     const fileName = he.encode(request.payload.filename, {allowUnsafeSymbols: true});//encode special characters
     const deckName = fileName.split('.')[0];
 
-    //
-    // let saveTo = './' + fileName;
-    // let fileStream = fs.createWriteStream(saveTo);
-    // //fileStream.write(request.payload.file.data);
-    // fileStream.write(request.payload.file, 'binary');
-    // fileStream.end();
-    // fileStream.on('error', (err) => {
-    //   reply('error in upload!');
-    //   console.log('error', err);
-    // });
-    // fileStream.on('finish', (res) => {
-    //   // reply('upload completed!');
-    //   console.log('upload completed');
-    // });
-
-
-    // let pptx2html = require('../PPTX2HTML/js/pptx2html');
-
     let data_url = request.payload.file;
     let buffer = new Buffer(data_url.split(',')[1], 'base64');
     let convertor = new Convertor.Convertor();
@@ -149,39 +129,11 @@ module.exports = {
       // let noOfSlides = convertor.getNoOfSlides(buffer);
       reply('import completed').header('deckId', deck.id).header('noOfSlides', noOfSlides);
 
-      //Save file
-      // fs.writeFile('./' + fileName, buffer, (err) => {
-      //   if (err) {
-      //     reply('error in upload!');
-      //     console.log('error', err);
-      //   } else {
-      //     console.log('upload completed');
-      //   }
-      // });
-
       if (noOfSlides > 1) {
         let slides = convertor.processPPTX(buffer);
         findFirstSlideOfADeck(deck.id).then((slideId) => {
-        // updateSlide(slideId, user, license, deck.id, slides[0]).then(() => {
-
           //create the rest of slides
           createNodesRecursive(user, license, deck.id, slideId, slides, 1);
-
-        // }).catch((error) => {
-        //   request.log('error', error);
-        //   reply(boom.badImplementation());
-        // });
-        // let previousSlideId = slideId;
-        // for (let i = 1; i < slides.length; i++) {
-        //
-        //   createDeckTreeNode(selector, nodeSpec, user).then((node) => {
-        //     console.log(node);
-        //     updateSlide(node.id, user, license, deck.id, slides[i]);
-        //     previousSlideId = node.id;
-        //   });
-        //
-        // }
-
         }).catch((error) => {
           request.log('error', error);
           reply(boom.badImplementation());
@@ -373,17 +325,6 @@ module.exports = {
     //});
 
   }
-  // ,testPPTX2HTML: function(request, reply) {// Dejan added this to test pptx2html
-  //   if (!request.payload) {
-  //     let file = './PPTX2HTML/pptx samples/simple slide - notes - p1,3.pptx';
-  //     fs.readFile(file, (err, data) => {
-  //       if (err) throw err;
-  //       pptx2html.convert(data);
-  //     });
-  //   }
-  //   reply('test completed, look at the console');
-  // }
-
 };
 
 
@@ -441,8 +382,7 @@ function createNodesRecursive(user, license, deckId, previousSlideId, slides, in
     'id': '0',
     'type': 'slide'
   };
-  // createDeckTreeNode(selector, nodeSpec, user).then((node) => {
-  //   updateSlide(node.id, user, license, deckId, slides[index]);
+
   createSlide(selector, nodeSpec, user, slides[index], String(index + 1), license).then((node) => {
     if (index >= slides.length - 1) {//Last one
       return;
@@ -585,158 +525,3 @@ function replaceSpecialSymbols(string) {
   newString = newString.replace('&amp;', '&');
   return newString;
 }
-
-// function createDeckTreeNode(selector, nodeSpec, user) {
-//   let myPromise = new Promise((resolve, reject) => {
-//
-//     let data = JSON.stringify({
-//       selector: selector,
-//       nodeSpec: nodeSpec,
-//       user: String(user)
-//     });
-//
-//     let options = {
-//       host: Microservices.deck.uri,
-//       port: Microservices.deck.port,
-//       path: '/decktree/node/create',
-//       method: 'POST',
-//       headers : {
-//         'Content-Type': 'application/json',
-//         'Cache-Control': 'no-cache',
-//         'Content-Length': data.length
-//       }
-//     };
-//
-//     let req = http.request(options, (res) => {
-//       // console.log('STATUS: ' + res.statusCode);
-//       // console.log('HEADERS: ' + JSON.stringify(res.headers));
-//       res.setEncoding('utf8');
-//       res.on('data', (chunk) => {
-//         // console.log('Response: ', chunk);
-//         let newDeckTreeNode = JSON.parse(chunk);
-//
-//         resolve(newDeckTreeNode);
-//       });
-//     });
-//     req.on('error', (e) => {
-//       console.log('problem with request: ' + e.message);
-//       reject(e);
-//     });
-//     req.write(data);
-//     req.end();
-//   });
-//
-//   return myPromise;
-// }
-
-// function updateSlide(slideId, user, license, deckId, slide) {
-//   let myPromise = new Promise((resolve, reject) => {
-//
-//     let slideTitle = replaceSpecialSymbols(slide.title);//deck tree does not display some encoded symbols properly
-//     slideTitle = he.encode(slideTitle, {allowUnsafeSymbols: true});//encode some symbols which were not replaced
-//     //Encode special characters (e.g. bullets)
-//     let encodedContent = he.encode(slide.content, {allowUnsafeSymbols: true});
-//     let encodedNotes = he.encode(slide.notes, {allowUnsafeSymbols: true});
-//
-//     let jsonData = {
-//       title: (slideTitle !== '') ? slideTitle : 'New slide',//It is not allowed to be empty
-//       content: encodedContent,
-//       speakernotes:encodedNotes,
-//       user: String(user),
-//       root_deck: String(deckId) + '-1',
-//       parent_deck: {
-//         id: String(deckId),
-//         revision: '1'
-//       },
-//       license: license
-//     };
-//
-//     if (slide.notes === '') {//It is not allowed for speakernotes to be empty
-//       delete jsonData.speakernotes;
-//     }
-//
-//     let data = JSON.stringify(jsonData);
-//
-//     let options = {
-//       host: Microservices.deck.uri,
-//       port: Microservices.deck.port,
-//       path: '/slide/' + slideId,
-//       method: 'PUT',
-//       headers : {
-//         'Content-Type': 'application/json',
-//         'Cache-Control': 'no-cache',
-//         'Content-Length': data.length
-//       }
-//     };
-//     let req = http.request(options, (res) => {
-//       // console.log('STATUS: ' + res.statusCode);
-//       // console.log('HEADERS: ' + JSON.stringify(res.headers));
-//       res.setEncoding('utf8');
-//       res.on('data', (chunk) => {
-//         // console.log('Response: ', chunk);
-//       });
-//       res.on('end', () => {
-//         resolve(slideId);
-//       });
-//     });
-//     req.on('error', (e) => {
-//       console.log('problem with request: ' + e.message);
-//     });
-//     req.write(data);
-//     req.end();
-//   });
-//
-//   return myPromise;
-// }
-
-//Send a request to insert new slide
-// function createSlide(user, license, deckId, slide) {
-//
-//   //Encode special characters (e.g. bullets)
-//   let encodedContent = he.encode(slide.content, {allowUnsafeSymbols: true});
-//   let encodedNotes = he.encode(slide.notes, {allowUnsafeSymbols: true});
-//
-//   let jsonData = {
-//     title: (slide.title !== '') ? slide.title : 'New slide',//It is not allowed to be empty
-//     content: encodedContent,
-//     speakernotes:encodedNotes,
-//     user: user,
-//     root_deck: String(deckId),
-//     parent_deck: {
-//       id: String(deckId),
-//       revision: '1'
-//     },
-//     license: license
-//   };
-//
-//   if (slide.notes === '') {//It is not allowed for speakernotes to be empty
-//     delete jsonData.speakernotes;
-//   }
-//   let data = JSON.stringify(jsonData);
-//   let options = {
-//     host: Microservices.deck.uri,
-//     port: Microservices.deck.port,
-//     path: '/slide/new',
-//     method: 'POST',
-//     headers : {
-//       'Content-Type': 'application/json',
-//       'Cache-Control': 'no-cache',
-//       'Content-Length': data.length
-//     }
-//   };
-//
-//   let req = http.request(options, (res) => {
-//     // console.log('STATUS: ' + res.statusCode);
-//     // console.log('HEADERS: ' + JSON.stringify(res.headers));
-//     res.setEncoding('utf8');
-//     res.on('data', (chunk) => {
-//       // console.log('Response: ', chunk);
-//
-//     });
-//   });
-//   req.on('error', (e) => {
-//     console.log('problem with request: ' + e.message);
-//   });
-//   req.write(data);
-//   req.end();
-// }
