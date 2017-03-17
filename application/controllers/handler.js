@@ -142,7 +142,7 @@ module.exports = {
     let buffer = new Buffer(data_url.split(',')[1], 'base64');
 
     if (fileType.toLowerCase() === 'odp' ) {
-      //SEND TO docker-unoconv-webservice
+      //SEND TO docker-unoconv-webservice, to convert it to pptx
       let formdata = require('form-data');
       let form = new formdata();
       form.append('file', buffer, {
@@ -169,57 +169,16 @@ module.exports = {
         });
 
         res.on('end', function(){
-          // fs.writeFile('/home/osboxes/Development/docker-unoconv-webservice-master/aa.pptx', data, 'binary', function(err){
-          //   if (err) throw err;
-          //   console.log('File saved.');
-          // });
-
-          let buffer2 = new Buffer(data, 'binary');
-
-
-
-
-
-          //for testing
-          let convertor = new Convertor.Convertor();
-          convertor.user = user;
-          let initialResult = convertor.convertFirstSlide(buffer2);
-          // let firstSlide = initialResult.firstSlide;
-          const noOfSlides = initialResult.noOfSlides;
-          console.log('noOfSlides', noOfSlides);
-
-
-
-
-
-
-
-//TODO
-          // createDeckFromPPTX(buffer2, user, language, license, deckName);
-
-
-
-
+          createDeckFromPPTX(new Buffer(data, 'binary'), user, language, license, deckName, request, reply);
         });
-        console.log('result of call to unoconv service', res.headers, res.statusCode);
-
-
-
-
-
-
-
-
-
-
-
+        // console.log('result of call to unoconv service', res.headers, res.statusCode);
       });
     } else {
-      createDeckFromPPTX(buffer, user, language, license, deckName);
+      createDeckFromPPTX(buffer, user, language, license, deckName, request, reply);
     }
-  }
+  },
 
-  ,importImage: function(request, reply) { // Klaas added this to test image upload
+  importImage: function(request, reply) { // Klaas added this to test image upload
     //console.log('request.params.CKEditorFuncNum' + request.params.CKEditorFuncNum); // {}
     //console.log('request.query.CKEditorFuncNum' +request.query.CKEditorFuncNum);
 
@@ -394,7 +353,7 @@ module.exports = {
 
 };
 
-function createDeckFromPPTX(buffer, user, language, license, deckName) {
+function createDeckFromPPTX(buffer, user, language, license, deckName, request, reply) {
   let convertor = new Convertor.Convertor();
   convertor.user = user;
 
@@ -410,7 +369,6 @@ function createDeckFromPPTX(buffer, user, language, license, deckName) {
       findFirstSlideOfADeck(deck.id).then((slideId) => {
         //create the rest of slides
         createNodesRecursive(user, license, deck.id, slideId, slides, 1);
-
       }).catch((error) => {
         request.log('error', error);
         reply(boom.badImplementation());
