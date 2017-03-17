@@ -116,7 +116,9 @@ module.exports = {
     }
     const license = request.payload.license;
     const fileName = he.encode(request.payload.filename, {allowUnsafeSymbols: true});//encode special characters
-    const deckName = fileName.split('.')[0];
+    const fileNameSplit = fileName.split('.');
+    const deckName = fileNameSplit[0];
+    const fileType = fileNameSplit[fileNameSplit.length - 1];
 
     //
     // let saveTo = './' + fileName;
@@ -138,80 +140,45 @@ module.exports = {
 
     let data_url = request.payload.file;
     let buffer = new Buffer(data_url.split(',')[1], 'base64');
-    let convertor = new Convertor.Convertor();
-    convertor.user = user;
 
-    let initialResult = convertor.convertFirstSlide(buffer);
-    let firstSlide = initialResult.firstSlide;
-    const noOfSlides = initialResult.noOfSlides;
+    if (fileType.toLowerCase() === 'odp' ) {
+      //SEND TO docker-unoconv-webservice, to convert it to pptx
+      let formdata = require('form-data');
+      let form = new formdata();
+      form.append('file', buffer, {
+        filename: fileName,
+        contentType: 'application/vnd.oasis.opendocument.presentation'
+      });
+      form.append('contentType', 'application/vnd.oasis.opendocument.presentation');
 
-    return createDeck(user, language, license, deckName, firstSlide).then((deck) => {
-      // let noOfSlides = convertor.getNoOfSlides(buffer);
-      reply('import completed').header('deckId', deck.id).header('noOfSlides', noOfSlides);
+      let request1 = form.submit({
+        port: Microservices.unoconv.port,
+        host: Microservices.unoconv.host,
+        path: Microservices.unoconv.path,
+        protocol: Microservices.unoconv.protocol,
+        timeout: 20 * 1000
+      }, (err, res) => {
+        if (err) {
+          console.error(err);
+        }
+        let data = '';
+        res.setEncoding('binary');
 
-      //Save file
-      // fs.writeFile('./' + fileName, buffer, (err) => {
-      //   if (err) {
-      //     reply('error in upload!');
-      //     console.log('error', err);
-      //   } else {
-      //     console.log('upload completed');
-      //   }
-      // });
-
-      if (noOfSlides > 1) {
-        let slides = convertor.processPPTX(buffer);
-        findFirstSlideOfADeck(deck.id).then((slideId) => {
-        // updateSlide(slideId, user, license, deck.id, slides[0]).then(() => {
-
-          //create the rest of slides
-          createNodesRecursive(user, license, deck.id, slideId, slides, 1);
-
-        // }).catch((error) => {
-        //   request.log('error', error);
-        //   reply(boom.badImplementation());
-        // });
-        // let previousSlideId = slideId;
-        // for (let i = 1; i < slides.length; i++) {
-        //
-        //   createDeckTreeNode(selector, nodeSpec, user).then((node) => {
-        //     console.log(node);
-        //     updateSlide(node.id, user, license, deck.id, slides[i]);
-        //     previousSlideId = node.id;
-        //   });
-        //
-        // }
-
-        }).catch((error) => {
-          request.log('error', error);
-          reply(boom.badImplementation());
+        res.on('data', function(chunk){
+          data += chunk;
         });
-      }
-    }).catch((error) => {
-      request.log('error', error);
-      reply(boom.badImplementation());
-    });
 
+        res.on('end', function(){
+          createDeckFromPPTX(new Buffer(data, 'binary'), user, language, license, deckName, request, reply);
+        });
+        // console.log('result of call to unoconv service', res.headers, res.statusCode);
+      });
+    } else {
+      createDeckFromPPTX(buffer, user, language, license, deckName, request, reply);
+    }
+  },
 
-
-    //console.log(pptx2html.convert(request.params));
-
-    //TODO: give HTML ouput of PPTX2HTML
-    //reply('importservice result = HTML from PPTX import');
-    //reply(result);
-
-    //slideDB.get(encodeURIComponent(request.params.id)).then((slide) => {
-    //  if (co.isEmpty(slide))
-    //    reply(boom.notFound());
-    //  else
-    //    reply(co.rewriteID(slide));
-    //}).catch((error) => {
-    //  request.log('error', error);
-    //  reply(boom.badImplementation());
-    //});
-  }
-
-  ,importImage: function(request, reply) { // Klaas added this to test image upload
+  importImage: function(request, reply) { // Klaas added this to test image upload
     //console.log('request.params.CKEditorFuncNum' + request.params.CKEditorFuncNum); // {}
     //console.log('request.query.CKEditorFuncNum' +request.query.CKEditorFuncNum);
 
@@ -386,6 +353,32 @@ module.exports = {
 
 };
 
+function createDeckFromPPTX(buffer, user, language, license, deckName, request, reply) {
+  let convertor = new Convertor.Convertor();
+  convertor.user = user;
+
+  let initialResult = convertor.convertFirstSlide(buffer);
+  let firstSlide = initialResult.firstSlide;
+  const noOfSlides = initialResult.noOfSlides;
+
+  return createDeck(user, language, license, deckName, firstSlide).then((deck) => {
+    reply('import completed').header('deckId', deck.id).header('noOfSlides', noOfSlides);
+
+    if (noOfSlides > 1) {
+      let slides = convertor.processPPTX(buffer);
+      findFirstSlideOfADeck(deck.id).then((slideId) => {
+        //create the rest of slides
+        createNodesRecursive(user, license, deck.id, slideId, slides, 1);
+      }).catch((error) => {
+        request.log('error', error);
+        reply(boom.badImplementation());
+      });
+    }
+  }).catch((error) => {
+    request.log('error', error);
+    reply(boom.badImplementation());
+  });
+}
 
 function saveImageToFile(imgName, file, user) {
   //Create UUID
