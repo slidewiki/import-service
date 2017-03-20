@@ -1219,6 +1219,12 @@ genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, warpObj, c
 			var pNode = textBodyNode["a:p"][i];
 			var rNode = pNode["a:r"];
 
+      //linebreaks
+      let brNode = pNode["a:br"];
+      if (brNode !== undefined && brNode.constructor !== Array) {
+        brNode = [brNode];
+      }
+
       let spanElement = "";
 
 			if (rNode === undefined) {
@@ -1232,7 +1238,17 @@ genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, warpObj, c
 			} else if (rNode.constructor === Array) {
 				// with multi r
 				for (var j=0; j<rNode.length; j++) {
-					spanElement += this.genSpanElement(rNode[j], slideLayoutSpNode, slideMasterSpNode, type, warpObj);
+          //check for linebreaks
+          if (brNode !== undefined && rNode[j].attrs !== undefined) {
+            for (let k=0; k<brNode.length; k++) {
+              if (brNode[k].attrs !== undefined && brNode[k].attrs.order < rNode[j].attrs.order) {//there is a br element before this rNode
+                spanElement += '<br>';
+                brNode.splice(k--);//remove just used br element
+              }
+            }
+          }
+
+          spanElement += this.genSpanElement(rNode[j], slideLayoutSpNode, slideMasterSpNode, type, warpObj);
 
           if (isSomeKindOfTitle) {
             const text = this.getText(rNode[j]);
@@ -1315,6 +1331,12 @@ genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, warpObj, c
 		var pNode = textBodyNode["a:p"];
 		var rNode = pNode["a:r"];
 
+    //linebreaks
+    let brNode = pNode["a:br"];
+    if (brNode !== undefined && brNode.constructor !== Array) {
+      brNode = [brNode];
+    }
+
     let spanElement = "";
 
 		if (rNode === undefined) {
@@ -1328,6 +1350,16 @@ genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, warpObj, c
 		} else if (rNode.constructor === Array) {
 			// with multi r
 			for (var j=0; j<rNode.length; j++) {
+        //check for linebreaks
+        if (brNode !== undefined && rNode[j].attrs !== undefined) {
+          for (let k=0; k<brNode.length; k++) {
+            if (brNode[k].attrs !== undefined && brNode[k].attrs.order < rNode[j].attrs.order) {//there is a br element before this rNode
+              spanElement += '<br>';
+              brNode.splice(k--);//remove just used br element
+            }
+          }
+        }
+
 				spanElement += this.genSpanElement(rNode[j], slideLayoutSpNode, slideMasterSpNode, type, warpObj);
 
         if (isSomeKindOfTitle) {
