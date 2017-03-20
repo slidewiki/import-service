@@ -13,6 +13,7 @@ importservice:
     - LETSENCRYPT_EMAIL=meissner@informatik.uni-leipzig.de
     - SERVICE_URL_DECK=https://deckservice.experimental.slidewiki.org
     - SERVICE_URL_FILE=https://fileservice.experimental.slidewiki.org
+    - SERVICE_HOST_UNOCONV=unoconvservice.experimental.slidewiki.org
     - DATABASE_URL=mongodb # use a url or the name, defined in the docker-compose file
   volumes:
     - files:/data/files
