@@ -319,6 +319,21 @@ module.exports = {
       //console.log('upload completed');
     //});
 
+  },
+  importImagePaste: function(request, reply) { // Klaas - SWIK-1132 - for image paste in CKeditor
+    const filename = request.payload.upload.hapi.filename;
+    const userid = request.params.userid;
+    const filePath = saveImageToFile(filename, request.payload.upload._data, userid);
+
+    /*let content = '<script type="text/javascript">\n';
+    content += 'document.domain = "slidewiki.org";\n';
+    content += 'window.parent.CKEDITOR.tools.callFunction('+ request.query.CKEditorFuncNum + ' , "' + filePath + '", "" );\n';
+    content += '</script>';*/
+
+    content = '{ "uploaded": 1, "fileName": "'+filename+'", "url": "'+filePath+'" }';
+        //reply('<script type="text/javascript">window.parent.CKEDITOR.tools.callFunction(1, "http://platform.manfredfris.ch/assets/images/logo_full.png", "");</script>);');
+    reply(content);
+
   }
 };
 
