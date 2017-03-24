@@ -330,7 +330,7 @@ module.exports = {
     content += 'window.parent.CKEDITOR.tools.callFunction('+ request.query.CKEditorFuncNum + ' , "' + filePath + '", "" );\n';
     content += '</script>';*/
 
-    content = '{ "uploaded": 1, "fileName": "'+filename+'", "url": "'+filePath+'" }';
+    let content = '{ "uploaded": 1, "fileName": "'+filename+'", "url": "'+filePath+'" }';
         //reply('<script type="text/javascript">window.parent.CKEDITOR.tools.callFunction(1, "http://platform.manfredfris.ch/assets/images/logo_full.png", "");</script>);');
     reply(content);
 
