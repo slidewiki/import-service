@@ -378,7 +378,7 @@ processSingleSlide(zip, sldFileName, index, slideSize) {
             break;
         }
         if (bgColor === undefined) {
-		    bgColor = "FFFFFF";
+		    bgColor = "";
         }
 	}
 	var nodes = content["p:sld"]["p:cSld"]["p:spTree"];
