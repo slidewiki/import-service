@@ -394,8 +394,12 @@ processSingleSlide(zip, sldFileName, index, slideSize) {
     //var result = "<div style='position: absolute;width:" + slideSize.width + "px; height:" + slideSize.height + "px; background-color: #" + bgColor + "'>"
     //var result = "<div style='position: absolute;border-style: dotted; background-color: #" + bgColor + "' >"
     //var result = "<div style='position: absolute;border-style: dotted; background-color: #" + bgColor + "' >"
-    var result = "<div class='pptx2html' style='position: relative;width:" + slideSize.width + "px; height:" + slideSize.height + "px; background-color: #" + bgColor + "'><div></div>"
-
+    if (bfColor !== ''){
+        let bgColorResult = "background-color: #" + bgColor;
+    } else{
+        let bgColorResult = '';
+    }
+    var result = "<div class='pptx2html' style='position: relative;width:" + slideSize.width + "px; height:" + slideSize.height + "px; " + bgColorResult + "'><div></div>"
 
 	for (var nodeKey in nodes) {
         let that = this;
