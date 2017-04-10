@@ -394,7 +394,7 @@ processSingleSlide(zip, sldFileName, index, slideSize) {
     //var result = "<div style='position: absolute;width:" + slideSize.width + "px; height:" + slideSize.height + "px; background-color: #" + bgColor + "'>"
     //var result = "<div style='position: absolute;border-style: dotted; background-color: #" + bgColor + "' >"
     //var result = "<div style='position: absolute;border-style: dotted; background-color: #" + bgColor + "' >"
-    if (bfColor !== ''){
+    if (bgColor !== ''){
         let bgColorResult = "background-color: #" + bgColor;
     } else{
         let bgColorResult = '';
