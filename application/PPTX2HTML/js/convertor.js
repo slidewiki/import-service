@@ -1851,24 +1851,24 @@ getVerticalAlign(node, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTe
 
 getFontType(node, type, slideMasterTextStyles) {
 	var typeface = this.getTextByPathList(node, ["a:rPr", "a:latin", "attrs", "typeface"]);
-
-	if (typeface === undefined) {
-		var fontSchemeNode = this.getTextByPathList(this.themeContent, ["a:theme", "a:themeElements", "a:fontScheme"]);
-		if (type == "title" || type == "subTitle" || type == "ctrTitle") {
-			typeface = this.getTextByPathList(fontSchemeNode, ["a:majorFont", "a:latin", "attrs", "typeface"]);
-		} else if (type == "body") {
-			typeface = this.getTextByPathList(fontSchemeNode, ["a:minorFont", "a:latin", "attrs", "typeface"]);
-		} else {
-			typeface = this.getTextByPathList(fontSchemeNode, ["a:minorFont", "a:latin", "attrs", "typeface"]);
-		}
-	}
-
+    // SWIK-1123 HF: I'm butchering the function to avoid inline CSS so we can use themes.
+	// if (typeface === undefined) {
+	// 	var fontSchemeNode = this.getTextByPathList(this.themeContent, ["a:theme", "a:themeElements", "a:fontScheme"]);
+	// 	if (type == "title" || type == "subTitle" || type == "ctrTitle") {
+	// 		typeface = this.getTextByPathList(fontSchemeNode, ["a:majorFont", "a:latin", "attrs", "typeface"]);
+	// 	} else if (type == "body") {
+	// 		typeface = this.getTextByPathList(fontSchemeNode, ["a:minorFont", "a:latin", "attrs", "typeface"]);
+	// 	} else {
+	// 		typeface = this.getTextByPathList(fontSchemeNode, ["a:minorFont", "a:latin", "attrs", "typeface"]);
+	// 	}
+	// }
+    //
 	return (typeface === undefined) ? "inherit" : typeface;
 }
 
 getFontColor(node, type, slideMasterTextStyles) {
 	var color = this.getTextByPathStr(node, "a:rPr a:solidFill a:srgbClr attrs val");
-	return (color === undefined) ? "#000" : "#" + color;
+	return (color === undefined) ? "inherit" : "#" + color;
 }
 
 getFontSize(node, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles) {
@@ -1876,39 +1876,41 @@ getFontSize(node, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextSty
 	if (node["a:rPr"] !== undefined) {
 		fontSize = parseInt(node["a:rPr"]["attrs"]["sz"]) / 100;
 	}
-
-	if ((isNaN(fontSize) || fontSize === undefined)) {
-		var sz = this.getTextByPathList(slideLayoutSpNode, ["p:txBody", "a:lstStyle", "a:lvl1pPr", "a:defRPr", "attrs", "sz"]);
-		fontSize = parseInt(sz) / 100;
-	}
-
-	if (isNaN(fontSize) || fontSize === undefined) {
-		if (type == "title" || type == "subTitle" || type == "ctrTitle") {
-			var sz = this.getTextByPathList(slideMasterTextStyles, ["p:titleStyle", "a:lvl1pPr", "a:defRPr", "attrs", "sz"]);
-		} else if (type == "body") {
-			var sz = this.getTextByPathList(slideMasterTextStyles, ["p:bodyStyle", "a:lvl1pPr", "a:defRPr", "attrs", "sz"]);
-		} else if (type == "dt" || type == "sldNum") {
-			var sz = "1200";
-		} else if (type === undefined) {
-			var sz = this.getTextByPathList(slideMasterTextStyles, ["p:otherStyle", "a:lvl1pPr", "a:defRPr", "attrs", "sz"]);
-		}
-		fontSize = parseInt(sz) / 100;
-	}
-
-	var baseline = this.getTextByPathList(node, ["a:rPr", "attrs", "baseline"]);
-	if (baseline !== undefined && !isNaN(fontSize)) {
-		fontSize -= 10;
-	}
+    // SWIK-1123  HF: I'm butchering the function to avoid inline CSS so we can use themes.
+	// if ((isNaN(fontSize) || fontSize === undefined)) {
+	// 	var sz = this.getTextByPathList(slideLayoutSpNode, ["p:txBody", "a:lstStyle", "a:lvl1pPr", "a:defRPr", "attrs", "sz"]);
+	// 	fontSize = parseInt(sz) / 100;
+	// }
+    //
+	// if (isNaN(fontSize) || fontSize === undefined) {
+	// 	if (type == "title" || type == "subTitle" || type == "ctrTitle") {
+	// 		var sz = this.getTextByPathList(slideMasterTextStyles, ["p:titleStyle", "a:lvl1pPr", "a:defRPr", "attrs", "sz"]);
+	// 	} else if (type == "body") {
+	// 		var sz = this.getTextByPathList(slideMasterTextStyles, ["p:bodyStyle", "a:lvl1pPr", "a:defRPr", "attrs", "sz"]);
+	// 	} else if (type == "dt" || type == "sldNum") {
+	// 		var sz = "1200";
+	// 	} else if (type === undefined) {
+	// 		var sz = this.getTextByPathList(slideMasterTextStyles, ["p:otherStyle", "a:lvl1pPr", "a:defRPr", "attrs", "sz"]);
+	// 	}
+	// 	fontSize = parseInt(sz) / 100;
+	// }
+    //
+	// var baseline = this.getTextByPathList(node, ["a:rPr", "attrs", "baseline"]);
+	// if (baseline !== undefined && !isNaN(fontSize)) {
+	// 	fontSize -= 10;
+	// }
 
 	return isNaN(fontSize) ? "inherit" : (fontSize + "pt");
 }
 
 getFontBold(node, type, slideMasterTextStyles) {
-	return (node["a:rPr"] !== undefined && node["a:rPr"]["attrs"]["b"] === "1") ? "bold" : "initial";
+    //SWIK-1123 HF: Changing to inherit from initial
+	return (node["a:rPr"] !== undefined && node["a:rPr"]["attrs"]["b"] === "1") ? "bold" : "inherit";
 }
 
 getFontItalic(node, type, slideMasterTextStyles) {
-	return (node["a:rPr"] !== undefined && node["a:rPr"]["attrs"]["i"] === "1") ? "italic" : "normal";
+    //SWIK-1123 HF: Changing to inherit from normal
+	return (node["a:rPr"] !== undefined && node["a:rPr"]["attrs"]["i"] === "1") ? "italic" : "inherit";
 }
 
 getFontDecoration(node, type, slideMasterTextStyles) {
