@@ -378,7 +378,7 @@ processSingleSlide(zip, sldFileName, index, slideSize) {
             break;
         }
         if (bgColor === undefined) {
-		    bgColor = "FFFFFF";
+		    bgColor = "";
         }
 	}
 	var nodes = content["p:sld"]["p:cSld"]["p:spTree"];
@@ -394,8 +394,11 @@ processSingleSlide(zip, sldFileName, index, slideSize) {
     //var result = "<div style='position: absolute;width:" + slideSize.width + "px; height:" + slideSize.height + "px; background-color: #" + bgColor + "'>"
     //var result = "<div style='position: absolute;border-style: dotted; background-color: #" + bgColor + "' >"
     //var result = "<div style='position: absolute;border-style: dotted; background-color: #" + bgColor + "' >"
-    var result = "<div class='pptx2html' style='position: relative;width:" + slideSize.width + "px; height:" + slideSize.height + "px; background-color: #" + bgColor + "'><div></div>"
-
+    var bgColorResult = '';
+    if (bgColor !== ''){
+        bgColorResult = "background-color: #" + bgColor;
+    }
+    var result = "<div class='pptx2html' style='position: relative;width:" + slideSize.width + "px; height:" + slideSize.height + "px; " + bgColorResult + "'><div></div>"
 
 	for (var nodeKey in nodes) {
         let that = this;
