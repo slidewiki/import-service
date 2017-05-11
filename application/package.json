@@ -20,6 +20,7 @@
     "coverall": "npm run coverage && cat ./coverage/lcov.info | coveralls && rm -rf ./coverage",
     "countLOC": "sloc -f cli-table -k total,source,comment,empty -e node_modules\\|coverage ./",
     "countLOC:details": "sloc -f cli-table -d -e node_modules\\|coverage ./",
+    "dev": "node --debug=5858 server.js",
     "start:watch": "nodemon",
     "start:mongodb": "docker run -d --name mongotest -p 27018:27017 mongo",
     "stop:mongodb": "docker stop mongotest && docker rm mongotest"

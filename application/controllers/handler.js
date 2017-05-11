@@ -17,8 +17,9 @@ let Convertor = require('../PPTX2HTML/js/convertor.js');
 //require('../PPTX2HTML/js/pptx2html');
 
 //import pptx2html from '../PPTX2HTML/js/pptx2html';
-
+console.log("Hello?");
 module.exports = {
+
   //Import uploaded PPTX and transform to HTML via PPTX2HTML  or return ERROR
   //TODO: can I run client-side non ES6 javascript in node.js?
   //pptx2html/js/pptx2html.js uses document.ready / Jquery
@@ -31,7 +32,7 @@ module.exports = {
     //reply(request.payload.file);
     //request.log('ImportPPTX', 'ImportPPTX service called' + request.payload.file);
     //console.log('ImportPPTX data' + request.payload.file);
-
+    console.log("module.exports");
 //see https://github.com/risis-eu/risis-datasets/blob/master/plugins/upload/handleUpload.js#L99
 // for example of reading a superagent request
     //!!!request.body!!!

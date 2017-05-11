@@ -1269,6 +1269,7 @@ genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, warpObj, c
 			}
 
 
+
       const insertListItemTag = (createList && !isSomeKindOfTitle && !isSldNum && (layoutType === undefined) && (pNode["a:pPr"] === undefined || pNode["a:pPr"]["a:buNone"] === undefined));
       const isOrderedList = (pNode["a:pPr"] !== undefined && pNode["a:pPr"]["a:buAutoNum"] !== undefined);
       let itemLevel = "0";
@@ -1295,6 +1296,11 @@ genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, warpObj, c
       text += "<div class='" + this.getHorizontalAlign(pNode, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles) + "'>";
 
       text += this.genBuChar(pNode);
+
+      console.log("isSomeKindOfTitle ", isSomeKindOfTitle);
+      if(isSomeKindOfTitle){
+        spanElement = '<h3>' + spanElement + '</h3>';
+      }
 
       text += spanElement;
 
@@ -1397,6 +1403,13 @@ genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, warpObj, c
 
     text += this.genBuChar(pNode);
 
+    console.log("isSomeKindOfTitle ", isSomeKindOfTitle);
+    if(isSomeKindOfTitle){
+      spanElement = '<h3>' + spanElement + '</h3>';
+    }
+
+
+
     text += spanElement;
 
     text += "</div>";
@@ -1414,6 +1427,8 @@ genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, warpObj, c
   } else if (isSubTitle && this.currentSlide.subTitle === '') {
     this.currentSlide.subTitle = title;
   }
+
+  console.log(text);
 
 	return text;
 }
@@ -1575,14 +1590,29 @@ __proto__: Array[0]
     //console.log('///////////////////////////////////////////////////linkID');
     //console.log(linkID);
     //console.log('///////////////////////////////////////////////////linkID');
+    //HF: If it's a title, then we want heading tags rather than a span tag.
+    // This means we don't have to rely on titleBodySize
+
+    const isTitle = (type === 'title');
+    const isSubTitle = (type === 'subTitle');
+    const isCtrTitle = (type === 'ctrTitle');
+    const isSomeKindOfTitle = (isTitle || isSubTitle || isCtrTitle);
+
+    let elementName = "span";
+    if(isSomeKindOfTitle){
+      elementName = "span";
+    }
+    let element = "<" + elementName +  "class='text-block' " + textStyle + ">";
 
     if (linkID !== undefined && warpObj["slideResObj"] !== undefined) {
       let linkURL = warpObj["slideResObj"][linkID]["target"];
-      return "<span class='text-block' " + textStyle + "><a href='" + linkURL + "' target='_blank'>" + text.replace(/\s/i, "&nbsp;") + "</a></span>";
+      return element + "<a href='" + linkURL + "' target='_blank'>" + text.replace(/\s/i, "&nbsp;") + "</a></" + elementName + ">";
   	} else {
-  		return "<span class='text-block' " + textStyle + ">" + text.replace(/\s/i, "&nbsp;") + "</span>";
+  		return element + text.replace(/\s/i, "&nbsp;") + "</" + elementName + ">";
     }
 }
+
+
 
 genTable(node, warpObj) {
 
