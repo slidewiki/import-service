@@ -1590,25 +1590,13 @@ __proto__: Array[0]
     //console.log('///////////////////////////////////////////////////linkID');
     //console.log(linkID);
     //console.log('///////////////////////////////////////////////////linkID');
-    //HF: If it's a title, then we want heading tags rather than a span tag.
-    // This means we don't have to rely on titleBodySize
 
-    const isTitle = (type === 'title');
-    const isSubTitle = (type === 'subTitle');
-    const isCtrTitle = (type === 'ctrTitle');
-    const isSomeKindOfTitle = (isTitle || isSubTitle || isCtrTitle);
-
-    let elementName = "span";
-    if(isSomeKindOfTitle){
-      elementName = "span";
-    }
-    let element = "<" + elementName +  "class='text-block' " + textStyle + ">";
 
     if (linkID !== undefined && warpObj["slideResObj"] !== undefined) {
       let linkURL = warpObj["slideResObj"][linkID]["target"];
-      return element + "<a href='" + linkURL + "' target='_blank'>" + text.replace(/\s/i, "&nbsp;") + "</a></" + elementName + ">";
+      return "<span class='text-block' " + textStyle + "><a href='" + linkURL + "' target='_blank'>" + text.replace(/\s/i, "&nbsp;") + "</a></span>";
   	} else {
-  		return element + text.replace(/\s/i, "&nbsp;") + "</" + elementName + ">";
+  		return "<span class='text-block' " + textStyle + ">" + text.replace(/\s/i, "&nbsp;") + "</span>";
     }
 }
 
