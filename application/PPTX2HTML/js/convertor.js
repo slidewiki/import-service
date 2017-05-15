@@ -10,6 +10,10 @@ let colz = require('./colz.class.min.js');
 let tXml = require('./tXml.js');
 let functions = require('./functions.js');
 
+function getRandomId() {
+  return '"' + Math.floor((Math.random() * 100000) + 1) + '"';
+}
+
 // import tXml from './tXml.js';
 
 //TODO INCLUDE THESE SCRIPTS
@@ -612,7 +616,7 @@ processGroupSpNode(node, warpObj) {
 
 	var order = node["attrs"]["order"];
 
-	var result = "<div class='block group' style='position: absolute;z-index: " + order + "; top: " + (y - chy) + "px; left: " + (x - chx) + "px; width: " + (cx - chcx) + "px; height: " + (cy - chcy) + "px;'>";
+  var result = "<div id=" + getRandomId() + " class='block group' style='position: absolute;z-index: " + order + "; top: " + (y - chy) + "px; left: " + (x - chx) + "px; width: " + (cx - chcx) + "px; height: " + (cy - chcy) + "px;'>";
 
 	// Procsee all child nodes
 	for (var nodeKey in node) {
@@ -741,7 +745,7 @@ genShape(node, slideLayoutSpNode, slideMasterSpNode, id, name, idx, type, order,
     let svgPos = this.getPosition(slideXfrmNode, undefined, undefined);
     let svgSize = this.getSize(slideXfrmNode, undefined, undefined);
 
-    result += "<div class='drawing-container' _id='" + id + "' _idx='" + idx + "' _type='" + type + "' _name='" + name +
+    result += "<div id=" + getRandomId() + " class='drawing-container' _id='" + id + "' _idx='" + idx + "' _type='" + type + "' _name='" + name +
         "' style='position: absolute;"
              + svgPos
              + svgSize
@@ -1016,7 +1020,7 @@ genShape(node, slideLayoutSpNode, slideMasterSpNode, id, name, idx, type, order,
 
 		result += "</svg></div>";
 
-		result += "<div class='block content " + this.getVerticalAlign(node, slideLayoutSpNode, slideMasterSpNode, type) +
+		result += "<div id=" + getRandomId() + " class='block content " + this.getVerticalAlign(node, slideLayoutSpNode, slideMasterSpNode, type) +
 				"' _id='" + id + "' _idx='" + idx + "' _type='" + type + "' _name='" + name +
 				"' style='position: absolute;" +
 					this.getPosition(slideXfrmNode, slideLayoutXfrmNode, slideMasterXfrmNode) +
@@ -1039,7 +1043,7 @@ genShape(node, slideLayoutSpNode, slideMasterSpNode, id, name, idx, type, order,
       textBody = this.genTextBody(node["p:txBody"], slideLayoutSpNode, slideMasterSpNode, type, warpObj, createList);
     }
     if (textBody !== undefined && textBody !== "") {//Dejan added this to prevent creation of some undefined and empty elements
-    		result += "<div class='block content " + this.getVerticalAlign(node, slideLayoutSpNode, slideMasterSpNode, type) +
+    		result += "<div id=" + getRandomId() + " class='block content " + this.getVerticalAlign(node, slideLayoutSpNode, slideMasterSpNode, type) +
     				"' _id='" + id + "' _idx='" + idx + "' _type='" + type + "' _name='" + name +
     				"' style='position: absolute;" +
     					this.getPosition(slideXfrmNode, slideLayoutXfrmNode, slideMasterXfrmNode) +
@@ -1100,7 +1104,7 @@ processPicNode(node, warpObj) {
     altTag = " alt=\"" + descr + "\"";
   }
 
-	return "<div class='block content' style='position: absolute;" + this.getPosition(xfrmNode, undefined, undefined) + this.getSize(xfrmNode, undefined, undefined) +
+	return "<div id=" + getRandomId() + " class='block content' style='position: absolute;" + this.getPosition(xfrmNode, undefined, undefined) + this.getSize(xfrmNode, undefined, undefined) +
 			" z-index: " + order + ";" +
 			// "'><img src=\"data:" + mimeType + ";base64," + functions.base64ArrayBuffer(imgArrayBuffer) + "\" style='position: absolute;width: 100%; height: 100%'" +
       // "'><img src=\"http://" + imagePath + "\" style='position: absolute;width: 100%; height: 100%'" +
@@ -1292,7 +1296,7 @@ genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, warpObj, c
       previousNodeIsOrderedListItem = isOrderedList;
       previousItemLevel = itemLevel;
 
-      text += "<div class='" + this.getHorizontalAlign(pNode, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles) + "'>";
+      text += "<div id=" + getRandomId() + " class='" + this.getHorizontalAlign(pNode, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles) + "'>";
 
       text += this.genBuChar(pNode);
 
@@ -1392,7 +1396,7 @@ genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, warpObj, c
       text += "<li>";//add list tag
     }
 
-    text += "<div class='" + this.getHorizontalAlign(pNode, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles) + "'>";
+    text += "<div id=" + getRandomId() + " class='" + this.getHorizontalAlign(pNode, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles) + "'>";
 
 
     text += this.genBuChar(pNode);
@@ -1589,7 +1593,8 @@ genTable(node, warpObj) {
 	var order = node["attrs"]["order"];
 	var tableNode = this.getTextByPathList(node, ["a:graphic", "a:graphicData", "a:tbl"]);
 	var xfrmNode = this.getTextByPathList(node, ["p:xfrm"]);
-	var tableHtml = "<table style='position: absolute;" + this.getPosition(xfrmNode, undefined, undefined) + this.getSize(xfrmNode, undefined, undefined) + " z-index: " + order + ";'>";
+
+	var tableHtml = "<table id=" + getRandomId() + " style='position: absolute;" + this.getPosition(xfrmNode, undefined, undefined) + this.getSize(xfrmNode, undefined, undefined) + " z-index: " + order + ";'>";
 
 	var trNodes = tableNode["a:tr"];
 	if (trNodes.constructor === Array) {
@@ -1750,7 +1755,8 @@ genChart(node, warpObj) {
 genDiagram(node, warpObj) {
 	var order = node["attrs"]["order"];
 	var xfrmNode = this.getTextByPathList(node, ["p:xfrm"]);
-	return "<div class='block content' style='position: absolute;border: 1px dotted;" +
+
+	return "<div id=" + getRandomId() + " class='block content' style='position: absolute;border: 1px dotted;" +
 				this.getPosition(xfrmNode, undefined, undefined) + this.getSize(xfrmNode, undefined, undefined) +
 			"'>TODO: diagram</div>";
 }
