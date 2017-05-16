@@ -1618,7 +1618,7 @@ genTable(node, warpObj) {
 					}
 				}
 			} else {
-				var text = this.genTextBody(tcNodes["a:txBody"]);
+				var text = this.genTextBody(tcNodes["a:txBody"], undefined, undefined, undefined, warpObj);
 				tableHtml += "<td>" + text + "</td>";
 			}
 			tableHtml += "</tr>";
@@ -1628,11 +1628,11 @@ genTable(node, warpObj) {
 		var tcNodes = trNodes["a:tc"];
 		if (tcNodes.constructor === Array) {
 			for (var j=0; j<tcNodes.length; j++) {
-				var text = this.genTextBody(tcNodes[j]["a:txBody"]);
+				var text = this.genTextBody(tcNodes[j]["a:txBody"], undefined, undefined, undefined, warpObj);
 				tableHtml += "<td>" + text + "</td>";
 			}
 		} else {
-			var text = this.genTextBody(tcNodes["a:txBody"]);
+			var text = this.genTextBody(tcNodes["a:txBody"], undefined, undefined, undefined, warpObj);
 			tableHtml += "<td>" + text + "</td>";
 		}
 		tableHtml += "</tr>";
