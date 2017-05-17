@@ -1297,9 +1297,9 @@ genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, warpObj, c
 
       text += this.genBuChar(pNode);
 
-      console.log("isSomeKindOfTitle ", isSomeKindOfTitle);
+      // HF For the titles, we need to give them heading tags
       if(isSomeKindOfTitle){
-        spanElement = '<h3>' + spanElement + '</h3>';
+        spanElement = applyTitle(spanElement, type)
       }
 
       text += spanElement;
@@ -1403,12 +1403,10 @@ genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, warpObj, c
 
     text += this.genBuChar(pNode);
 
-    console.log("isSomeKindOfTitle ", isSomeKindOfTitle);
+    // HF For the titles, we need to give them heading tags
     if(isSomeKindOfTitle){
-      spanElement = '<h3>' + spanElement + '</h3>';
+      spanElement = applyTitle(spanElement, type)
     }
-
-
 
     text += spanElement;
 
@@ -1428,10 +1426,20 @@ genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, warpObj, c
     this.currentSlide.subTitle = title;
   }
 
-  console.log(text);
-
 	return text;
 }
+
+//HF: Rather than writing this twice, I created a function.
+// Should only be called if it is a title of some kind
+  applyTitle(spanElement, type){
+    if(type === 'subTitle'){
+      spanElement = '<h4>' + spanElement + '</h4>';
+    }
+    else{
+      spanElement = '<h3>' + spanElement + '</h3>';
+    }
+    return spanElement;
+  }
 
 getText(node) {//Get raw text from a:r (a:p) node - for the slide title
   let text = node["a:t"];
