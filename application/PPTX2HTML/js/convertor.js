@@ -1303,7 +1303,7 @@ genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, warpObj, c
 
       // HF For the titles, we need to give them heading tags
       if(isSomeKindOfTitle){
-        spanElement = applyTitle(spanElement, type)
+        spanElement = this.applyTitle(spanElement, type);
       }
 
       text += spanElement;
@@ -1409,7 +1409,7 @@ genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, warpObj, c
 
     // HF For the titles, we need to give them heading tags
     if(isSomeKindOfTitle){
-      spanElement = applyTitle(spanElement, type)
+      spanElement = this.applyTitle(spanElement, type);
     }
 
     text += spanElement;
