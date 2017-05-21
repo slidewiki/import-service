@@ -403,6 +403,9 @@ processSingleSlide(zip, sldFileName, index, slideSize) {
         bgColorResult = "background-color: #" + bgColor;
     }
     var result = "<div class='pptx2html' style='position: relative;width:" + slideSize.width + "px; height:" + slideSize.height + "px; " + bgColorResult + "'><div></div>"
+    // HF: We need an extra class so that we can have title slide and other slides different
+    let className = index === 0 ? 'titleSlide' : 'bodySlide';
+    result += '<div class="' + className + '">';
 
 	for (var nodeKey in nodes) {
         let that = this;
@@ -418,7 +421,8 @@ processSingleSlide(zip, sldFileName, index, slideSize) {
 	}
 
 	//return result + "</section>";
-    return result + "</div>";
+    //HF Two divs for className and pptx2html
+    return result + "</div></div>";
 }
 
 processSingleSlideNotes(zip, sldFileName, index, slideSize) {
