@@ -16,5 +16,5 @@ module.exports = {
     host: (!co.isEmpty(process.env.SERVICE_HOST_UNOCONV)) ? process.env.SERVICE_HOST_UNOCONV : 'unoconvservice',
     path: '/unoconv/pptx',
     port: 443
-}
+  }
 };
