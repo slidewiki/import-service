@@ -13,6 +13,10 @@ var nv = require('nvd3');
 var d3 = require('d3');
 var jsdom = require('jsdom');
 
+function getRandomId() {
+  return '"' + Math.floor((Math.random() * 100000) + 1) + '"';
+}
+
 // import tXml from './tXml.js';
 
 //TODO INCLUDE THESE SCRIPTS
@@ -391,7 +395,7 @@ processSingleSlide(zip, sldFileName, index, slideSize) {
             break;
         }
         if (bgColor === undefined) {
-		    bgColor = "FFFFFF";
+		        bgColor = "";
         }
 	}
 	var nodes = content["p:sld"]["p:cSld"]["p:spTree"];
@@ -407,10 +411,14 @@ processSingleSlide(zip, sldFileName, index, slideSize) {
     //var result = "<div style='position: absolute;width:" + slideSize.width + "px; height:" + slideSize.height + "px; background-color: #" + bgColor + "'>"
     //var result = "<div style='position: absolute;border-style: dotted; background-color: #" + bgColor + "' >"
     //var result = "<div style='position: absolute;border-style: dotted; background-color: #" + bgColor + "' >"
-    var result = "<div class='pptx2html' style='position: relative;width:" + slideSize.width + "px; height:" + slideSize.height + "px; background-color: #" + bgColor + "'><div></div>"
 
-    var promises = [];
+  var bgColorResult = '';
+  if (bgColor !== ''){
+      bgColorResult = "background-color: #" + bgColor;
+  }
+  var result = "<div class='pptx2html' style='position: relative;width:" + slideSize.width + "px; height:" + slideSize.height + "px; " + bgColorResult + "'><div></div>"
 
+  var promises = [];
 	for (var nodeKey in nodes) {
  		if (nodes[nodeKey].constructor === Array) {
             for (var i=0; i<nodes[nodeKey].length; i++) {
@@ -612,27 +620,28 @@ indexNodes(content) {
 }
 
 processNodesInSlide(nodeKey, nodeValue, warpObj) {
-
-
-
-	switch (nodeKey) {
-		case "p:sp":	// Shape, Text
-			return this.processSpNode(nodeValue, warpObj);
-			break;
-		case "p:cxnSp":	// Shape, Text (with connection)
-			return this.processCxnSpNode(nodeValue, warpObj);
-			break;
-		case "p:pic":	// Picture
-	return this.processPicNode(nodeValue, warpObj);
-			break;
-		case "p:graphicFrame":	// Chart, Diagram, Table
-			return this.processGraphicFrameNode(nodeValue, warpObj);
-			break;
-		case "p:grpSp":	// 群組
-			return this.processGroupSpNode(nodeValue, warpObj);
-			break;
-		default:
-	}
+  try {
+  	switch (nodeKey) {
+  		case "p:sp":	// Shape, Text
+  			result = this.processSpNode(nodeValue, warpObj);
+  			break;
+  		case "p:cxnSp":	// Shape, Text (with connection)
+  			result = this.processCxnSpNode(nodeValue, warpObj);
+  			break;
+  		case "p:pic":	// Picture
+  			result = this.processPicNode(nodeValue, warpObj);
+  			break;
+  		case "p:graphicFrame":	// Chart, Diagram, Table
+  			result = this.processGraphicFrameNode(nodeValue, warpObj);
+  			break;
+  		case "p:grpSp":	// 群組
+  			result = this.processGroupSpNode(nodeValue, warpObj);
+  			break;
+  		default:
+  	}
+  } catch(e) {
+    console.log('Error in processNodesInSlide', e);
+  }
 
 	return new Promise(function(resolve, reject){
 		resolve({text: ''});
@@ -656,10 +665,9 @@ processGroupSpNode(node, warpObj) {
 	var chcy = parseInt(xfrmNode["a:chExt"]["attrs"]["cy"]) * factor;
 
 	var order = node["attrs"]["order"];
-	// Process all child nodes
-	var promises = [];
 
 	// Procsee all child nodes
+  var promises = [];
 	for (var nodeKey in node) {
 		if (node[nodeKey].constructor === Array) {
 			for (var i=0; i<node[nodeKey].length; i++) {
@@ -670,21 +678,21 @@ processGroupSpNode(node, warpObj) {
 		}
 	}
 
-    return Promise.all(promises).then((infos) => {
-    	// Create the new merged html
-        var text = "<div class='block group' style='position: absolute;z-index: "
+  return Promise.all(promises).then((infos) => {
+  	// Create the new merged html
+    var text = "<div id=" + getRandomId() + " class='block group' style='position: absolute;z-index: "
 			+ order + "; top: " + (y - chy) + "px; left: " + (x - chx) + "px; width: "
 			+ (cx - chcx) + "px; height: " + (cy - chcy) + "px;'>"
-        	+ infos.map((info) => {return info.text}).join('') + "</div>";
+    	+ infos.map((info) => {return info.text}).join('') + "</div>";
 		var res = {};
 		// Merge objects returned by the promises
-    	for (var i = 0; i < infos.length; i++  ) {
-    		res = Object.assign(res, infos[i]);
+  	for (var i = 0; i < infos.length; i++  ) {
+  		res = Object.assign(res, infos[i]);
 		}
 		// Assign the respective joined html
 		res.text = text;
-        return res;
-    }).catch(function(err){console.log("processGroupSpNode " + err)});
+    return res;
+  }).catch(function(err){console.log("processGroupSpNode " + err)});
 
 
     // return result;
@@ -801,7 +809,7 @@ genShape(node, slideLayoutSpNode, slideMasterSpNode, id, name, idx, type, order,
     let svgPos = this.getPosition(slideXfrmNode, undefined, undefined);
     let svgSize = this.getSize(slideXfrmNode, undefined, undefined);
 
-    result += "<div class='drawing-container' _id='" + id + "' _idx='" + idx + "' _type='" + type + "' _name='" + name +
+    result += "<div id=" + getRandomId() + " class='drawing-container' _id='" + id + "' _idx='" + idx + "' _type='" + type + "' _name='" + name +
         "' style='position: absolute;"
              + svgPos
              + svgSize
@@ -1076,7 +1084,7 @@ genShape(node, slideLayoutSpNode, slideMasterSpNode, id, name, idx, type, order,
 
 		result += "</svg></div>";
 
-		result += "<div class='block content " + this.getVerticalAlign(node, slideLayoutSpNode, slideMasterSpNode, type) +
+		result += "<div id=" + getRandomId() + " class='block content " + this.getVerticalAlign(node, slideLayoutSpNode, slideMasterSpNode, type) +
 				"' _id='" + id + "' _idx='" + idx + "' _type='" + type + "' _name='" + name +
 				"' style='position: absolute;" +
 					this.getPosition(slideXfrmNode, slideLayoutXfrmNode, slideMasterXfrmNode) +
@@ -1102,9 +1110,9 @@ genShape(node, slideLayoutSpNode, slideMasterSpNode, id, name, idx, type, order,
     // TextBody
     if (node["p:txBody"] !== undefined) {
       return this.genTextBody(node["p:txBody"], slideLayoutSpNode, slideMasterSpNode, type, warpObj, createList).then((info) => {
-      	  textBody = info.text;
-		  if (textBody !== undefined && textBody !== "") {//Dejan added this to prevent creation of some undefined and empty elements
-            	result += "<div class='block content " + this.getVerticalAlign(node, slideLayoutSpNode, slideMasterSpNode, type) +
+    	  textBody = info.text;
+        if (textBody !== undefined && textBody !== "") {//Dejan added this to prevent creation of some undefined and empty elements
+        	result += "<div id=" + getRandomId() + " class='block content " + this.getVerticalAlign(node, slideLayoutSpNode, slideMasterSpNode, type) +
                 "' _id='" + id + "' _idx='" + idx + "' _type='" + type + "' _name='" + name +
                 "' style='position: absolute;" +
                 this.getPosition(slideXfrmNode, slideLayoutXfrmNode, slideMasterXfrmNode) +
@@ -1116,18 +1124,15 @@ genShape(node, slideLayoutSpNode, slideMasterSpNode, id, name, idx, type, order,
                 textBody +
                 "</div>";
             	info.text = result;
-
         }
         return info;
-    }).catch((err) => {console.log('Error generating text: ' + err)});
+      }).catch((err) => {console.log('Error generating text: ' + err)});
     }
 
-	return new Promise((resolve, reject) => {
-			resolve({text: result});
-	});
-
-
-	}
+    return new Promise((resolve, reject) => {
+      resolve({text: result});
+    });
+  }
 }
 
 processPicNode(node, warpObj) {
@@ -1173,7 +1178,7 @@ processPicNode(node, warpObj) {
         altTag = " alt=\"" + descr + "\"";
       }
 
-    	resolve ({text: "<div class='block content' style='position: absolute;" + this.getPosition(xfrmNode, undefined, undefined) + this.getSize(xfrmNode, undefined, undefined) +
+    	resolve ({text: "<div id=" + getRandomId() + " class='block content' style='position: absolute;" + this.getPosition(xfrmNode, undefined, undefined) + this.getSize(xfrmNode, undefined, undefined) +
     			" z-index: " + order + ";" +
     			// "'><img src=\"data:" + mimeType + ";base64," + functions.base64ArrayBuffer(imgArrayBuffer) + "\" style='position: absolute;width: 100%; height: 100%'" +
           // "'><img src=\"http://" + imagePath + "\" style='position: absolute;width: 100%; height: 100%'" +
@@ -1258,46 +1263,46 @@ sendImageToFileService(imgName, zip) {
     return myPromise;
 }
 
-saveImageToFile(imgName, zip) {
-  let fs = require('fs');
-  let Microservices = require('../../configs/microservices');
-  //Create UUID
-  let uuid = require('node-uuid');
-  const uuidValue = uuid.v1();// Generate a v1 (time-based) id
-  //Get file extension
-  const imgNameArray = imgName.split('.');
-  const extension = imgNameArray[imgNameArray.length - 1];
-
-  const imgUserPath = this.user + '/' + uuidValue + '.' + extension;
-
-  // const imgUserPath = this.user + '/' + uuidValue + simpleImgName;
-  //const saveTo = '.' + Microservices.file.shareVolume + '/' + imgUserPath;// For localhost testing
-  const saveTo = Microservices.file.shareVolume + '/' + imgUserPath;
-
-  //Create the user dir if does not exist
-  // const userDir = '.' + Microservices.file.shareVolume + '/' + this.user;// For localhost testing
-  const userDir = Microservices.file.shareVolume + '/' + this.user;
-  if (!fs.existsSync(userDir)){
-    fs.mkdirSync(userDir, 744, function(err) {
-      if(err) {
-        console.log(err);
-      }
-    });
-  }
-
-  //Save file
-  let fileStream = fs.createWriteStream(saveTo);
-  fileStream.write(zip.file(imgName).asBinary(), 'binary');
-  fileStream.end();
-  fileStream.on('error', (err) => {
-    console.log('error', err);
-  });
-  fileStream.on('finish', (res) => {
-    // console.log('save completed: ', simpleImgName);
-  });
-
-  return Microservices.file.uri + '/' + imgUserPath;
-}
+// saveImageToFile(imgName, zip) {
+//   let fs = require('fs');
+//   let Microservices = require('../../configs/microservices');
+//   //Create UUID
+//   let uuid = require('node-uuid');
+//   const uuidValue = uuid.v1();// Generate a v1 (time-based) id
+//   //Get file extension
+//   const imgNameArray = imgName.split('.');
+//   const extension = imgNameArray[imgNameArray.length - 1];
+//
+//   const imgUserPath = this.user + '/' + uuidValue + '.' + extension;
+//
+//   // const imgUserPath = this.user + '/' + uuidValue + simpleImgName;
+//   //const saveTo = '.' + Microservices.file.shareVolume + '/' + imgUserPath;// For localhost testing
+//   const saveTo = Microservices.file.shareVolume + '/' + imgUserPath;
+//
+//   //Create the user dir if does not exist
+//   // const userDir = '.' + Microservices.file.shareVolume + '/' + this.user;// For localhost testing
+//   const userDir = Microservices.file.shareVolume + '/' + this.user;
+//   if (!fs.existsSync(userDir)){
+//     fs.mkdirSync(userDir, 744, function(err) {
+//       if(err) {
+//         console.log(err);
+//       }
+//     });
+//   }
+//
+//   //Save file
+//   let fileStream = fs.createWriteStream(saveTo);
+//   fileStream.write(zip.file(imgName).asBinary(), 'binary');
+//   fileStream.end();
+//   fileStream.on('error', (err) => {
+//     console.log('error', err);
+//   });
+//   fileStream.on('finish', (res) => {
+//     // console.log('save completed: ', simpleImgName);
+//   });
+//
+//   return Microservices.file.uri + '/' + imgUserPath;
+// }
 
 processGraphicFrameNode(node, warpObj) {
 
@@ -1344,220 +1349,239 @@ processSpPrNode(node, warpObj) {
 }
 
 genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, warpObj, createList) {
-    return new Promise((resolve, reject) => {
-        var text = "";
-        var slideMasterTextStyles = warpObj["slideMasterTextStyles"];
+  return new Promise((resolve, reject) => {
+    var text = "";
+    var slideMasterTextStyles = warpObj["slideMasterTextStyles"];
 
-        if (textBodyNode === undefined) {
-            resolve({
-                text: text
-            });
+    if (textBodyNode === undefined) {
+      resolve({
+        text: text
+      });
+    }
+
+    const isTitle = (type === 'title');
+    const isSubTitle = (type === 'subTitle');
+    const isCtrTitle = (type === 'ctrTitle');
+    const isSomeKindOfTitle = (isTitle || isSubTitle || isCtrTitle);
+    const isSldNum = (type === 'sldNum');
+    const layoutType = this.getTextByPathList(slideLayoutSpNode, ["p:nvSpPr", "p:nvPr", "p:ph", "attrs", "type"]);
+
+    var title = '';
+
+    if (textBodyNode["a:p"].constructor === Array) {
+      // multi p
+      var previousNodeIsListItem = false;
+      var previousNodeIsOrderedListItem = false;
+      var previousItemLevel = "0";
+      for (var i=0; i<textBodyNode["a:p"].length; i++) {
+
+        var pNode = textBodyNode["a:p"][i];
+        var rNode = pNode["a:r"];
+
+        //linebreaks
+        let brNode = pNode["a:br"];
+        if (brNode !== undefined && brNode.constructor !== Array) {
+          brNode = [brNode];
         }
 
-        const isTitle = (type === 'title');
-        const isSubTitle = (type === 'subTitle');
-        const isCtrTitle = (type === 'ctrTitle');
-        const isSomeKindOfTitle = (isTitle || isSubTitle || isCtrTitle);
-        const isSldNum = (type === 'sldNum');
-        const layoutType = this.getTextByPathList(slideLayoutSpNode, ["p:nvSpPr", "p:nvPr", "p:ph", "attrs", "type"]);
+        let spanElement = "";
 
-        var title = '';
+        if (rNode === undefined) {
+          // without r
+          spanElement += this.genSpanElement(pNode, slideLayoutSpNode, slideMasterSpNode, type, warpObj);
 
-
-        if (textBodyNode["a:p"].constructor === Array) {
-            // multi p
-            var previousNodeIsListItem = false;
-            var previousNodeIsOrderedListItem = false;
-            var previousItemLevel = "0";
-            for (var i=0; i<textBodyNode["a:p"].length; i++) {
-
-
-                var pNode = textBodyNode["a:p"][i];
-                var rNode = pNode["a:r"];
-
-                let spanElement = "";
-
-                if (rNode === undefined) {
-                    // without r
-                    spanElement += this.genSpanElement(pNode, slideLayoutSpNode, slideMasterSpNode, type, warpObj);
-
-                    if (isSomeKindOfTitle) {
-                        const text = this.getText(pNode);
-                        title += (text !== undefined) ? text : ' ';
-                    }
-                } else if (rNode.constructor === Array) {
-                    // with multi r
-                    for (var j=0; j<rNode.length; j++) {
-                        spanElement += this.genSpanElement(rNode[j], slideLayoutSpNode, slideMasterSpNode, type, warpObj);
-
-                        if (isSomeKindOfTitle) {
-                            const text = this.getText(rNode[j]);
-                            title += (text !== undefined) ? text : ' ';
-                        }
-                    }
-                } else {
-                    // with one r
-                    spanElement += this.genSpanElement(rNode, slideLayoutSpNode, slideMasterSpNode, type, warpObj);
-
-                    if (isSomeKindOfTitle) {
-                        const text = this.getText(rNode);
-                        title += (text !== undefined) ? text : ' ';
-                    }
+          if (isSomeKindOfTitle) {
+            const text = this.getText(pNode);
+            title += (text !== undefined) ? text : ' ';
+          }
+        } else if (rNode.constructor === Array) {
+          // with multi r
+          for (var j=0; j<rNode.length; j++) {
+            //check for linebreaks
+            if (brNode !== undefined && rNode[j].attrs !== undefined) {
+              for (let k=0; k<brNode.length; k++) {
+                if (brNode[k].attrs !== undefined && brNode[k].attrs.order < rNode[j].attrs.order) {//there is a br element before this rNode
+                  spanElement += '<br>';
+                  brNode.splice(k--);//remove just used br element
                 }
-
-                var hasOnlyNsbp0 = spanElement.split('</span>');
-                var hasOnlyNsbp = hasOnlyNsbp0.map((str) => {return str.split('>');});
-
-                var whiteLine = false;
-                if(hasOnlyNsbp[0][1] === '&nbsp;') {
-    				whiteLine = true;
-    			}
-
-
-                const insertListItemTag = (createList && !isSomeKindOfTitle && !isSldNum && (layoutType === undefined) && (pNode["a:pPr"] === undefined || pNode["a:pPr"]["a:buNone"] === undefined));
-                const isOrderedList = (pNode["a:pPr"] !== undefined && pNode["a:pPr"]["a:buAutoNum"] !== undefined);
-                let itemLevel = "0";
-                if (pNode["a:pPr"] !== undefined && pNode["a:pPr"]["attrs"] !== undefined && pNode["a:pPr"]["attrs"]["lvl"] !== undefined) {
-                    itemLevel = pNode["a:pPr"]["attrs"]["lvl"];
-                }
-
-                if (spanElement !== "" && insertListItemTag && !whiteLine) {//do not show bullets if the text is empty
-                    if (isOrderedList) {
-                        const orderedListStyle = (pNode["a:pPr"]["a:buAutoNum"]["attrs"] !== undefined && pNode["a:pPr"]["a:buAutoNum"]["attrs"]["type"] !== undefined) ? pNode["a:pPr"]["a:buAutoNum"]["attrs"]["type"] : '';
-                        const orderedListStartAt = (pNode["a:pPr"]["a:buAutoNum"]["attrs"] !== undefined && pNode["a:pPr"]["a:buAutoNum"]["attrs"]["startAt"] !== undefined) ? ' start="' + pNode["a:pPr"]["a:buAutoNum"]["attrs"]["startAt"] + '"' : '';
-
-                        text += (previousNodeIsListItem && previousNodeIsOrderedListItem && (itemLevel === previousItemLevel)) ? "" : "<ol " + this.getOrderedListStyle(orderedListStyle, itemLevel) + orderedListStartAt + ">";
-                    } else {
-                        text += (previousNodeIsListItem && !previousNodeIsOrderedListItem && (itemLevel === previousItemLevel)) ? "" : "<ul " + this.getUnorderedListStyle(itemLevel) + ">";
-                    }
-
-                    text += "<li>";//add list tag
-                }
-                previousNodeIsListItem = insertListItemTag;
-                previousNodeIsOrderedListItem = isOrderedList;
-                previousItemLevel = itemLevel;
-
-                text += "<div class='" + this.getHorizontalAlign(pNode, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles) + "'>";
-
-                text += this.genBuChar(pNode);
-
-                text += spanElement;
-
-                text += "</div>";
-
-                //see if next node is list item
-                let nextNodeIsListItem = false;
-                let nextNodeIsOrderedListItem = false;
-                let nextItemLevel = "0";
-                if (i < textBodyNode["a:p"].length - 1) {//it is not the last node in array
-                    let pNodeNext = textBodyNode["a:p"][i+1];
-
-                    nextNodeIsListItem = (createList && !isSomeKindOfTitle && !isSldNum && (layoutType === undefined) && (pNodeNext["a:pPr"] === undefined || pNodeNext["a:pPr"]["a:buNone"] === undefined));
-                    nextNodeIsOrderedListItem = (pNodeNext["a:pPr"] !== undefined && pNodeNext["a:pPr"]["a:buAutoNum"] !== undefined);
-                    if (pNodeNext["a:pPr"] !== undefined && pNodeNext["a:pPr"]["attrs"] !== undefined && pNodeNext["a:pPr"]["attrs"]["lvl"] !== undefined) {
-                        nextItemLevel = pNodeNext["a:pPr"]["attrs"]["lvl"];
-                    }
-                }
-
-                if (spanElement !== "" && insertListItemTag && !whiteLine) {
-                    text += "</li>";//add list tag
-
-                    if (isOrderedList) {
-                        text += (nextNodeIsListItem && nextNodeIsOrderedListItem && (itemLevel === nextItemLevel)) ? "" : "</ol>";
-                    } else {
-                        text += (nextNodeIsListItem && !nextNodeIsOrderedListItem && (itemLevel === nextItemLevel)) ? "" : "</ul>";
-                    }
-                }
-
-			if (isOrderedList) {
-			  text += (nextNodeIsListItem && nextNodeIsOrderedListItem && (itemLevel === nextItemLevel)) ? "" : "</ol>";
-			} else {
-			  text += (nextNodeIsListItem && !nextNodeIsOrderedListItem && (itemLevel === nextItemLevel)) ? "" : "</ul>";
-			}
-			// text += (insertListItemTag) ? ((isOrderedList) ? "</ol>" : "</ul>") : "";
-		}
-	} else {
-        // one p
-
-
-            var pNode = textBodyNode["a:p"];
-            var rNode = pNode["a:r"];
-
-            let spanElement = "";
-
-            if (rNode === undefined) {
-                // without r
-                spanElement += this.genSpanElement(pNode, slideLayoutSpNode, slideMasterSpNode, type, warpObj);
-
-                if (isSomeKindOfTitle) {
-                    const text = this.getText(pNode);
-                    title += (text !== undefined) ? text : ' ';
-                }
-            } else if (rNode.constructor === Array) {
-                // with multi r
-                for (var j=0; j<rNode.length; j++) {
-                    spanElement += this.genSpanElement(rNode[j], slideLayoutSpNode, slideMasterSpNode, type, warpObj);
-
-                    if (isSomeKindOfTitle) {
-                        const text = this.getText(rNode[j]);
-                        title += (text !== undefined) ? text : ' ';
-                    }
-                }
-            } else {
-                // with one r
-                spanElement += this.genSpanElement(rNode, slideLayoutSpNode, slideMasterSpNode, type, warpObj);
-
-                if (isSomeKindOfTitle) {
-                    const text = this.getText(rNode);
-                    title += (text !== undefined) ? text : ' ';
-                }
+              }
             }
+            spanElement += this.genSpanElement(rNode[j], slideLayoutSpNode, slideMasterSpNode, type, warpObj);
 
-            var hasOnlyNsbp0 = spanElement.split('</span>');
-            var hasOnlyNsbp = hasOnlyNsbp0.map((str) => {return str.split('>');});
-
-            var whiteLine = false;
-            if(hasOnlyNsbp[0][1] === '&nbsp;') {
-                whiteLine = true;
+            if (isSomeKindOfTitle) {
+              const text = this.getText(rNode[j]);
+              title += (text !== undefined) ? text : ' ';
             }
+          }
+        } else {
+          // with one r
+          spanElement += this.genSpanElement(rNode, slideLayoutSpNode, slideMasterSpNode, type, warpObj);
 
-
-            const insertListItemTag = (createList && !isSomeKindOfTitle && !isSldNum && (layoutType === undefined) && (pNode["a:pPr"] === undefined || pNode["a:pPr"]["a:buNone"] === undefined));
-            const isOrderedList = (pNode["a:pPr"] !== undefined && pNode["a:pPr"]["a:buAutoNum"] !== undefined);
-
-
-
-
-            if (spanElement !== "" && insertListItemTag && !whiteLine) {
-                text += (isOrderedList) ? "<ol>" : "<ul>";
-                text += "<li>";//add list tag
-            }
-
-            text += "<div class='" + this.getHorizontalAlign(pNode, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles) + "'>";
-
-            text += this.genBuChar(pNode);
-
-            text += spanElement;
-
-            text += "</div>";
-            if (spanElement !== "" && insertListItemTag && !whiteLine) {
-                text += "</li>";//add list tag
-                text += (isOrderedList) ? "</ol>" : "</ul>";
-            }
-
+          if (isSomeKindOfTitle) {
+            const text = this.getText(rNode);
+            title += (text !== undefined) ? text : ' ';
+          }
         }
 
-        if(isSomeKindOfTitle){
-        	resolve({
-        		title: title,
-				text: text
-			});
-		} else {
-        	resolve({
-        		text: text
-			});
-		}
-    });
+        var hasOnlyNsbp0 = spanElement.split('</span>');
+        var hasOnlyNsbp = hasOnlyNsbp0.map((str) => {return str.split('>');});
+
+        var whiteLine = false;
+        if(hasOnlyNsbp[0][1] === '&nbsp;') {
+  				whiteLine = true;
+  			}
+
+        const insertListItemTag = (createList && !isSomeKindOfTitle && !isSldNum && (layoutType === undefined) && (pNode["a:pPr"] === undefined || pNode["a:pPr"]["a:buNone"] === undefined));
+        const isOrderedList = (pNode["a:pPr"] !== undefined && pNode["a:pPr"]["a:buAutoNum"] !== undefined);
+        let itemLevel = "0";
+        if (pNode["a:pPr"] !== undefined && pNode["a:pPr"]["attrs"] !== undefined && pNode["a:pPr"]["attrs"]["lvl"] !== undefined) {
+          itemLevel = pNode["a:pPr"]["attrs"]["lvl"];
+        }
+
+        if (spanElement !== "" && insertListItemTag && !whiteLine) {//do not show bullets if the text is empty
+          if (isOrderedList) {
+            const orderedListStyle = (pNode["a:pPr"]["a:buAutoNum"]["attrs"] !== undefined && pNode["a:pPr"]["a:buAutoNum"]["attrs"]["type"] !== undefined) ? pNode["a:pPr"]["a:buAutoNum"]["attrs"]["type"] : '';
+            const orderedListStartAt = (pNode["a:pPr"]["a:buAutoNum"]["attrs"] !== undefined && pNode["a:pPr"]["a:buAutoNum"]["attrs"]["startAt"] !== undefined) ? ' start="' + pNode["a:pPr"]["a:buAutoNum"]["attrs"]["startAt"] + '"' : '';
+
+            text += (previousNodeIsListItem && previousNodeIsOrderedListItem && (itemLevel === previousItemLevel)) ? "" : "<ol" + this.getOrderedListStyle(orderedListStyle, itemLevel) + orderedListStartAt + ">";
+          } else {
+            text += (previousNodeIsListItem && !previousNodeIsOrderedListItem && (itemLevel === previousItemLevel)) ? "" : "<ul" + this.getUnorderedListStyle(itemLevel) + ">";
+          }
+
+          text += "<li>";//add list tag
+        }
+        previousNodeIsListItem = insertListItemTag;
+        previousNodeIsOrderedListItem = isOrderedList;
+        previousItemLevel = itemLevel;
+
+        text += "<div id=" + getRandomId() + " class='" + this.getHorizontalAlign(pNode, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles) + "'>";
+
+        text += this.genBuChar(pNode);
+
+        text += spanElement;
+
+  			text += "</div>";
+
+        //see if next node is list item
+        let nextNodeIsListItem = false;
+        let nextNodeIsOrderedListItem = false;
+        let nextItemLevel = "0";
+        if (i < textBodyNode["a:p"].length - 1) {//it is not the last node in array
+          let pNodeNext = textBodyNode["a:p"][i+1];
+
+          nextNodeIsListItem = (createList && !isSomeKindOfTitle && !isSldNum && (layoutType === undefined) && (pNodeNext["a:pPr"] === undefined || pNodeNext["a:pPr"]["a:buNone"] === undefined));
+          nextNodeIsOrderedListItem = (pNodeNext["a:pPr"] !== undefined && pNodeNext["a:pPr"]["a:buAutoNum"] !== undefined);
+          if (pNodeNext["a:pPr"] !== undefined && pNodeNext["a:pPr"]["attrs"] !== undefined && pNodeNext["a:pPr"]["attrs"]["lvl"] !== undefined) {
+            nextItemLevel = pNodeNext["a:pPr"]["attrs"]["lvl"];
+          }
+        }
+
+        if (spanElement !== "" && insertListItemTag && !whiteLine) {
+          text += "</li>";//add list tag
+
+          if (isOrderedList) {
+            text += (nextNodeIsListItem && nextNodeIsOrderedListItem && (itemLevel === nextItemLevel)) ? "" : "</ol>";
+          } else {
+            text += (nextNodeIsListItem && !nextNodeIsOrderedListItem && (itemLevel === nextItemLevel)) ? "" : "</ul>";
+          }
+        }
+  		}
+  	} else {
+      // one p
+
+
+      var pNode = textBodyNode["a:p"];
+      var rNode = pNode["a:r"];
+
+      //linebreaks
+      let brNode = pNode["a:br"];
+      if (brNode !== undefined && brNode.constructor !== Array) {
+        brNode = [brNode];
+      }
+
+      let spanElement = "";
+
+      if (rNode === undefined) {
+        // without r
+        spanElement += this.genSpanElement(pNode, slideLayoutSpNode, slideMasterSpNode, type, warpObj);
+
+        if (isSomeKindOfTitle) {
+          const text = this.getText(pNode);
+          title += (text !== undefined) ? text : ' ';
+        }
+      } else if (rNode.constructor === Array) {
+          // with multi r
+          for (var j=0; j<rNode.length; j++) {
+
+          //check for linebreaks
+          if (brNode !== undefined && rNode[j].attrs !== undefined) {
+            for (let k=0; k<brNode.length; k++) {
+              if (brNode[k].attrs !== undefined && brNode[k].attrs.order < rNode[j].attrs.order) {//there is a br element before this rNode
+                spanElement += '<br>';
+                brNode.splice(k--);//remove just used br element
+              }
+            }
+          }
+
+  				spanElement += this.genSpanElement(rNode[j], slideLayoutSpNode, slideMasterSpNode, type, warpObj);
+
+          if (isSomeKindOfTitle) {
+            const text = this.getText(rNode[j]);
+            title += (text !== undefined) ? text : ' ';
+          }
+  			}
+  		} else {
+  			// with one r
+  			spanElement += this.genSpanElement(rNode, slideLayoutSpNode, slideMasterSpNode, type, warpObj);
+
+        if (isSomeKindOfTitle) {
+          const text = this.getText(rNode);
+          title += (text !== undefined) ? text : ' ';
+        }
+      }
+
+      var hasOnlyNsbp0 = spanElement.split('</span>');
+      var hasOnlyNsbp = hasOnlyNsbp0.map((str) => {return str.split('>');});
+
+      var whiteLine = false;
+      if(hasOnlyNsbp[0][1] === '&nbsp;') {
+        whiteLine = true;
+      }
+
+
+      const insertListItemTag = (createList && !isSomeKindOfTitle && !isSldNum && (layoutType === undefined) && (pNode["a:pPr"] === undefined || pNode["a:pPr"]["a:buNone"] === undefined));
+      const isOrderedList = (pNode["a:pPr"] !== undefined && pNode["a:pPr"]["a:buAutoNum"] !== undefined);
+
+      if (spanElement !== "" && insertListItemTag && !whiteLine) {
+        text += (isOrderedList) ? "<ol>" : "<ul>";
+        text += "<li>";//add list tag
+      }
+
+      text += "<div id=" + getRandomId() + " class='" + this.getHorizontalAlign(pNode, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles) + "'>";
+
+      text += this.genBuChar(pNode);
+
+      text += spanElement;
+
+      text += "</div>";
+      if (spanElement !== "" && insertListItemTag && !whiteLine) {
+        text += "</li>";//add list tag
+        text += (isOrderedList) ? "</ol>" : "</ul>";
+      }
+
+    }
+
+    if(isSomeKindOfTitle){
+    	resolve({
+    		title: title,
+        text: text
+      });
+  	} else {
+    	resolve({
+    		text: text
+  		});
+  	}
+  });
 }
 
 getText(node) {//Get raw text from a:r (a:p) node - for the slide title
@@ -1729,7 +1753,8 @@ genTable(node, warpObj) {
 	var tableNode = this.getTextByPathList(node, ["a:graphic", "a:graphicData", "a:tbl"]);
 	var xfrmNode = this.getTextByPathList(node, ["p:xfrm"]);
 	var rowPromises = [];
-	var tableHtml = "<table style='position: absolute;" + this.getPosition(xfrmNode, undefined, undefined) + this.getSize(xfrmNode, undefined, undefined) + " z-index: " + order + ";'>";
+	var tableHtml = "<table id=" + getRandomId() + " style='position: absolute;" + this.getPosition(xfrmNode, undefined, undefined) + this.getSize(xfrmNode, undefined, undefined) + " z-index: " + order + ";'>";
+
 	var trNodes = tableNode["a:tr"];
 	if (trNodes.constructor === Array) {
 		for (var i=0; i<trNodes.length; i++) {
@@ -1775,7 +1800,7 @@ genTable(node, warpObj) {
 					*/
 				}
 			} else {
-			    colPromises.push(this.genTextBody(tcNodes["a:txBody"]).then(function(info){
+			    colPromises.push(this.genTextBody(tcNodes["a:txBody"], undefined, undefined, undefined, warpObj).then(function(info){
                     info.text = "<td>" + info.text + "</td>";
 			        return info;
                 }));
@@ -1794,7 +1819,7 @@ genTable(node, warpObj) {
 		if (tcNodes.constructor === Array) {
 
 			for (var j=0; j<tcNodes.length; j++) {
-			    colPromises.push(this.genTextBody(tcNodes[j]["a:txBody"]).then((info) => {
+			    colPromises.push(this.genTextBody(tcNodes[j]["a:txBody"], undefined, undefined, undefined, warpObj).then((info) => {
 			    	info.text = "<td>" + info.text + "</td>";
                     return info;
                 }));
@@ -1802,7 +1827,7 @@ genTable(node, warpObj) {
 				tableHtml += "<td>" + text + "</td>";*/
 			}
 		} else {
-			colPromises.push(this.genTextBody(tcNodes["a:txBody"]).then((info) => {
+			colPromises.push(this.genTextBody(tcNodes["a:txBody"], undefined, undefined, undefined, warpObj).then((info) => {
                 info.text = "<td>" + info.text + "</td>";
             	return info;
 			}));
@@ -2016,7 +2041,7 @@ genChart(node, warpObj) {
 genDiagram(node, warpObj) {
 	var order = node["attrs"]["order"];
 	var xfrmNode = this.getTextByPathList(node, ["p:xfrm"]);
-	var diagramHtml = "<div class='block content' style='position: absolute;border: 1px dotted;" +
+	var diagramHtml = "<div id=" + getRandomId() + " class='block content' style='position: absolute;border: 1px dotted;" +
 				this.getPosition(xfrmNode, undefined, undefined) + this.getSize(xfrmNode, undefined, undefined) +
 			"'>TODO: diagram</div>";
 	return new Promise(function(resolve, reject){

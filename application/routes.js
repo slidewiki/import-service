@@ -75,6 +75,39 @@ module.exports = function(server) {
     }
   });
 
+  server.route({
+    //will be POST
+    method: 'POST',
+    path: '/importImagePaste/{userid}',
+
+    handler: handlers.importImagePaste,
+    config: {
+      cors: true,
+      validate: {
+        params: {
+          userid: Joi.string()
+        },
+      },
+      payload: {
+        parse: true,
+        //allow: 'application/vnd.openxmlformats-officedocument.presentationml.presentation' - works!
+        //allow: 'application/x-www-form-urlencoded'
+        //allow: 'multipart/form-data'
+        maxBytes: 209715200,
+        output:'stream',
+      },
+      //validate: {
+    //    params: {
+    //      payload: Joi.object().keys({
+    //        file: Joi.string()
+    //      }).requiredKeys('file')
+    //    },
+     // },
+      tags: ['api'],
+      description: 'Import image file, pasted in CKeditor in slide edit view, to SlideWiki'
+    }
+  });
+
   // server.route({// Dejan added this to test pptx2html in the microservice
   //   //will be POST
   //   method: 'POST',
