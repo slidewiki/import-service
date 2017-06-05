@@ -577,24 +577,28 @@ processNodesInSlide(nodeKey, nodeValue, warpObj) {
 
 	var result = "";
 
-	switch (nodeKey) {
-		case "p:sp":	// Shape, Text
-			result = this.processSpNode(nodeValue, warpObj);
-			break;
-		case "p:cxnSp":	// Shape, Text (with connection)
-			result = this.processCxnSpNode(nodeValue, warpObj);
-			break;
-		case "p:pic":	// Picture
-			result = this.processPicNode(nodeValue, warpObj);
-			break;
-		case "p:graphicFrame":	// Chart, Diagram, Table
-			result = this.processGraphicFrameNode(nodeValue, warpObj);
-			break;
-		case "p:grpSp":	// 群組
-			result = this.processGroupSpNode(nodeValue, warpObj);
-			break;
-		default:
-	}
+  try {
+  	switch (nodeKey) {
+  		case "p:sp":	// Shape, Text
+  			result = this.processSpNode(nodeValue, warpObj);
+  			break;
+  		case "p:cxnSp":	// Shape, Text (with connection)
+  			result = this.processCxnSpNode(nodeValue, warpObj);
+  			break;
+  		case "p:pic":	// Picture
+  			result = this.processPicNode(nodeValue, warpObj);
+  			break;
+  		case "p:graphicFrame":	// Chart, Diagram, Table
+  			result = this.processGraphicFrameNode(nodeValue, warpObj);
+  			break;
+  		case "p:grpSp":	// 群組
+  			result = this.processGroupSpNode(nodeValue, warpObj);
+  			break;
+  		default:
+  	}
+  } catch(e) {
+    console.log('Error in processNodesInSlide', e);
+  }
 
 	return result;
 
