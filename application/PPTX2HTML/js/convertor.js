@@ -623,19 +623,19 @@ processNodesInSlide(nodeKey, nodeValue, warpObj) {
   try {
   	switch (nodeKey) {
   		case "p:sp":	// Shape, Text
-  			result = this.processSpNode(nodeValue, warpObj);
+  			return this.processSpNode(nodeValue, warpObj);
   			break;
   		case "p:cxnSp":	// Shape, Text (with connection)
-  			result = this.processCxnSpNode(nodeValue, warpObj);
+  			return this.processCxnSpNode(nodeValue, warpObj);
   			break;
   		case "p:pic":	// Picture
-  			result = this.processPicNode(nodeValue, warpObj);
+  			return this.processPicNode(nodeValue, warpObj);
   			break;
   		case "p:graphicFrame":	// Chart, Diagram, Table
-  			result = this.processGraphicFrameNode(nodeValue, warpObj);
+  			return this.processGraphicFrameNode(nodeValue, warpObj);
   			break;
   		case "p:grpSp":	// 群組
-  			result = this.processGroupSpNode(nodeValue, warpObj);
+  			return this.processGroupSpNode(nodeValue, warpObj);
   			break;
   		default:
   	}

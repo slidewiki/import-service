@@ -150,12 +150,12 @@ module.exports = {
         });
 
         res.on('end', function(){
-          createDeckFromPPTX(new Buffer(data, 'binary'), user, language, license, deckName, request, reply);
+          createDeckFromPPTX(new Buffer(data, 'binary'), user, jwt, language, license, deckName, request, reply);
         });
         // console.log('result of call to unoconv service', res.headers, res.statusCode);
       });
     } else {
-      createDeckFromPPTX(buffer, user, language, license, deckName, request, reply);
+      createDeckFromPPTX(buffer, user, jwt, language, license, deckName, request, reply);
     }
   },
 
@@ -338,7 +338,7 @@ module.exports = {
   }
 };
 
-function createDeckFromPPTX(buffer, user, language, license, deckName, request, reply) {
+function createDeckFromPPTX(buffer, user, jwt, language, license, deckName, request, reply) {
   let convertor = new Convertor.Convertor();
   convertor.user = user;
   convertor.jwt = jwt;
@@ -352,7 +352,7 @@ function createDeckFromPPTX(buffer, user, language, license, deckName, request, 
       if (noOfSlides > 1) {
         //var slides = convertor.processPPTX(buffer);
         convertor.processPPTX(buffer).then((result) => {
-          slides = result;
+          let slides = result;
           return findFirstSlideOfADeck(deck.id).then((slideId) => {
             //create the rest of slides
             createNodesRecursive(user, license, deck.id, slideId, slides, 1);
