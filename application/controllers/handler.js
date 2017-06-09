@@ -436,8 +436,8 @@ function createNodesRecursive(user, license, deckId, previousSlideId, slides, in
       createNodesRecursive(user, license, deckId, node.id, slides, (index + 1));
     }
   }).catch((error) => {
-    console.log('Error: ' + error);
-    request.log('error', error);
+    console.log('Error createNodesRecursive: ' + error);
+    request.log('error createNodesRecursive', error);
     reply(boom.badImplementation());
   });
 }
@@ -504,7 +504,10 @@ function createDeck(user, language, license, deckName, firstSlide) {
 
 function createSlide(selector, nodeSpec, user, slide, slideNo, license) {
   let myPromise = new Promise((resolve, reject) => {
-
+    if (slide.content === undefined || slide.content === '') {
+      console.log('Error in createSlide - invalid slide', slideNo);
+      resolve({id: selector.sid.substring(0, selector.sid.length - 2)});// invalid slide, continue without it
+    }
     let title = '';
     if (slide.title && slide.title !== ''){
       title = slide.title;
@@ -524,7 +527,7 @@ function createSlide(selector, nodeSpec, user, slide, slideNo, license) {
     //Encode special characters (e.g. bullets)
 
     let encodedContent = he.encode(slide.content, {allowUnsafeSymbols: true});
-    let encodedNotes = he.encode(slide.notes, {allowUnsafeSymbols: true});
+    let encodedNotes = (slide.notes !== undefined) ? he.encode(slide.notes, {allowUnsafeSymbols: true}) : '';
 
     let jsonData = {
       selector: selector,
@@ -553,8 +556,7 @@ function createSlide(selector, nodeSpec, user, slide, slideNo, license) {
       }
 
     }).catch((err) => {
-      console.log('Error: ' + error);
-      console.log('Error', err);
+      console.log('Error createSlide', err);
       reject(e);
     });
     //req.write(data);
@@ -587,6 +589,9 @@ function findFirstSlideOfADeck(deckId) {
 }
 
 function replaceSpecialSymbols(string) {
+  if (string === undefined) {
+    return '';
+  }
   let newString = string.replace('’', '\'');
   newString = newString.replace('‘', '\'');
   newString = newString.replace('“', '"');
