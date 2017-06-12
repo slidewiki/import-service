@@ -28,6 +28,7 @@
   "dependencies": {
     "ajv": "^4.11.0",
     "boom": "^4.2.0",
+    "d3": "^3.5.11",
     "database-cleaner": "^1.2.0",
     "form-data": "^2.1.2",
     "good": "^7.1.0",
@@ -38,8 +39,10 @@
     "he": "^1.1.0",
     "inert": "^4.1.0",
     "joi": "^10.2.0",
+    "jsdom": "^11.0.0",
     "mongodb": "^2.2.22",
     "node-uuid": "^1.4.7",
+    "nvd3": "^1.8.5",
     "request": "^2.79.0",
     "request-promise-native": "^1.0.3",
     "vision": "^4.1.1"
