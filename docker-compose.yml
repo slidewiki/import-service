@@ -1,5 +1,5 @@
 importservice:
-  image: slidewiki/importservice
+  image: slidewiki/importservice:latest-dev
   restart: on-failure:5
   expose:
     - "80"
