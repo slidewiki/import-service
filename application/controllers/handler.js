@@ -116,9 +116,13 @@ module.exports = {
       language = 'en_GB';
     }
     const license = request.payload.license;
+    const title = (request.payload.title !== undefined) ? request.payload.title : '';
+    const description = (request.payload.description !== undefined) ? request.payload.description : '';
+    const tags = (request.payload.tags !== undefined) ? JSON.parse(request.payload.tags) : [];
+    const theme = (request.payload.theme !== undefined) ? request.payload.theme : '';
     const fileName = he.encode(request.payload.filename, {allowUnsafeSymbols: true});//encode special characters
     const fileNameSplit = fileName.split('.');
-    const deckName = fileNameSplit[0];
+    const deckName = (title !== '') ? title : fileNameSplit[0];
     const fileType = fileNameSplit[fileNameSplit.length - 1];
 
     let data_url = request.payload.file;
@@ -152,12 +156,12 @@ module.exports = {
         });
 
         res.on('end', function(){
-          createDeckFromPPTX(new Buffer(data, 'binary'), user, jwt, language, license, deckName, request, reply);
+          createDeckFromPPTX(new Buffer(data, 'binary'), user, jwt, language, license, deckName, description, tags, theme, request, reply);
         });
         // console.log('result of call to unoconv service', res.headers, res.statusCode);
       });
     } else {
-      createDeckFromPPTX(buffer, user, jwt, language, license, deckName, request, reply);
+      createDeckFromPPTX(buffer, user, jwt, language, license, deckName, description, tags, theme, request, reply);
     }
   },
 
@@ -340,7 +344,7 @@ module.exports = {
   }
 };
 
-function createDeckFromPPTX(buffer, user, jwt, language, license, deckName, request, reply) {
+function createDeckFromPPTX(buffer, user, jwt, language, license, deckName, description, tags, theme, request, reply) {
   let convertor = new Convertor.Convertor();
   convertor.user = user;
   convertor.jwt = jwt;
@@ -349,7 +353,7 @@ function createDeckFromPPTX(buffer, user, jwt, language, license, deckName, requ
     const noOfSlides = result.noOfSlides;
     //const filesInfo = result.filesInfo;
 
-    return createDeck(user, language, license, deckName, result).then((deck) => {
+    return createDeck(user, language, license, deckName, description, tags, theme, result).then((deck) => {
       reply('import completed').header('deckId', deck.id).header('noOfSlides', noOfSlides);
       if (noOfSlides > 1) {
         //var slides = convertor.processPPTX(buffer);
@@ -445,7 +449,7 @@ function createNodesRecursive(user, license, deckId, previousSlideId, slides, in
 }
 
 //Send a request to insert a new deck with the first slide
-function createDeck(user, language, license, deckName, firstSlide) {
+function createDeck(user, language, license, deckName, description, tags, theme, firstSlide) {
   //Send a request to insert a new deck with the first slide
   // console.log('deck', user, license, deckName);
   let myPromise = new Promise((resolve, reject) => {
@@ -475,6 +479,9 @@ function createDeck(user, language, license, deckName, firstSlide) {
       language: language,
       license: license,
       title: deckName,
+      description: description,
+      tags: tags,
+      theme: theme,
       first_slide: {
         content: encodedFirstSlideContent,
         title: (firstSlideTitle !== '') ? firstSlideTitle : 'Slide 1',//It is not allowed to be empty
