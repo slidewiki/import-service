@@ -117,7 +117,7 @@ module.exports = {
     }
     const license = request.payload.license;
     const title = (request.payload.title !== undefined) ? request.payload.title : '';
-    const description = (request.payload.description !== undefined) ? request.payload.description : '';
+    const description = (request.payload.description) ? request.payload.description : 'empty';
     const tags = (request.payload.tags !== undefined) ? JSON.parse(request.payload.tags) : [];
     const theme = (request.payload.theme !== undefined) ? request.payload.theme : '';
     const fileName = he.encode(request.payload.filename, {allowUnsafeSymbols: true});//encode special characters
@@ -480,6 +480,9 @@ function createDeck(user, language, license, deckName, description, tags, theme,
       license: license,
       title: deckName,
       description: description,
+      translation: {
+        status: 'original'
+      },
       tags: tags,
       theme: theme,
       first_slide: {
