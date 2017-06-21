@@ -45,14 +45,14 @@ module.exports = function(server) {
   server.route({
     //will be POST
     method: 'POST',
-    path: '/importImage/{userid}',
+    path: '/importImage/{jwt}',
 
     handler: handlers.importImage,
     config: {
       cors: true,
       validate: {
         params: {
-          userid: Joi.string()
+          jwt: Joi.string()
         },
       },
       payload: {
@@ -78,14 +78,14 @@ module.exports = function(server) {
   server.route({
     //will be POST
     method: 'POST',
-    path: '/importImagePaste/{userid}',
+    path: '/importImagePaste/{jwt}',
 
     handler: handlers.importImagePaste,
     config: {
       cors: true,
       validate: {
         params: {
-          userid: Joi.string()
+          jwt: Joi.string()
         },
       },
       payload: {
