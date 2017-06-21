@@ -475,10 +475,10 @@ function sendImageToFileService(imgName, data, jwt) {
       body: data,
       // body: new Buffer(zip.file(imgName).asArrayBuffer(), 'base64'),
       headers: {
-          '----jwt----': jwt,
-          // '----jwt----': 'eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJ1c2VyaWQiOjMzLCJ1c2VybmFtZSI6InJtZWlzc24iLCJpYXQiOjE0Nzg2OTI3MDZ9.5h-UKLioMYK9OBfoNQVuQ25DhZCJ5PzUYlDXT6SFfBpaKLhpYVmK8w0xE5dOSNzw58qLmxuQHGba_CVI-rPnNQ',
-          'content-type': contentType,
-          'Accept':  'application/json'
+        '----jwt----': jwt,
+        // '----jwt----': 'eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJ1c2VyaWQiOjMzLCJ1c2VybmFtZSI6InJtZWlzc24iLCJpYXQiOjE0Nzg2OTI3MDZ9.5h-UKLioMYK9OBfoNQVuQ25DhZCJ5PzUYlDXT6SFfBpaKLhpYVmK8w0xE5dOSNzw58qLmxuQHGba_CVI-rPnNQ',
+        'content-type': contentType,
+        'Accept':  'application/json'
       }
     };
 
