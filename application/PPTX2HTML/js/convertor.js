@@ -1283,14 +1283,12 @@ sendImageToFileService(imgName, zip) {
             'content-type': contentType,
             // 'content-type': 'image/png',
             'Accept':  'application/json'
-
         }
       };
 
       rp(options)
         .then( (body) => {
           imageName = JSON.parse(body).fileName;
-
           resolve(Microservices.file.uri + '/picture/' + imageName);
         })
         .catch( (err) => {
@@ -1377,7 +1375,7 @@ processGraphicFrameNode(node, warpObj) {
   		default:
   	}
   } catch(e) {
-    console.log('Error in sendImageToFileService', e);
+    console.log('Error in processGraphicFrameNode', e);
     return new Promise((resolve) => {resolve ({text: ''});});
   }
 
