@@ -76,6 +76,8 @@ class Convertor {
 
         this.user = '';
         this.jwt = '';
+
+        this.allIds = [];
     }
 
     convertFirstSlide(data) {
@@ -702,8 +704,11 @@ processGroupSpNode(node, warpObj) {
   	}
 
     return Promise.all(promises).then((infos) => {
+      let random = getRandomId();
+      while (this.allIds.indexOf(random) !== -1){random = getRandomId();}
+      this.allIds.push(random);
     	// Create the new merged html
-      var text = "<div id=" + getRandomId() + " class='block group' style='position: absolute;z-index: "
+      var text = "<div id=" + random + " class='block group' style='position: absolute;z-index: "
   			+ order + "; top: " + (y - chy) + "px; left: " + (x - chx) + "px; width: "
   			+ (cx - chcx) + "px; height: " + (cy - chcy) + "px;'>"
       	+ infos.map((info) => {return info.text}).join('') + "</div>";
@@ -844,7 +849,11 @@ genShape(node, slideLayoutSpNode, slideMasterSpNode, id, name, idx, type, order,
       let svgPos = this.getPosition(slideXfrmNode, undefined, undefined);
       let svgSize = this.getSize(slideXfrmNode, undefined, undefined);
 
-      result += "<div id=" + getRandomId() + " class='drawing-container' _id='" + id + "' _idx='" + idx + "' _type='" + type + "' _name='" + name +
+      let random = getRandomId();
+      while (this.allIds.indexOf(random) !== -1){random = getRandomId();}
+      this.allIds.push(random);
+
+      result += "<div id=" + random + " class='drawing-container' _id='" + id + "' _idx='" + idx + "' _type='" + type + "' _name='" + name +
           "' style='position: absolute;"
                + svgPos
                + svgSize
@@ -1119,7 +1128,11 @@ genShape(node, slideLayoutSpNode, slideMasterSpNode, id, name, idx, type, order,
 
   		result += "</svg></div>";
 
-  		result += "<div id=" + getRandomId() + " class='block content " + this.getVerticalAlign(node, slideLayoutSpNode, slideMasterSpNode, type) +
+      let random = getRandomId();
+      while (this.allIds.indexOf(random) !== -1){random = getRandomId();}
+      this.allIds.push(random);
+
+  		result += "<div id=" + random + " class='block content " + this.getVerticalAlign(node, slideLayoutSpNode, slideMasterSpNode, type) +
   				"' _id='" + id + "' _idx='" + idx + "' _type='" + type + "' _name='" + name +
   				"' style='position: absolute;" +
   					this.getPosition(slideXfrmNode, slideLayoutXfrmNode, slideMasterXfrmNode) +
@@ -1149,7 +1162,12 @@ genShape(node, slideLayoutSpNode, slideMasterSpNode, id, name, idx, type, order,
         return this.genTextBody(node["p:txBody"], slideLayoutSpNode, slideMasterSpNode, type, warpObj, createList).then((info) => {
       	  textBody = info.text;
           if (textBody !== undefined && textBody !== "") {//Dejan added this to prevent creation of some undefined and empty elements
-          	result += "<div id=" + getRandomId() + " class='block content " + this.getVerticalAlign(node, slideLayoutSpNode, slideMasterSpNode, type) +
+
+            let random = getRandomId();
+            while (this.allIds.indexOf(random) !== -1){random = getRandomId();}
+            this.allIds.push(random);
+
+          	result += "<div id=" + random + " class='block content " + this.getVerticalAlign(node, slideLayoutSpNode, slideMasterSpNode, type) +
                   "' _id='" + id + "' _idx='" + idx + "' _type='" + type + "' _name='" + name +
                   "' style='position: absolute;" +
                   this.getPosition(slideXfrmNode, slideLayoutXfrmNode, slideMasterXfrmNode) +
@@ -1221,7 +1239,11 @@ processPicNode(node, warpObj) {
           altTag = " alt=\"" + descr + "\"";
         }
 
-      	resolve ({text: "<div id=" + getRandomId() + " class='block content' style='position: absolute;" + this.getPosition(xfrmNode, undefined, undefined) + this.getSize(xfrmNode, undefined, undefined) +
+        let random = getRandomId();
+        while (this.allIds.indexOf(random) !== -1){random = getRandomId();}
+        this.allIds.push(random);
+
+      	resolve ({text: "<div id=" + random + " class='block content' style='position: absolute;" + this.getPosition(xfrmNode, undefined, undefined) + this.getSize(xfrmNode, undefined, undefined) +
       			" z-index: " + order + ";" +
       			// "'><img src=\"data:" + mimeType + ";base64," + functions.base64ArrayBuffer(imgArrayBuffer) + "\" style='position: absolute;width: 100%; height: 100%'" +
             // "'><img src=\"http://" + imagePath + "\" style='position: absolute;width: 100%; height: 100%'" +
@@ -1509,7 +1531,11 @@ genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, warpObj, c
           previousNodeIsOrderedListItem = isOrderedList;
           previousItemLevel = itemLevel;
 
-          text += "<div id=" + getRandomId() + " class='" + this.getHorizontalAlign(pNode, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles) + "'>";
+          let random = getRandomId();
+          while (this.allIds.indexOf(random) !== -1){random = getRandomId();}
+          this.allIds.push(random);
+
+          text += "<div id=" + random + " class='" + this.getHorizontalAlign(pNode, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles) + "'>";
 
           text += this.genBuChar(pNode);
 
@@ -1617,7 +1643,11 @@ genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, warpObj, c
           text += "<li>";//add list tag
         }
 
-        text += "<div id=" + getRandomId() + " class='" + this.getHorizontalAlign(pNode, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles) + "'>";
+        let random = getRandomId();
+        while (this.allIds.indexOf(random) !== -1){random = getRandomId();}
+        this.allIds.push(random);
+
+        text += "<div id=" + random + " class='" + this.getHorizontalAlign(pNode, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles) + "'>";
 
         text += this.genBuChar(pNode);
 
@@ -1849,7 +1879,12 @@ genTable(node, warpObj) {
   	var tableNode = this.getTextByPathList(node, ["a:graphic", "a:graphicData", "a:tbl"]);
   	var xfrmNode = this.getTextByPathList(node, ["p:xfrm"]);
   	var rowPromises = [];
-  	var tableHtml = "<table id=" + getRandomId() + " style='position: absolute;" + this.getPosition(xfrmNode, undefined, undefined) + this.getSize(xfrmNode, undefined, undefined) + " z-index: " + order + ";'>";
+
+    let random = getRandomId();
+    while (this.allIds.indexOf(random) !== -1){random = getRandomId();}
+    this.allIds.push(random);
+
+  	var tableHtml = "<table id=" + random + " style='position: absolute;" + this.getPosition(xfrmNode, undefined, undefined) + this.getSize(xfrmNode, undefined, undefined) + " z-index: " + order + ";'>";
 
   	var trNodes = tableNode["a:tr"];
   	if (trNodes.constructor === Array) {
@@ -2151,7 +2186,12 @@ genDiagram(node, warpObj) {
   try {
   	var order = node["attrs"]["order"];
   	var xfrmNode = this.getTextByPathList(node, ["p:xfrm"]);
-  	var diagramHtml = "<div id=" + getRandomId() + " class='block content' style='position: absolute;border: 1px dotted;" +
+
+    let random = getRandomId();
+    while (this.allIds.indexOf(random) !== -1){random = getRandomId();}
+    this.allIds.push(random);
+
+  	var diagramHtml = "<div id=" + random + " class='block content' style='position: absolute;border: 1px dotted;" +
   				this.getPosition(xfrmNode, undefined, undefined) + this.getSize(xfrmNode, undefined, undefined) +
   			"'>TODO: diagram</div>";
   	return new Promise(function(resolve, reject){
