@@ -13,10 +13,9 @@ var nv = require('nvd3');
 var d3 = require('d3');
 var jsdom = require('jsdom');
 
-function getRandomId() {
-  return '"' + Math.floor((Math.random() * 100000) + 1) + '"';
+function getRandomNumber() {
+  return Math.floor((Math.random() * 100000) + 1);
 }
-
 // import tXml from './tXml.js';
 
 //TODO INCLUDE THESE SCRIPTS
@@ -78,6 +77,13 @@ class Convertor {
         this.jwt = '';
 
         this.allIds = [];
+    }
+
+    getRandomId() {
+      let random = getRandomNumber();
+      while (this.allIds.indexOf(random) !== -1){random = getRandomNumber();}
+      this.allIds.push(random);
+      return '"' + random + '"';
     }
 
     convertFirstSlide(data) {
@@ -420,7 +426,11 @@ processSingleSlide(zip, sldFileName, index, slideSize) {
     if (bgColor !== ''){
       bgColorResult = "background-color: #" + bgColor;
     }
-    var result = "<div class='pptx2html' style='position: relative;width:" + slideSize.width + "px; height:" + slideSize.height + "px; " + bgColorResult + "'><div></div>"
+
+    let random = this.getRandomId();
+    let random2 = this.getRandomId();
+
+    var result = "<div id=" + random + " class='pptx2html' style='position: relative;width:" + slideSize.width + "px; height:" + slideSize.height + "px; " + bgColorResult + "'><div id=" + random2 + " ></div>"
 
     var promises = [];
   	for (var nodeKey in nodes) {
@@ -445,10 +455,10 @@ processSingleSlide(zip, sldFileName, index, slideSize) {
       res.content = result + text + "</div>";
       delete res.text;
       return res;
-    }).catch(function(err){console.log("processSingleSlide " + err); return new Promise((resolve) => {resolve ({content: "<div class='pptx2html' style='position: relative;width:" + slideSize.width + "px; height:" + slideSize.height + "px; ></div>"});});});
+    }).catch(function(err){console.log("processSingleSlide " + err); return new Promise((resolve) => {resolve ({content: "<div id=" + random + " class='pptx2html' style='position: relative;width:" + slideSize.width + "px; height:" + slideSize.height + "px; ></div>"});});});
   } catch(e) {
     console.log('Error in processSingleSlide', e);
-    return new Promise((resolve) => {resolve ({content: "<div class='pptx2html' style='position: relative;width:" + slideSize.width + "px; height:" + slideSize.height + "px; ></div>"});});
+    return new Promise((resolve) => {resolve ({content: "<div id=" + random + " class='pptx2html' style='position: relative;width:" + slideSize.width + "px; height:" + slideSize.height + "px; ></div>"});});
   }
 }
 
@@ -702,11 +712,9 @@ processGroupSpNode(node, warpObj) {
   			promises.push(this.processNodesInSlide(nodeKey, node[nodeKey], warpObj));
   		}
   	}
-
+    let that = this;
     return Promise.all(promises).then((infos) => {
-      let random = getRandomId();
-      while (this.allIds.indexOf(random) !== -1){random = getRandomId();}
-      this.allIds.push(random);
+      let random = that.getRandomId();
     	// Create the new merged html
       var text = "<div id=" + random + " class='block group' style='position: absolute;z-index: "
   			+ order + "; top: " + (y - chy) + "px; left: " + (x - chx) + "px; width: "
@@ -849,16 +857,15 @@ genShape(node, slideLayoutSpNode, slideMasterSpNode, id, name, idx, type, order,
       let svgPos = this.getPosition(slideXfrmNode, undefined, undefined);
       let svgSize = this.getSize(slideXfrmNode, undefined, undefined);
 
-      let random = getRandomId();
-      while (this.allIds.indexOf(random) !== -1){random = getRandomId();}
-      this.allIds.push(random);
+      let random = this.getRandomId();
+      let random2 = this.getRandomId();
 
       result += "<div id=" + random + " class='drawing-container' _id='" + id + "' _idx='" + idx + "' _type='" + type + "' _name='" + name +
           "' style='position: absolute;"
                + svgPos
                + svgSize
                + " z-index: " + order + ";'>" +
-          "<svg class='drawing' _id='" + id + "' _idx='" + idx + "' _type='" + type + "' _name='" + name +
+          "<svg id=" + random2 + " class='drawing' _id='" + id + "' _idx='" + idx + "' _type='" + type + "' _name='" + name +
           "' style='position: absolute;"
                + "top:0px; left:0px;"
                + svgSize
@@ -872,12 +879,17 @@ genShape(node, slideLayoutSpNode, slideMasterSpNode, id, name, idx, type, order,
 
   		var headEndNodeAttrs = this.getTextByPathList(node, ["p:spPr", "a:ln", "a:headEnd", "attrs"]);
   		var tailEndNodeAttrs = this.getTextByPathList(node, ["p:spPr", "a:ln", "a:tailEnd", "attrs"]);
+
+      random = this.getRandomId();
+
   		// type: none, triangle, stealth, diamond, oval, arrow
   		if ( (headEndNodeAttrs !== undefined && (headEndNodeAttrs["type"] === "triangle" || headEndNodeAttrs["type"] === "arrow")) ||
   			 (tailEndNodeAttrs !== undefined && (tailEndNodeAttrs["type"] === "triangle" || tailEndNodeAttrs["type"] === "arrow")) ) {
-  			var triangleMarker = "<defs><marker id=\"markerTriangle\" viewBox=\"0 0 10 10\" refX=\"1\" refY=\"5\" markerWidth=\"5\" markerHeight=\"5\" orient=\"auto-start-reverse\" markerUnits=\"strokeWidth\"><path d=\"M 0 0 L 10 5 L 0 10 z\" /></marker></defs>";
+  			var triangleMarker = "<defs id=" + random + " ><marker id=\"markerTriangle\" viewBox=\"0 0 10 10\" refX=\"1\" refY=\"5\" markerWidth=\"5\" markerHeight=\"5\" orient=\"auto-start-reverse\" markerUnits=\"strokeWidth\"><path d=\"M 0 0 L 10 5 L 0 10 z\" /></marker></defs>";
   			result += triangleMarker;
   		}
+
+      random = this.getRandomId();
 
   		switch (shapType) {
   			case "accentBorderCallout1":
@@ -1035,15 +1047,15 @@ genShape(node, slideLayoutSpNode, slideMasterSpNode, id, name, idx, type, order,
   			case "wedgeRectCallout":
   			case "wedgeRoundRectCallout":
   			case "rect":
-  				result += "<rect x='0' y='0' width='" + w + "' height='" + h + "' fill='" + fillColor +
+  				result += "<rect id=" + random + " x='0' y='0' width='" + w + "' height='" + h + "' fill='" + fillColor +
   							"' stroke='" + border.color + "' stroke-width='" + border.width + "' stroke-dasharray='" + border.strokeDasharray + "' />";
   				break;
   			case "ellipse":
-  				result += "<ellipse cx='" + (w / 2) + "' cy='" + (h / 2) + "' rx='" + (w / 2) + "' ry='" + (h / 2) + "' fill='" + fillColor +
+  				result += "<ellipse id=" + random + " cx='" + (w / 2) + "' cy='" + (h / 2) + "' rx='" + (w / 2) + "' ry='" + (h / 2) + "' fill='" + fillColor +
   							"' stroke='" + border.color + "' stroke-width='" + border.width + "' stroke-dasharray='" + border.strokeDasharray + "' />";
   				break;
   			case "roundRect":
-  				result += "<rect x='0' y='0' width='" + w + "' height='" + h + "' rx='7' ry='7' fill='" + fillColor +
+  				result += "<rect id=" + random + " x='0' y='0' width='" + w + "' height='" + h + "' rx='7' ry='7' fill='" + fillColor +
   							"' stroke='" + border.color + "' stroke-width='" + border.width + "' stroke-dasharray='" + border.strokeDasharray + "' />";
   				break;
   			case "bentConnector2":	// 直角 (path)
@@ -1053,7 +1065,7 @@ genShape(node, slideLayoutSpNode, slideMasterSpNode, id, name, idx, type, order,
   				} else {
   					d = "M " + w + " 0 L " + w + " " + h + " L 0 " + h;
   				}
-  				result += "<path d='" + d + "' stroke='" + border.color +
+  				result += "<path id=" + random + " d='" + d + "' stroke='" + border.color +
   								"' stroke-width='" + border.width + "' stroke-dasharray='" + border.strokeDasharray + "' fill='none' ";
   				if (headEndNodeAttrs !== undefined && (headEndNodeAttrs["type"] === "triangle" || headEndNodeAttrs["type"] === "arrow")) {
   					result += "marker-start='url(#markerTriangle)' ";
@@ -1073,10 +1085,10 @@ genShape(node, slideLayoutSpNode, slideMasterSpNode, id, name, idx, type, order,
   			case "curvedConnector4":
   			case "curvedConnector5":
   				if (isFlipV) {
-  					result += "<line x1='" + w + "' y1='0' x2='0' y2='" + h + "' stroke='" + border.color +
+  					result += "<line id=" + random + " x1='" + w + "' y1='0' x2='0' y2='" + h + "' stroke='" + border.color +
   								"' stroke-width='" + border.width + "' stroke-dasharray='" + border.strokeDasharray + "' ";
   				} else {
-  					result += "<line x1='0' y1='0' x2='" + w + "' y2='" + h + "' stroke='" + border.color +
+  					result += "<line id=" + random + " x1='0' y1='0' x2='" + w + "' y2='" + h + "' stroke='" + border.color +
   								"' stroke-width='" + border.width + "' stroke-dasharray='" + border.strokeDasharray + "' ";
   				}
   				if (headEndNodeAttrs !== undefined && (headEndNodeAttrs["type"] === "triangle" || headEndNodeAttrs["type"] === "arrow")) {
@@ -1088,14 +1100,14 @@ genShape(node, slideLayoutSpNode, slideMasterSpNode, id, name, idx, type, order,
   				result += "/>";
   				break;
   			case "rightArrow":
-  				result += "<defs><marker id=\"markerTriangle\" viewBox=\"0 0 10 10\" refX=\"1\" refY=\"5\" markerWidth=\"2.5\" markerHeight=\"2.5\" orient=\"auto-start-reverse\" markerUnits=\"strokeWidth\"><path d=\"M 0 0 L 10 5 L 0 10 z\" /></marker></defs>";
-  				result += "<line x1='0' y1='" + (h/2) + "' x2='" + (w-15) + "' y2='" + (h/2) + "' stroke='" + border.color +
+  				result += "<defs id=" + random + "><marker id=\"markerTriangle\" viewBox=\"0 0 10 10\" refX=\"1\" refY=\"5\" markerWidth=\"2.5\" markerHeight=\"2.5\" orient=\"auto-start-reverse\" markerUnits=\"strokeWidth\"><path d=\"M 0 0 L 10 5 L 0 10 z\" /></marker></defs>";
+  				result += "<line id=" + random + " x1='0' y1='" + (h/2) + "' x2='" + (w-15) + "' y2='" + (h/2) + "' stroke='" + border.color +
   								"' stroke-width='" + (h/2) + "' stroke-dasharray='" + border.strokeDasharray + "' ";
   				result += "marker-end='url(#markerTriangle)' />";
   				break;
   			case "downArrow":
-  				result += "<defs><marker id=\"markerTriangle\" viewBox=\"0 0 10 10\" refX=\"1\" refY=\"5\" markerWidth=\"2.5\" markerHeight=\"2.5\" orient=\"auto-start-reverse\" markerUnits=\"strokeWidth\"><path d=\"M 0 0 L 10 5 L 0 10 z\" /></marker></defs>";
-  				result += "<line x1='" + (w/2) + "' y1='0' x2='" + (w/2) + "' y2='" + (h-15) + "' stroke='" + border.color +
+  				result += "<defs id=" + random + "><marker id=\"markerTriangle\" viewBox=\"0 0 10 10\" refX=\"1\" refY=\"5\" markerWidth=\"2.5\" markerHeight=\"2.5\" orient=\"auto-start-reverse\" markerUnits=\"strokeWidth\"><path d=\"M 0 0 L 10 5 L 0 10 z\" /></marker></defs>";
+  				result += "<line id=" + random + " x1='" + (w/2) + "' y1='0' x2='" + (w/2) + "' y2='" + (h-15) + "' stroke='" + border.color +
   								"' stroke-width='" + (w/2) + "' stroke-dasharray='" + border.strokeDasharray + "' ";
   				result += "marker-end='url(#markerTriangle)' />";
   				break;
@@ -1128,9 +1140,7 @@ genShape(node, slideLayoutSpNode, slideMasterSpNode, id, name, idx, type, order,
 
   		result += "</svg></div>";
 
-      let random = getRandomId();
-      while (this.allIds.indexOf(random) !== -1){random = getRandomId();}
-      this.allIds.push(random);
+      random = this.getRandomId();
 
   		result += "<div id=" + random + " class='block content " + this.getVerticalAlign(node, slideLayoutSpNode, slideMasterSpNode, type) +
   				"' _id='" + id + "' _idx='" + idx + "' _type='" + type + "' _name='" + name +
@@ -1163,9 +1173,7 @@ genShape(node, slideLayoutSpNode, slideMasterSpNode, id, name, idx, type, order,
       	  textBody = info.text;
           if (textBody !== undefined && textBody !== "") {//Dejan added this to prevent creation of some undefined and empty elements
 
-            let random = getRandomId();
-            while (this.allIds.indexOf(random) !== -1){random = getRandomId();}
-            this.allIds.push(random);
+            let random = this.getRandomId();
 
           	result += "<div id=" + random + " class='block content " + this.getVerticalAlign(node, slideLayoutSpNode, slideMasterSpNode, type) +
                   "' _id='" + id + "' _idx='" + idx + "' _type='" + type + "' _name='" + name +
@@ -1229,7 +1237,7 @@ processPicNode(node, warpObj) {
     		default:
     			mimeType = "image/*";
     	}
-
+      let that = this;
       // const imagePath = this.saveImageToFile(imgName, zip);
       this.sendImageToFileService(imgName, zip).then((imagePath) => {
         //Dejan added this to create the img alt tag
@@ -1239,15 +1247,14 @@ processPicNode(node, warpObj) {
           altTag = " alt=\"" + descr + "\"";
         }
 
-        let random = getRandomId();
-        while (this.allIds.indexOf(random) !== -1){random = getRandomId();}
-        this.allIds.push(random);
+        let random = that.getRandomId();
+        let random2 = that.getRandomId();
 
       	resolve ({text: "<div id=" + random + " class='block content' style='position: absolute;" + this.getPosition(xfrmNode, undefined, undefined) + this.getSize(xfrmNode, undefined, undefined) +
       			" z-index: " + order + ";" +
       			// "'><img src=\"data:" + mimeType + ";base64," + functions.base64ArrayBuffer(imgArrayBuffer) + "\" style='position: absolute;width: 100%; height: 100%'" +
             // "'><img src=\"http://" + imagePath + "\" style='position: absolute;width: 100%; height: 100%'" +
-            "'><img src=\"" + imagePath + "\" style='width: 100%; height: 100%'" +
+            "'><img id=" + random2 + " src=\"" + imagePath + "\" style='width: 100%; height: 100%'" +
                 altTag +
                 "/></div>"});
 
@@ -1478,7 +1485,10 @@ genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, warpObj, c
               if (brNode !== undefined && rNode[j].attrs !== undefined) {
                 for (let k=0; k<brNode.length; k++) {
                   if (brNode[k].attrs !== undefined && brNode[k].attrs.order < rNode[j].attrs.order) {//there is a br element before this rNode
-                    spanElement += '<br>';
+
+                    let random = this.getRandomId();
+
+                    spanElement += '<br id=' + random + ' >';
                     brNode.splice(k--);//remove just used br element
                   }
                 }
@@ -1516,24 +1526,27 @@ genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, warpObj, c
           }
 
           if (spanElement !== "" && insertListItemTag && !whiteLine) {//do not show bullets if the text is empty
+
+            let random = this.getRandomId();
+
             if (isOrderedList) {
               const orderedListStyle = (pNode["a:pPr"]["a:buAutoNum"]["attrs"] !== undefined && pNode["a:pPr"]["a:buAutoNum"]["attrs"]["type"] !== undefined) ? pNode["a:pPr"]["a:buAutoNum"]["attrs"]["type"] : '';
               const orderedListStartAt = (pNode["a:pPr"]["a:buAutoNum"]["attrs"] !== undefined && pNode["a:pPr"]["a:buAutoNum"]["attrs"]["startAt"] !== undefined) ? ' start="' + pNode["a:pPr"]["a:buAutoNum"]["attrs"]["startAt"] + '"' : '';
 
-              text += (previousNodeIsListItem && previousNodeIsOrderedListItem && (itemLevel === previousItemLevel)) ? "" : "<ol" + this.getOrderedListStyle(orderedListStyle, itemLevel) + orderedListStartAt + ">";
+              text += (previousNodeIsListItem && previousNodeIsOrderedListItem && (itemLevel === previousItemLevel)) ? "" : "<ol id=" + random + this.getOrderedListStyle(orderedListStyle, itemLevel) + orderedListStartAt + ">";
             } else {
-              text += (previousNodeIsListItem && !previousNodeIsOrderedListItem && (itemLevel === previousItemLevel)) ? "" : "<ul" + this.getUnorderedListStyle(itemLevel) + ">";
+              text += (previousNodeIsListItem && !previousNodeIsOrderedListItem && (itemLevel === previousItemLevel)) ? "" : "<ul id=" + random + this.getUnorderedListStyle(itemLevel) + ">";
             }
 
-            text += "<li>";//add list tag
+            let random2 = this.getRandomId();
+
+            text += "<li id=" + random2 + ">";//add list tag
           }
           previousNodeIsListItem = insertListItemTag;
           previousNodeIsOrderedListItem = isOrderedList;
           previousItemLevel = itemLevel;
 
-          let random = getRandomId();
-          while (this.allIds.indexOf(random) !== -1){random = getRandomId();}
-          this.allIds.push(random);
+          let random = this.getRandomId();
 
           text += "<div id=" + random + " class='" + this.getHorizontalAlign(pNode, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles) + "'>";
 
@@ -1603,7 +1616,10 @@ genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, warpObj, c
             if (brNode !== undefined && rNode[j].attrs !== undefined) {
               for (let k=0; k<brNode.length; k++) {
                 if (brNode[k].attrs !== undefined && brNode[k].attrs.order < rNode[j].attrs.order) {//there is a br element before this rNode
-                  spanElement += '<br>';
+
+                  let random = this.getRandomId();
+
+                  spanElement += '<br id=' + random + ' >';
                   brNode.splice(k--);//remove just used br element
                 }
               }
@@ -1639,13 +1655,14 @@ genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, warpObj, c
         const isOrderedList = (pNode["a:pPr"] !== undefined && pNode["a:pPr"]["a:buAutoNum"] !== undefined);
 
         if (spanElement !== "" && insertListItemTag && !whiteLine) {
-          text += (isOrderedList) ? "<ol>" : "<ul>";
-          text += "<li>";//add list tag
+          let random = this.getRandomId();
+          let random2 = this.getRandomId();
+
+          text += (isOrderedList) ? "<ol id=" + random + ">" : "<ul id=" + random + ">";
+          text += "<li id=" + random2 + ">";//add list tag
         }
 
-        let random = getRandomId();
-        while (this.allIds.indexOf(random) !== -1){random = getRandomId();}
-        this.allIds.push(random);
+        let random = this.getRandomId();
 
         text += "<div id=" + random + " class='" + this.getHorizontalAlign(pNode, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles) + "'>";
 
@@ -1686,11 +1703,14 @@ genTextBody(textBodyNode, slideLayoutSpNode, slideMasterSpNode, type, warpObj, c
 //HF: Rather than writing this twice, I created a function.
 // Should only be called if it is a title of some kind
   applyTitle(spanElement, type){
+
+    let random = this.getRandomId();
+
     if(type === 'subTitle'){
-      spanElement = '<h4>' + spanElement + '</h4>';
+      spanElement = '<h4 id=' + random + '>' + spanElement + '</h4>';
     }
     else{
-      spanElement = '<h3>' + spanElement + '</h3>';
+      spanElement = '<h3 id=' + random + '>' + spanElement + '</h3>';
     }
     return spanElement;
   }
@@ -1758,11 +1778,14 @@ genBuChar(node) {
   	if (isNaN(lvl)) {
   		lvl = 0;
   	}
+    let random = this.getRandomId();
 
   	var buChar = this.getTextByPathList(pPrNode, ["a:buChar", "attrs", "char"]);
   	if (buChar !== undefined) {
   		var buFontAttrs = this.getTextByPathList(pPrNode, ["a:buFont", "attrs"]);
-  		if (buFontAttrs !== undefined) {
+
+
+      if (buFontAttrs !== undefined) {
   			var marginLeft = parseInt( this.getTextByPathList(pPrNode, ["attrs", "marL"]) ) * 96 / 914400;
   			var marginRight = parseInt(buFontAttrs["pitchFamily"]);
   			if (isNaN(marginLeft)) {
@@ -1773,18 +1796,19 @@ genBuChar(node) {
   			}
   			var typeface = buFontAttrs["typeface"];
 
-  			return "<span style='font-family: " + typeface +
+
+  			return "<span id=" + random + " style='font-family: " + typeface +
   					"; margin-left: " + marginLeft * lvl + "px" +
   					"; margin-right: " + marginRight + "px" +
   					"; font-size: 20pt" +
   					"'>" + buChar + "</span>";
   		} else {
         marginLeft = 328600 * 96 / 914400 * lvl;
-        return "<span style='margin-left: " + marginLeft + "px;'>" + buChar + "</span>";
+        return "<span id=" + random + " style='margin-left: " + marginLeft + "px;'>" + buChar + "</span>";
       }
   	} else {
   		//buChar = '•';
-  		return "<span style='margin-left: " + 328600 * 96 / 914400 * lvl + "px" +
+  		return "<span id=" + random + " style='margin-left: " + 328600 * 96 / 914400 * lvl + "px" +
   					"; margin-right: " + 0 + "px;'></span>";
   	}
 
@@ -1859,11 +1883,16 @@ genSpanElement(node, slideLayoutSpNode, slideMasterSpNode, type, warpObj) {
 
       let linkID = this.getTextByPathList(node, ["a:rPr", "a:hlinkClick", "attrs", "r:id"]);
 
+      let random = this.getRandomId();
+
       if (linkID !== undefined && warpObj["slideResObj"] !== undefined) {
         let linkURL = warpObj["slideResObj"][linkID]["target"];
-        return "<span class='text-block' " + textStyle + "><a href='" + linkURL + "' target='_blank'>" + text.replace(/\s/i, "&nbsp;") + "</a></span>";
+
+        let random2 = this.getRandomId();
+
+        return "<span id=" + random + " class='text-block' " + textStyle + "><a id=" + random + " href='" + linkURL + "' target='_blank'>" + text.replace(/\s/i, "&nbsp;") + "</a></span>";
     	} else {
-    		return "<span class='text-block' " + textStyle + ">" + text.replace(/\s/i, "&nbsp;") + "</span>";
+    		return "<span id=" + random + " class='text-block' " + textStyle + ">" + text.replace(/\s/i, "&nbsp;") + "</span>";
       }
     } catch(e) {
       console.log('Error in genTextBody', e);
@@ -1880,9 +1909,7 @@ genTable(node, warpObj) {
   	var xfrmNode = this.getTextByPathList(node, ["p:xfrm"]);
   	var rowPromises = [];
 
-    let random = getRandomId();
-    while (this.allIds.indexOf(random) !== -1){random = getRandomId();}
-    this.allIds.push(random);
+    let random = this.getRandomId();
 
   	var tableHtml = "<table id=" + random + " style='position: absolute;" + this.getPosition(xfrmNode, undefined, undefined) + this.getSize(xfrmNode, undefined, undefined) + " z-index: " + order + ";'>";
 
@@ -1893,9 +1920,9 @@ genTable(node, warpObj) {
 
   			var tcNodes = trNodes[i]["a:tc"];
 
+        var that = this;
   			if (tcNodes.constructor === Array) {
   				for (var j=0; j<tcNodes.length; j++) {
-  					var that = this;
   			    colPromises.push(
               that.genTextBody(tcNodes[j]["a:txBody"], undefined, undefined, undefined, warpObj).then((info) => {
 
@@ -1903,14 +1930,17 @@ genTable(node, warpObj) {
                   var colSpan = that.getTextByPathList(tcNodes[j], ["attrs", "gridSpan"]);
                   var vMerge = that.getTextByPathList(tcNodes[j], ["attrs", "vMerge"]);
                   var hMerge = that.getTextByPathList(tcNodes[j], ["attrs", "hMerge"]);
+
+                  let random2 = that.getRandomId();
+
                   if (rowSpan !== undefined) {
-                  	info.text = "<td rowspan='" + parseInt(rowSpan) + "'>" + info.text + "</td>";
+                  	info.text = "<td id=" + random2 + " rowspan='" + parseInt(rowSpan) + "'>" + info.text + "</td>";
                       return info;
                   } else if (colSpan !== undefined) {
-                      info.text = "<td colspan='" + parseInt(colSpan) + "'>" + info.text + "</td>";
+                      info.text = "<td id=" + random2 + " colspan='" + parseInt(colSpan) + "'>" + info.text + "</td>";
                       return info;
                   } else if (vMerge === undefined && hMerge === undefined) {
-                  	info.text = "<td>" + info.text + "</td>";
+                  	info.text = "<td id=" + random2 + ">" + info.text + "</td>";
                       return info;
                   }
                 })
@@ -1931,16 +1961,23 @@ genTable(node, warpObj) {
   					*/
   				}
   			} else {
+
+          let random2 = this.getRandomId();
+
   		    colPromises.push(this.genTextBody(tcNodes["a:txBody"], undefined, undefined, undefined, warpObj).then(function(info){
-              info.text = "<td>" + info.text + "</td>";
+              info.text = "<td id=" + random2 + ">" + info.text + "</td>";
   		        return info;
           }));
   				/*var text = this.genTextBody(tcNodes["a:txBody"]);
   				tableHtml += "<td>" + text + "</td>";*/
   			}
+
   			// create the Row.
         rowPromises.push(Promise.all(colPromises).then(function(colsInfo){
-            var colsText = '<tr>' + colsInfo.map((colInfo) => {return colInfo.text}).join('') + '</tr>';
+
+            let random3 = that.getRandomId();
+
+            var colsText = '<tr id=' + random3 + '>' + colsInfo.map((colInfo) => {return colInfo.text}).join('') + '</tr>';
             return {text: colsText};
         }));
   		}
@@ -1950,24 +1987,32 @@ genTable(node, warpObj) {
   		if (tcNodes.constructor === Array) {
 
   			for (var j=0; j<tcNodes.length; j++) {
+
+            let random2 = this.getRandomId();
+
   			    colPromises.push(this.genTextBody(tcNodes[j]["a:txBody"], undefined, undefined, undefined, warpObj).then((info) => {
-  			    	info.text = "<td>" + info.text + "</td>";
+  			    	info.text = "<td id=" + random2 + ">" + info.text + "</td>";
               return info;
             }));
   				/*var text = this.genTextBody(tcNodes[j]["a:txBody"]);
   				tableHtml += "<td>" + text + "</td>";*/
   			}
   		} else {
+        let random2 = this.getRandomId();
+
   			colPromises.push(this.genTextBody(tcNodes["a:txBody"], undefined, undefined, undefined, warpObj).then((info) => {
-            info.text = "<td>" + info.text + "</td>";
+            info.text = "<td id=" + random2 + ">" + info.text + "</td>";
           	return info;
   			}));
   			/*var text = this.genTextBody(tcNodes["a:txBody"]);
   			tableHtml += "<td>" + text + "</td>";*/
   		}
+      let that = this;
   		// Create the row
       rowPromises.push(Promise.all(colPromises).then(function(colsInfo){
-          var colsText = '<tr>' + colsInfo.map((colInfo) => {return colInfo.text}).join('') + '</tr>';
+
+          let random3 = that.getRandomId();
+          var colsText = '<tr id=' + random3 + '>' + colsInfo.map((colInfo) => {return colInfo.text}).join('') + '</tr>';
           return {text: colsText};
       }));
 
@@ -2187,9 +2232,7 @@ genDiagram(node, warpObj) {
   	var order = node["attrs"]["order"];
   	var xfrmNode = this.getTextByPathList(node, ["p:xfrm"]);
 
-    let random = getRandomId();
-    while (this.allIds.indexOf(random) !== -1){random = getRandomId();}
-    this.allIds.push(random);
+    let random = this.getRandomId();
 
   	var diagramHtml = "<div id=" + random + " class='block content' style='position: absolute;border: 1px dotted;" +
   				this.getPosition(xfrmNode, undefined, undefined) + this.getSize(xfrmNode, undefined, undefined) +
