@@ -116,9 +116,13 @@ module.exports = {
       language = 'en_GB';
     }
     const license = request.payload.license;
+    const title = (request.payload.title !== undefined) ? request.payload.title : '';
+    const description = (request.payload.description) ? request.payload.description : 'empty';
+    const tags = (request.payload.tags !== undefined) ? JSON.parse(request.payload.tags) : [];
+    const theme = (request.payload.theme !== undefined) ? request.payload.theme : '';
     const fileName = he.encode(request.payload.filename, {allowUnsafeSymbols: true});//encode special characters
     const fileNameSplit = fileName.split('.');
-    const deckName = fileNameSplit[0];
+    const deckName = (title !== '') ? title : fileNameSplit[0];
     const fileType = fileNameSplit[fileNameSplit.length - 1];
 
     let data_url = request.payload.file;
@@ -152,12 +156,12 @@ module.exports = {
         });
 
         res.on('end', function(){
-          createDeckFromPPTX(new Buffer(data, 'binary'), user, jwt, language, license, deckName, request, reply);
+          createDeckFromPPTX(new Buffer(data, 'binary'), user, jwt, language, license, deckName, description, tags, theme, request, reply);
         });
         // console.log('result of call to unoconv service', res.headers, res.statusCode);
       });
     } else {
-      createDeckFromPPTX(buffer, user, jwt, language, license, deckName, request, reply);
+      createDeckFromPPTX(buffer, user, jwt, language, license, deckName, description, tags, theme, request, reply);
     }
   },
 
@@ -265,82 +269,107 @@ module.exports = {
     //Use saveImageToFile function
 
     const filename = request.payload.upload.hapi.filename;
-    const userid = request.params.userid;
-    const filePath = saveImageToFile(filename, request.payload.upload._data, userid);
+    const userid = request.params.jwt;// changed userid to jwt in routes - testing here for backward compatibility (when platform sends userid)
+    if (String(userid).length < 10) {// old way of managing images - save to shared folder
+      const filePath = saveImageToFile(filename, request.payload.upload._data, userid);
 
 
-        ///JSON ONLY FOR DRAGGING and dropping
-      //let response;
-      //response.writeHead(200, {'Content-Type': 'application/json'});
-      //let json = JSON.stringify({
-        //'uploaded': 1,
-        //'fileName': 'logo_full.png',
-        //'url': 'http://platform.manfredfris.ch/assets/images/logo_full.png'
-      //});
-      //response.end(json);
-      //console.log(json);
-      //reply (json);
-      // JSON ONLY FOR DRAGGING and dropping  - http://stackoverflow.com/questions/33197058/ckeditor-can-not-parse-json-response
-      //reply ({
-        //'uploaded': '1',
-        //'fileName': 'logo_full.png',
-        //'url': 'http://platform.manfredfris.ch/assets/images/logo_full.png'
+          ///JSON ONLY FOR DRAGGING and dropping
+        //let response;
+        //response.writeHead(200, {'Content-Type': 'application/json'});
+        //let json = JSON.stringify({
+          //'uploaded': 1,
+          //'fileName': 'logo_full.png',
+          //'url': 'http://platform.manfredfris.ch/assets/images/logo_full.png'
         //});
+        //response.end(json);
+        //console.log(json);
+        //reply (json);
+        // JSON ONLY FOR DRAGGING and dropping  - http://stackoverflow.com/questions/33197058/ckeditor-can-not-parse-json-response
+        //reply ({
+          //'uploaded': '1',
+          //'fileName': 'logo_full.png',
+          //'url': 'http://platform.manfredfris.ch/assets/images/logo_full.png'
+          //});
 
-    let content = '<script type="text/javascript">\n';
-        //content += "window.parent.CKEDITOR.tools.callFunction(1, 'http://platform.manfredfris.ch/assets/images/logo_full.png', '' );\n";
-        //content += "window.opener.CKEDITOR.tools.callFunction(1, 'http://platform.manfredfris.ch/assets/images/logo_full.png', '' );\n";
-        //content += "CKEDITOR.instances.inlineContent.tools.callFunction(1, 'http://platform.manfredfris.ch/assets/images/logo_full.png', '' );\n";
-        //content += "window.parent.CKEDITOR.instances.inlineContent.tools.callFunction(1, 'http://platform.manfredfris.ch/assets/images/logo_full.png', '' );\n";
-        //window.parent.CKEDITOR
+      let content = '<script type="text/javascript">\n';
+          //content += "window.parent.CKEDITOR.tools.callFunction(1, 'http://platform.manfredfris.ch/assets/images/logo_full.png', '' );\n";
+          //content += "window.opener.CKEDITOR.tools.callFunction(1, 'http://platform.manfredfris.ch/assets/images/logo_full.png', '' );\n";
+          //content += "CKEDITOR.instances.inlineContent.tools.callFunction(1, 'http://platform.manfredfris.ch/assets/images/logo_full.png', '' );\n";
+          //content += "window.parent.CKEDITOR.instances.inlineContent.tools.callFunction(1, 'http://platform.manfredfris.ch/assets/images/logo_full.png', '' );\n";
+          //window.parent.CKEDITOR
 
-        //       Save problem with Same-origin_policy when CKeditor image upload script is returned
-        //       https://developer.mozilla.org/en-US/docs/Web/Security/Same-origin_policy
-    content += 'document.domain = "slidewiki.org";\n';
+          //       Save problem with Same-origin_policy when CKeditor image upload script is returned
+          //       https://developer.mozilla.org/en-US/docs/Web/Security/Same-origin_policy
+      content += 'document.domain = "slidewiki.org";\n';
 
-        //content += request.params.CKEditor + ".tools.callFunction("+ request.params.CKEditorFuncNum + " , 'http://platform.manfredfris.ch/assets/images/logo_full.png', '' );\n";
-        //content += "window.parent.CKEDITOR.tools.callFunction("+ request.query.CKEditorFuncNum + " , 'http://platform.manfredfris.ch/assets/images/logo_full.png', '' );\n";
-        // content += 'window.parent.CKEDITOR.tools.callFunction('+ request.query.CKEditorFuncNum + ' , "http://platform.manfredfris.ch/assets/images/logo_full.png", "" );\n';
-    content += 'window.parent.CKEDITOR.tools.callFunction('+ request.query.CKEditorFuncNum + ' , "' + filePath + '", "" );\n';
+          //content += request.params.CKEditor + ".tools.callFunction("+ request.params.CKEditorFuncNum + " , 'http://platform.manfredfris.ch/assets/images/logo_full.png', '' );\n";
+          //content += "window.parent.CKEDITOR.tools.callFunction("+ request.query.CKEditorFuncNum + " , 'http://platform.manfredfris.ch/assets/images/logo_full.png', '' );\n";
+          // content += 'window.parent.CKEDITOR.tools.callFunction('+ request.query.CKEditorFuncNum + ' , "http://platform.manfredfris.ch/assets/images/logo_full.png", "" );\n';
+      content += 'window.parent.CKEDITOR.tools.callFunction('+ request.query.CKEditorFuncNum + ' , "' + filePath + '", "" );\n';
 
-        //CKEDITOR.instances.inlineContent
-        //content += "alert('test');\n"; //WORKS!
+          //CKEDITOR.instances.inlineContent
+          //content += "alert('test');\n"; //WORKS!
 
-        //SEARCH FOR ALTERNATIVES!!
+          //SEARCH FOR ALTERNATIVES!!
 
-    content += '</script>';
-        //reply('<script type="text/javascript">window.parent.CKEDITOR.tools.callFunction(1, "http://platform.manfredfris.ch/assets/images/logo_full.png", "");</script>);');
-    reply(content);
+      content += '</script>';
+          //reply('<script type="text/javascript">window.parent.CKEDITOR.tools.callFunction(1, "http://platform.manfredfris.ch/assets/images/logo_full.png", "");</script>);');
+      reply(content);
 
-        //TODO check if image file is uploaded.
-        //TODO send call to media service + user service to store media data of uploaded image file
-      // reply('upload completed!');
-      //reply(response);
-      //reply (pptx2html.convert(request.payload.file));
+          //TODO check if image file is uploaded.
+          //TODO send call to media service + user service to store media data of uploaded image file
+        // reply('upload completed!');
+        //reply(response);
+        //reply (pptx2html.convert(request.payload.file));
 
-      //SEE http://docs.ckeditor.com/#!/guide/dev_file_browser_api
-      //console.log('upload completed');
-    //});
+        //SEE http://docs.ckeditor.com/#!/guide/dev_file_browser_api
+        //console.log('upload completed');
+      //});
 
+    } else {// new way - use the file-service API
+      const jwt = request.params.jwt;
+      sendImageToFileService(filename, request.payload.upload._data, jwt).then((filePath) => {
+
+        let content = '<script type="text/javascript">\n';
+        content += 'document.domain = "slidewiki.org";\n';
+        content += 'window.parent.CKEDITOR.tools.callFunction('+ request.query.CKEditorFuncNum + ' , "' + filePath + '", "" );\n';
+        content += '</script>';
+        reply(content);
+      }).catch((err) => {
+        request.log('error', error);
+        reply(boom.badImplementation());
+      });
+    }
   },
   importImagePaste: function(request, reply) { // Klaas - SWIK-1132 - for image paste in CKeditor
     const filename = request.payload.upload.hapi.filename;
-    const userid = request.params.userid;
-    const filePath = saveImageToFile(filename, request.payload.upload._data, userid);
+    const userid = request.params.jwt;// changed userid to jwt in routes- testing here for backward compatibility (when platform sends userid)
+    if (String(userid).length < 10) {// old way of managing images - save to shared folder
+      const filePath = saveImageToFile(filename, request.payload.upload._data, userid);
 
-    /*let content = '<script type="text/javascript">\n';
-    content += 'document.domain = "slidewiki.org";\n';
-    content += 'window.parent.CKEDITOR.tools.callFunction('+ request.query.CKEditorFuncNum + ' , "' + filePath + '", "" );\n';
-    content += '</script>';*/
+      /*let content = '<script type="text/javascript">\n';
+      content += 'document.domain = "slidewiki.org";\n';
+      content += 'window.parent.CKEDITOR.tools.callFunction('+ request.query.CKEditorFuncNum + ' , "' + filePath + '", "" );\n';
+      content += '</script>';*/
 
-    let content = '{ "uploaded": 1, "fileName": "'+filename+'", "url": "'+filePath+'" }';
-        //reply('<script type="text/javascript">window.parent.CKEDITOR.tools.callFunction(1, "http://platform.manfredfris.ch/assets/images/logo_full.png", "");</script>);');
-    reply(content);
-
+      let content = '{ "uploaded": 1, "fileName": "'+filename+'", "url": "'+filePath+'" }';
+          //reply('<script type="text/javascript">window.parent.CKEDITOR.tools.callFunction(1, "http://platform.manfredfris.ch/assets/images/logo_full.png", "");</script>);');
+      reply(content);
+    } else {// new way - use the file-service API
+      const jwt = request.params.jwt;
+      sendImageToFileService(filename, request.payload.upload._data, jwt).then((filePath) => {
+        let content = '{ "uploaded": 1, "fileName": "'+filename+'", "url": "'+filePath+'" }';
+        reply(content);
+      }).catch((err) => {
+        request.log('error', error);
+        reply(boom.badImplementation());
+      });
+    }
   }
 };
 
-function createDeckFromPPTX(buffer, user, jwt, language, license, deckName, request, reply) {
+function createDeckFromPPTX(buffer, user, jwt, language, license, deckName, description, tags, theme, request, reply) {
   let convertor = new Convertor.Convertor();
   convertor.user = user;
   convertor.jwt = jwt;
@@ -349,7 +378,7 @@ function createDeckFromPPTX(buffer, user, jwt, language, license, deckName, requ
     const noOfSlides = result.noOfSlides;
     //const filesInfo = result.filesInfo;
 
-    return createDeck(user, language, license, deckName, result).then((deck) => {
+    return createDeck(user, language, license, deckName, description, tags, theme, result).then((deck) => {
       reply('import completed').header('deckId', deck.id).header('noOfSlides', noOfSlides);
       if (noOfSlides > 1) {
         //var slides = convertor.processPPTX(buffer);
@@ -417,6 +446,66 @@ function saveImageToFile(imgName, file, user) {
   return Microservices.file.uri + '/' + imgUserPath;
 }
 
+function sendImageToFileService(imgName, data, jwt) {
+  let myPromise = new Promise((resolve, reject) => {
+    //Get file extension
+    const imgNameArray = imgName.split('.');
+    const extension = imgNameArray[imgNameArray.length - 1];
+    let imageName = '';
+
+    let contentType = 'image/png';
+    switch (extension.toLowerCase()) {
+      case 'bmp' :
+        contentType = 'image/bmp';
+        break;
+      case 'tiff' :
+        contentType = 'image/tiff';
+        break;
+      case 'jpg' :
+        contentType = 'image/jpeg';
+        break;
+      case 'jpeg' :
+        contentType = 'image/jpeg';
+        break;
+    }
+
+    var options = {
+      method: 'POST',
+      uri: Microservices.file.uri + '/picture?license=CC0',
+      body: data,
+      // body: new Buffer(zip.file(imgName).asArrayBuffer(), 'base64'),
+      headers: {
+        '----jwt----': jwt,
+        // '----jwt----': 'eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJ1c2VyaWQiOjMzLCJ1c2VybmFtZSI6InJtZWlzc24iLCJpYXQiOjE0Nzg2OTI3MDZ9.5h-UKLioMYK9OBfoNQVuQ25DhZCJ5PzUYlDXT6SFfBpaKLhpYVmK8w0xE5dOSNzw58qLmxuQHGba_CVI-rPnNQ',
+        'content-type': contentType,
+        'Accept':  'application/json'
+      }
+    };
+
+    rp(options)
+      .then( (body) => {
+        console.log('res', body);
+        imageName = JSON.parse(body).fileName;
+        resolve(Microservices.file.uri + '/picture/' + imageName);
+      })
+      .catch( (err) => {
+        console.log('err', err);
+        const errorString = String(err);
+        // console.log('eRROR', err);
+        let index1 = errorString.indexOf('File already exists and is stored under ');
+        let index2 = errorString.indexOf('\"}"');
+        if (index1 > -1 && index2 > -1) {
+          imageName = errorString.substring(index1 + 40, index2 - 1);
+        }
+        if (imageName === '') {
+          // console.log('Error while saving image', err);
+        }
+        resolve(Microservices.file.uri + '/picture/' + imageName);
+      });
+  });
+
+  return myPromise;
+}
 
 function createNodesRecursive(user, license, deckId, previousSlideId, slides, index) {
 
@@ -445,7 +534,7 @@ function createNodesRecursive(user, license, deckId, previousSlideId, slides, in
 }
 
 //Send a request to insert a new deck with the first slide
-function createDeck(user, language, license, deckName, firstSlide) {
+function createDeck(user, language, license, deckName, description, tags, theme, firstSlide) {
   //Send a request to insert a new deck with the first slide
   // console.log('deck', user, license, deckName);
   let myPromise = new Promise((resolve, reject) => {
@@ -475,6 +564,12 @@ function createDeck(user, language, license, deckName, firstSlide) {
       language: language,
       license: license,
       title: deckName,
+      description: description,
+      translation: {
+        status: 'original'
+      },
+      tags: tags,
+      theme: theme,
       first_slide: {
         content: encodedFirstSlideContent,
         title: (firstSlideTitle !== '') ? firstSlideTitle : 'Slide 1',//It is not allowed to be empty
