@@ -38,7 +38,24 @@ module.exports = function(server) {
     //    },
      // },
       tags: ['api'],
-      description: 'Import PPTX presentation file to SlideWiki'
+      description: 'Import PPTX presentation file to SlideWiki. This route will retrieve multiform data with the following attributes in it: user (integer), jwt (string), language (string, 2 or 5 characters), license (string), title (string), description (string), tags (JSON), theme (string), filename (string) and file (binary). Example: https://github.com/slidewiki/slidewiki-platform/blob/master/services/import.js#L18',
+      plugins: {
+        'hapi-swagger': {
+          responses: {
+            ' 200 ': {
+              'description': 'import completed',
+              'headers': {
+                'deckId': {
+                  'description': 'Id of the new deck'
+                },
+                'noOfSlides': {
+                  'description': 'Number of slides in the new deck'
+                }
+              }
+            }
+          }
+        }
+      }
     }
   });
 
@@ -71,7 +88,7 @@ module.exports = function(server) {
     //    },
      // },
       tags: ['api'],
-      description: 'Import image file to SlideWiki'
+      description: 'Import image file to SlideWiki. This is only used by CKEditor and is bounded to it.'
     }
   });
 
@@ -104,7 +121,7 @@ module.exports = function(server) {
     //    },
      // },
       tags: ['api'],
-      description: 'Import image file, pasted in CKeditor in slide edit view, to SlideWiki'
+      description: 'Import image file, pasted in CKeditor in slide edit view, to SlideWiki. This is only used by CKEditor and is bounded to it.'
     }
   });
 
