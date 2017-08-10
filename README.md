@@ -7,7 +7,7 @@
 [![LinesOfCode](https://img.shields.io/badge/LOC-676-lightgrey.svg)](https://github.com/slidewiki/import-service/blob/master/application/package.json)
 [![Coverage Status](https://coveralls.io/repos/github/slidewiki/import-service/badge.svg?branch=master)](https://coveralls.io/github/slidewiki/import-service?branch=master)
 
-This repository handles import of presentation files (only PPTX for now) which are transformed to appropiate HTML for creation of deck and slides (sent to deck-service).
+This repository handles import of presentation files (only PPTX and ODP for now) which are transformed to appropiate HTML for creation of deck and slides (sent to deck-service).
 
 The PPTX2HTML library is used for parsing the PPTX (powerpoint presentation format) to HTML.
 See (https://github.com/g21589/PPTX2HTML) on Github, and see (http://g21589.github.io/PPTX2HTML/#) for a demo.
