@@ -10,105 +10,13 @@ let rp = require('request-promise-native');
 const Microservices = require('../configs/microservices');
 let Convertor = require('../PPTX2HTML/js/convertor.js');
 
-//const boom = require('boom'), //Boom gives us some predefined http codes and proper responses
-//slideDB = require('../database/slideDatabase'), //Database functions specific for slides
-//co = require('../common');
-//pptx2html =
-//require('../PPTX2HTML/js/pptx2html');
-
-//import pptx2html from '../PPTX2HTML/js/pptx2html';
-// console.log("Hello?");
 module.exports = {
-
   //Import uploaded PPTX and transform to HTML via PPTX2HTML  or return ERROR
   //TODO: can I run client-side non ES6 javascript in node.js?
   //pptx2html/js/pptx2html.js uses document.ready / Jquery
   //TODO: find out how use of reveal.js in PPTX2HTML works together with our use of
   // reveal.js in slidewiki-platform frontend work by Huw on slide viewer.
   importPPTX: function(request, reply) {
-    //request.log('ImportPPTX', 'ImportPPTX service called');
-    //TODO: call PPTX2HTML - test with PTTX2HTML/files/test.pptx
-    //pptx2html
-    //reply(request.payload.file);
-    //request.log('ImportPPTX', 'ImportPPTX service called' + request.payload.file);
-    //console.log('ImportPPTX data' + request.payload.file);
-    // console.log("module.exports");
-//see https://github.com/risis-eu/risis-datasets/blob/master/plugins/upload/handleUpload.js#L99
-// for example of reading a superagent request
-
-    //!!!request.body!!!
-    //console.log('file sent to service: ' + request.payload.file);
-    //console.log('file sent to service: ' + request.body);
-    //console.log('file sent to service: ' + request.data);
-    //console.log('file sent to service: ' + request.content);
-    //console.log('file sent to service: ' + request.content.file);
-    //evt.target.files[0]
-
-    //console.log(request.payload.file); //<Buffer 50 4b 03 04
-    //console.log(request.payload); //{ file: <Buffer 50 4b 0
-    // console.log(request.params); // {}
-    //console.log('file sent to service: request.payload' + request.payload); [object object]
-    //console.log('file sent to service: request.params' + request.params);
-    //console.log('file sent to service: request.file' + request.file);
-
-    //we should be abe to read request.files.file.data
-    //TODO: try multipart multipart/form-data?
-    // SEE RISIS SERVER.JS FOR EXAMPLE
-    //console.log('file sent to service: request.files.file.size' + request.files.file.data);
-    //console.log('file sent to service: request.params.files.file.size' + request.files.file.size);
-    //console.log(util.inspect(request.params, {showHidden: true, depth: 100}));
-    // console.log(util.inspect(request.payload.file.data, {showHidden: true, depth: 100})); //undefined
-    // console.log(util.inspect(request.payload.file, {showHidden: true, depth: 100})); ////<Buffer 50 4b 03 04
-    // console.log(util.inspect(request.payload, {showHidden: true, depth: 100}));//{ file: <Buffer 50 4b 0
-
-    //req.params.name
-    //console.log('file sent to service: request.payload.size: ' + request.payload.size);
-    //console.log('file sent to service: request.payload.files.file.size' + request.payload.files.file.size);
-    //console.log('file sent to service: request.payload.files.file.data' + request.payload.files.file.data);
-    //console.log('file sent to service: request.files.file.size' + request.files.file.size);
-    //console.log('file sent to service: request.files.file.data' + request.files.file.data);
-    //console.log('file sent to service: request.payload[0]' + request.payload[0]);
-    //console.log('file sent to service: request.payload.files[0]' + request.payload.files[0]);
-    //console.log('file sent to service request.payload.form: ' + request.payload.form);
-    //console.log('file sent to service request.payload.data: ' + request.payload.data);
-    //console.log('file sent to service request.payload.file: ' + request.payload.file);
-    //console.log('file sent to service request.payload.file.data: ' + request.payload.file.data);
-    //console.log('file sent to service request.payload.file: ' + request.payload.file);
-    //console.log('file sent to service request.payload.File: ' + request.payload.File);
-    //console.log('file sent to service request.payload.filename: ' + request.payload.filename);
-    //console.log(util.inspect(request.payload, {showHidden: true, depth: 100}));
-    //console.log(util.inspect(request.payload.file, {showHidden: true, depth: 100}));
-    //console.log(util.inspect(request.payload.files, {showHidden: true, depth: 100}));
-    //reply('request.payload: ' + request.payload);
-    //console.log('file sent to service: ' + request.payload.file);
-    //console.log('file sent to service: ' + request.payload.body);
-    //console.log('file sent to service: ' + request.payload.data);
-    //console.log('file sent to service: ' + request.payload.content);
-    //pptx2html.convert(request.payload.file);
-    //let result = pptx2html.convert(request.params);
-    //let file = evt.target.files[0];
-    //this.props.ImportStore.file = file;
-
-    //let result = pptx2html.convert(request.payload.file);
-    //let result = pptx2html.convert(request.body);
-    //let result = pptx2html.convert(request.data);
-    //let result = pptx2html.convert(request.content);
-    //let result = pptx2html.convert(request.payload[0]);
-    //console.log(pptx2html.convert(result));
-    //console.log(pptx2html.convert(request.payload.file.data));
-    //console.log(pptx2html.convert(request.payload.data)); // Uncaught error: cannot read as File: undefined
-    //console.log(pptx2html.convert(request.payload)); // Error: Uncaught error: cannot read as File: {"file":{"type":"Buffer","data":[8
-    //request.payload.file.data
-    //console.log(
-    //console.log(fs.readFile(request.payload.file));
-    //let test = request.payload.file;
-    //console.log(pptx2html.convert(test)); //Error: Uncaught error: cannot read as File: {"type":"Buffer","data":[80,75,3,4,20,0,6,0,8,
-
-    //console.log(pptx2html.convert(request.payload.file[0])); // Uncaught error: cannot read as File: 80
-    //console.log(pptx2html.convert(request.payload.files[0])); Cannot read property '0' of undefined
-    //console.log(pptx2html.convert(request.payload.file.files[0])); Uncaught error: Cannot read property '0' of undefined
-    //console.log(pptx2html.convert(request.payload.files.files)); Cannot read property 'files' of undefined
-
     const user = request.payload.user;
     const jwt = request.payload.jwt;
     let language = request.payload.language;
@@ -158,175 +66,24 @@ module.exports = {
         res.on('end', function(){
           createDeckFromPPTX(new Buffer(data, 'binary'), user, jwt, language, license, deckName, description, tags, theme, request, reply);
         });
-        // console.log('result of call to unoconv service', res.headers, res.statusCode);
       });
     } else {
       createDeckFromPPTX(buffer, user, jwt, language, license, deckName, description, tags, theme, request, reply);
     }
   },
 
-  importImage: function(request, reply) { // Klaas added this to test image upload
-    //console.log('request.params.CKEditorFuncNum' + request.params.CKEditorFuncNum); // {}
-    //console.log('request.query.CKEditorFuncNum' +request.query.CKEditorFuncNum);
-
-    //console.log('file sent to service: request.files.file.size' + request.files.file.data);
-    //console.log('file sent to service: request.params.files.file.size' + request.files.file.size);
-    //console.log(util.inspect(request.params, {showHidden: true, depth: 100}));
-    //console.log(util.inspect(request.payload.file.data, {showHidden: true, depth: 100})); //undefined
-    //console.log(util.inspect(request.payload.file, {showHidden: true, depth: 100})); ////<Buffer 50 4b 03 04
-    //console.log(util.inspect(request.payload, {showHidden: true, depth: 100}));//{ file: <Buffer 50 4b 0
-    //console.log(util.inspect(request.payload.filename, {showHidden: true, depth: 100}));//{ file: <Buffer 50 4b 0
-    //http://stackoverflow.com/questions/4295782/how-do-you-extract-post-data-in-node-js --> does not seem to work
-    //https://github.com/expressjs/node-multiparty
-
-    //http://stackoverflow.com/questions/21823379/how-to-upload-files-using-nodejs-and-hapi#24521136
-
-    //TODO use multer?
-    //https://www.npmjs.com/package/multer
-
-    //req.params.name
-    //console.log('file sent to service: request.payload.size: ' + request.payload.size);
-    //console.log('file sent to service: request.payload.files.file.size' + request.payload.files.file.size);
-    //const user = request.payload.user;
-    //const license = request.payload.license;
-    //const fileName = request.payload.filename;
-    //console.log('filename: '+ request.payload.filename);
-    /*
-    const fileName = request.payload.filename;
-    let saveTo = './' + fileName;
-    let fileStream = fs.createWriteStream(saveTo);
-    ////fileStream.write(request.payload.file.data);
-    //fileStream.write(request.payload.file, 'binary');
-    //fileStream.write(request.payload["upload"], 'binary');
-    fileStream.write(request.payload.upload);
-    fileStream.end();
-    fileStream.on('error', (err) => {
-      reply('error in upload!');
-      console.log('error', err);
-    });
-    fileStream.on('finish', (res) => {
-      // reply('upload completed!');
-      console.log('upload completed');
-    });
-    */
-
-    //const fileName = request.payload.filename;
-    //let saveTo = './' + fileName;
-    //let saveTo = './' + request.payload.filename;
-    //let saveTo = './uploaded/' + fileName;
-    //console.log('saved to:' + saveTo);
-    //console.log('request.params.filename'+  request.params.filename);
-    //console.log('request.query.filename'+  request.query.filename);
-    //console.log('request.payload["filename"]'+  request.payload["filename"]);
-    //request.payload["upload"].pipe(fs.createWriteStream("./uploaded/test.png")); //this already works.
-    //request.payload["upload"].pipe(fs.createWriteStream('temp.data')); //this already works.
-    //request.payload["upload"].pipe(fs.createWriteStream(saveTo));
-
-    //console.log('request.payload[upload]' + request.payload['upload']);
-    //console.log('request.payload.upload' + request.payload.upload);
-    //console.log(util.inspect(request.payload.upload, {showHidden: true, depth: 100})); //undefined
-    //console.log(util.inspect(request.payload['upload'], {showHidden: true, depth: 100})); //undefined
-
-    //console.log(util.inspect(request.payload.upload.data, {showHidden: true, depth: 100})); //undefined
-    //console.log(util.inspect(request.payload.upload._data, {showHidden: true, depth: 100})); //undefined
-    //console.log(util.inspect(request.payload.upload.hapi.filename, {showHidden: true, depth: 100})); //undefined
-    //let fileStream = fs.createWriteStream(saveTo);
-    ////fileStream.write(request.payload.file.data);
-    //fileStream.write(request.payload.file, 'binary');
-    //fileStream.end();
-    //fileStream.on('error', (err) => {
-    /*
-    request.payload["upload"].on('error', (err) => {
-      reply('error in upload!');
-      console.log('error', err);
-    });
-    //fileStream.on('finish', (res) => {
-    request.payload["upload"].on('finish', (res) => {
-      // reply('upload completed!');
-      console.log('upload completed');
-    });
-    */
-
-
-
-    // //TODO - create unique filename
-    // //let saveTo = './' + request.payload.filename;
-    // let saveTo = './uploaded/' + request.payload.upload.hapi.filename;
-    // let fileStream = fs.createWriteStream(saveTo);
-    // //fileStream.write(request.payload.file.data);
-    // //fileStream.write(request.payload.file, 'binary');
-    // fileStream.write(request.payload.upload._data); //this saves to file 'undefined'
-    // fileStream.end();
-    // fileStream.on('error', (err) => {
-    //   reply('error in upload!');
-    //   console.log('error', err);
-    // });
-    // fileStream.on('finish', (res) => {
-    //     console.log('upload completed');
-    //   });
-
-
-    //Use saveImageToFile function
-
+  importImage: function(request, reply) {
     const filename = request.payload.upload.hapi.filename;
     const userid = request.params.jwt;// changed userid to jwt in routes - testing here for backward compatibility (when platform sends userid)
     if (String(userid).length < 10) {// old way of managing images - save to shared folder
       const filePath = saveImageToFile(filename, request.payload.upload._data, userid);
-
-
-          ///JSON ONLY FOR DRAGGING and dropping
-        //let response;
-        //response.writeHead(200, {'Content-Type': 'application/json'});
-        //let json = JSON.stringify({
-          //'uploaded': 1,
-          //'fileName': 'logo_full.png',
-          //'url': 'http://platform.manfredfris.ch/assets/images/logo_full.png'
-        //});
-        //response.end(json);
-        //console.log(json);
-        //reply (json);
-        // JSON ONLY FOR DRAGGING and dropping  - http://stackoverflow.com/questions/33197058/ckeditor-can-not-parse-json-response
-        //reply ({
-          //'uploaded': '1',
-          //'fileName': 'logo_full.png',
-          //'url': 'http://platform.manfredfris.ch/assets/images/logo_full.png'
-          //});
-
       let content = '<script type="text/javascript">\n';
-          //content += "window.parent.CKEDITOR.tools.callFunction(1, 'http://platform.manfredfris.ch/assets/images/logo_full.png', '' );\n";
-          //content += "window.opener.CKEDITOR.tools.callFunction(1, 'http://platform.manfredfris.ch/assets/images/logo_full.png', '' );\n";
-          //content += "CKEDITOR.instances.inlineContent.tools.callFunction(1, 'http://platform.manfredfris.ch/assets/images/logo_full.png', '' );\n";
-          //content += "window.parent.CKEDITOR.instances.inlineContent.tools.callFunction(1, 'http://platform.manfredfris.ch/assets/images/logo_full.png', '' );\n";
-          //window.parent.CKEDITOR
-
           //       Save problem with Same-origin_policy when CKeditor image upload script is returned
           //       https://developer.mozilla.org/en-US/docs/Web/Security/Same-origin_policy
       content += 'document.domain = "slidewiki.org";\n';
-
-          //content += request.params.CKEditor + ".tools.callFunction("+ request.params.CKEditorFuncNum + " , 'http://platform.manfredfris.ch/assets/images/logo_full.png', '' );\n";
-          //content += "window.parent.CKEDITOR.tools.callFunction("+ request.query.CKEditorFuncNum + " , 'http://platform.manfredfris.ch/assets/images/logo_full.png', '' );\n";
-          // content += 'window.parent.CKEDITOR.tools.callFunction('+ request.query.CKEditorFuncNum + ' , "http://platform.manfredfris.ch/assets/images/logo_full.png", "" );\n';
       content += 'window.parent.CKEDITOR.tools.callFunction('+ request.query.CKEditorFuncNum + ' , "' + filePath + '", "" );\n';
-
-          //CKEDITOR.instances.inlineContent
-          //content += "alert('test');\n"; //WORKS!
-
-          //SEARCH FOR ALTERNATIVES!!
-
       content += '</script>';
-          //reply('<script type="text/javascript">window.parent.CKEDITOR.tools.callFunction(1, "http://platform.manfredfris.ch/assets/images/logo_full.png", "");</script>);');
       reply(content);
-
-          //TODO check if image file is uploaded.
-          //TODO send call to media service + user service to store media data of uploaded image file
-        // reply('upload completed!');
-        //reply(response);
-        //reply (pptx2html.convert(request.payload.file));
-
-        //SEE http://docs.ckeditor.com/#!/guide/dev_file_browser_api
-        //console.log('upload completed');
-      //});
-
     } else {// new way - use the file-service API
       const jwt = request.params.jwt;
       sendImageToFileService(filename, request.payload.upload._data, jwt).then((filePath) => {
@@ -347,14 +104,7 @@ module.exports = {
     const userid = request.params.jwt;// changed userid to jwt in routes- testing here for backward compatibility (when platform sends userid)
     if (String(userid).length < 10) {// old way of managing images - save to shared folder
       const filePath = saveImageToFile(filename, request.payload.upload._data, userid);
-
-      /*let content = '<script type="text/javascript">\n';
-      content += 'document.domain = "slidewiki.org";\n';
-      content += 'window.parent.CKEDITOR.tools.callFunction('+ request.query.CKEditorFuncNum + ' , "' + filePath + '", "" );\n';
-      content += '</script>';*/
-
       let content = '{ "uploaded": 1, "fileName": "'+filename+'", "url": "'+filePath+'" }';
-          //reply('<script type="text/javascript">window.parent.CKEDITOR.tools.callFunction(1, "http://platform.manfredfris.ch/assets/images/logo_full.png", "");</script>);');
       reply(content);
     } else {// new way - use the file-service API
       const jwt = request.params.jwt;
@@ -376,12 +126,10 @@ function createDeckFromPPTX(buffer, user, jwt, language, license, deckName, desc
 
   return convertor.convertFirstSlide(buffer).then((result) => {
     const noOfSlides = result.noOfSlides;
-    //const filesInfo = result.filesInfo;
 
     return createDeck(user, language, license, deckName, description, tags, theme, result).then((deck) => {
       reply('import completed').header('deckId', deck.id).header('noOfSlides', noOfSlides);
       if (noOfSlides > 1) {
-        //var slides = convertor.processPPTX(buffer);
         convertor.processPPTX(buffer).then((result) => {
           let slides = result;
           return findFirstSlideOfADeck(deck.id).then((slideId) => {
@@ -430,8 +178,6 @@ function saveImageToFile(imgName, file, user) {
 
   //Save file
   let fileStream = fs.createWriteStream(saveTo);
-
-  //fileStream.write(request.payload.file.data);
   fileStream.write(file, 'binary');
   fileStream.end();
   fileStream.on('error', (err) => {
@@ -442,7 +188,6 @@ function saveImageToFile(imgName, file, user) {
     console.log('upload completed');
   });
 
-    //  return 'http://' + Microservices.file.uri + '/' + imgUserPath;
   return Microservices.file.uri + '/' + imgUserPath;
 }
 
@@ -473,7 +218,6 @@ function sendImageToFileService(imgName, data, jwt) {
       method: 'POST',
       uri: Microservices.file.uri + '/picture?license=CC0',
       body: data,
-      // body: new Buffer(zip.file(imgName).asArrayBuffer(), 'base64'),
       headers: {
         '----jwt----': jwt,
         // '----jwt----': 'eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJ1c2VyaWQiOjMzLCJ1c2VybmFtZSI6InJtZWlzc24iLCJpYXQiOjE0Nzg2OTI3MDZ9.5h-UKLioMYK9OBfoNQVuQ25DhZCJ5PzUYlDXT6SFfBpaKLhpYVmK8w0xE5dOSNzw58qLmxuQHGba_CVI-rPnNQ',
@@ -491,7 +235,6 @@ function sendImageToFileService(imgName, data, jwt) {
       .catch( (err) => {
         console.log('err', err);
         const errorString = String(err);
-        // console.log('eRROR', err);
         let index1 = errorString.indexOf('File already exists and is stored under ');
         let index2 = errorString.indexOf('\"}"');
         if (index1 > -1 && index2 > -1) {
@@ -536,7 +279,6 @@ function createNodesRecursive(user, license, deckId, previousSlideId, slides, in
 //Send a request to insert a new deck with the first slide
 function createDeck(user, language, license, deckName, description, tags, theme, firstSlide) {
   //Send a request to insert a new deck with the first slide
-  // console.log('deck', user, license, deckName);
   let myPromise = new Promise((resolve, reject) => {
     let title = '';
     if (firstSlide.title && firstSlide.title !== ''){
@@ -656,8 +398,6 @@ function createSlide(selector, nodeSpec, user, slide, slideNo, license) {
       console.log('Error createSlide', err);
       reject(e);
     });
-    //req.write(data);
-    //req.end();
   });
 
   return myPromise;
