@@ -38,6 +38,7 @@ module.exports = function(server) {
     //    },
      // },
       tags: ['api'],
+      auth: 'jwt',
       description: 'Import PPTX presentation file to SlideWiki. This route will retrieve multiform data with the following attributes in it: user (integer), jwt (string), language (string, 2 or 5 characters), license (string), title (string), description (string), tags (JSON), theme (string), filename (string) and file (binary). Example: https://github.com/slidewiki/slidewiki-platform/blob/master/services/import.js#L18',
       plugins: {
         'hapi-swagger': {

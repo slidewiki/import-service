@@ -7,6 +7,8 @@ let fs = require('fs');
 let he = require('he');
 let rp = require('request-promise-native');
 
+const config = require('../configuration');
+
 const Microservices = require('../configs/microservices');
 let Convertor = require('../PPTX2HTML/js/convertor.js');
 
@@ -17,8 +19,9 @@ module.exports = {
   //TODO: find out how use of reveal.js in PPTX2HTML works together with our use of
   // reveal.js in slidewiki-platform frontend work by Huw on slide viewer.
   importPPTX: function(request, reply) {
-    const user = request.payload.user;
-    const jwt = request.payload.jwt;
+    const jwt = request.auth.token;
+    const user = request.auth.credentials.userid;
+
     let language = request.payload.language;
     if (language === undefined || language === null || language === '') {
       language = 'en_GB';
@@ -127,14 +130,24 @@ function createDeckFromPPTX(buffer, user, jwt, language, license, deckName, desc
   return convertor.convertFirstSlide(buffer).then((result) => {
     const noOfSlides = result.noOfSlides;
 
-    return createDeck(user, language, license, deckName, description, tags, theme, result).then((deck) => {
+    return createDeck({
+      user,
+      language,
+      license,
+      deckName,
+      description,
+      tags,
+      theme,
+      firstSlide: result,
+      authToken: jwt,
+    }).then((deck) => {
       reply('import completed').header('deckId', deck.id).header('noOfSlides', noOfSlides);
       if (noOfSlides > 1) {
         convertor.processPPTX(buffer).then((result) => {
           let slides = result;
           return findFirstSlideOfADeck(deck.id).then((slideId) => {
             //create the rest of slides
-            createNodesRecursive(user, license, deck.id, slideId, slides, 1);
+            createNodesRecursive(user, license, deck.id, slideId, slides, 1, jwt);
           }).catch((error) => {
             request.log('error', error);
             reply(boom.badImplementation());
@@ -250,7 +263,7 @@ function sendImageToFileService(imgName, data, jwt) {
   return myPromise;
 }
 
-function createNodesRecursive(user, license, deckId, previousSlideId, slides, index) {
+function createNodesRecursive(user, license, deckId, previousSlideId, slides, index, authToken) {
 
   let selector = {
     'id': String(deckId) + '-1',
@@ -263,11 +276,19 @@ function createNodesRecursive(user, license, deckId, previousSlideId, slides, in
     'type': 'slide'
   };
 
-  createSlide(selector, nodeSpec, user, slides[index], String(index + 1), license).then((node) => {
+  createSlide({
+    selector,
+    nodeSpec,
+    user,
+    slide: slides[index],
+    slideNo: String(index + 1),
+    license,
+    authToken,
+  }).then((node) => {
     if (index >= slides.length - 1) {//Last one
       return;
     } else {
-      createNodesRecursive(user, license, deckId, node.id, slides, (index + 1));
+      createNodesRecursive(user, license, deckId, node.id, slides, (index + 1), authToken);
     }
   }).catch((error) => {
     console.log('Error createNodesRecursive: ' + error);
@@ -277,7 +298,9 @@ function createNodesRecursive(user, license, deckId, previousSlideId, slides, in
 }
 
 //Send a request to insert a new deck with the first slide
-function createDeck(user, language, license, deckName, description, tags, theme, firstSlide) {
+function createDeck(options) {
+  let {user, language, license, deckName, description, tags, theme, firstSlide, authToken} = options;
+
   //Send a request to insert a new deck with the first slide
   let myPromise = new Promise((resolve, reject) => {
     let title = '';
@@ -302,7 +325,6 @@ function createDeck(user, language, license, deckName, description, tags, theme,
     let encodedFirstSlideNotes = he.encode(firstSlide.notes, {allowUnsafeSymbols: true});
 
     let jsonData = {
-      user: user,
       language: language,
       license: license,
       title: deckName,
@@ -323,25 +345,28 @@ function createDeck(user, language, license, deckName, description, tags, theme,
       delete jsonData.speakernotes;
     }
 
-    let data = JSON.stringify(jsonData);
-    rp.post({uri: Microservices.deck.uri + '/deck/new', body:data}).then((res) => {
-      try {
-        let newDeck = JSON.parse(res);
+    let headers = {};
+    headers[config.JWT.HEADER] = authToken;
+
+    rp.post({
+      uri: Microservices.deck.uri + '/deck/new',
+      body: jsonData,
+      json: true,
+      headers,
+    }).then((newDeck) => {
         resolve(newDeck);
-      } catch(e) {
-        console.log(e);
-        reject(e);
-      }
     }).catch((err) => {
       console.log('Error', err);
-      reject(e);
+      reject(err);
     });
   });
 
   return myPromise;
 }
 
-function createSlide(selector, nodeSpec, user, slide, slideNo, license) {
+function createSlide(options) {
+  let {selector, nodeSpec, user, slide, slideNo, license, authToken} = options;
+
   let myPromise = new Promise((resolve, reject) => {
     if (slide.content === undefined || slide.content === '') {
       console.log('Error in createSlide - invalid slide', slideNo);
@@ -371,7 +396,6 @@ function createSlide(selector, nodeSpec, user, slide, slideNo, license) {
     let jsonData = {
       selector: selector,
       nodeSpec: nodeSpec,
-      user: String(user),
       content: encodedContent,
       title: (slideTitle !== '') ? slideTitle : ('Slide ' + slideNo),//It is not allowed to be empty
       speakernotes:encodedNotes,
@@ -382,21 +406,19 @@ function createSlide(selector, nodeSpec, user, slide, slideNo, license) {
       delete jsonData.speakernotes;
     }
 
+    let headers = {};
+    headers[config.JWT.HEADER] = authToken;
 
-    let data = JSON.stringify(jsonData);
-    rp.post({uri: Microservices.deck.uri + '/decktree/node/create', body:data}).then((res) => {
-      try {
-        let newDeckTreeNode = JSON.parse(res);
-
-        resolve(newDeckTreeNode);
-      } catch(e) {
-        console.log(e);
-        reject(e);
-      }
-
+    rp.post({
+      uri: Microservices.deck.uri + '/decktree/node/create',
+      body: jsonData,
+      json: true,
+      headers,
+    }).then((newDeckTreeNode) => {
+      resolve(newDeckTreeNode);
     }).catch((err) => {
       console.log('Error createSlide', err);
-      reject(e);
+      reject(err);
     });
   });
 

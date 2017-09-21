@@ -7,7 +7,9 @@ This application demonstrates a service which returns previously inserted data f
 
 //This is our webserver framework (instead of express)
 const hapi = require('hapi'),
-  co = require('./common');
+  co = require('./common'),
+  config = require('./configuration'),
+  jwt = require('jsonwebtoken');
 
 //Initiate the webserver with standard or given port
 const server = new hapi.Server({ connections: {routes: {validate: { options: {convert : false}}}}});
@@ -54,7 +56,8 @@ let plugins = [
         version: '0.1.0'
       }
     }
-  }
+  },
+  require('hapi-auth-jwt2'),
 ];
 
 //Register plugins and start webserver
@@ -63,6 +66,21 @@ server.register(plugins, (err) => {
     console.error(err);
     global.process.exit();
   } else {
+    server.auth.strategy('jwt', 'jwt', {
+      key: config.JWT.SERIAL,
+      validateFunc: (decoded, request, callback) => {
+        let isValid = false;
+        if (decoded.userid && decoded.username) isValid = true;
+
+        callback(null, isValid);
+      },
+      verifyOptions: {
+        algorithms: [config.JWT.ALGORITHM],
+        ignoreExpiration: true
+      },
+      headerKey: config.JWT.HEADER,
+    });
+
     server.start(() => {
       server.log('info', 'Server started at ' + server.info.uri);
       //Register routes
