@@ -30,7 +30,7 @@ if (!co.isEmpty(process.env.DATABASE_PORT)){
 
 let JWTSerial = '69aac7f95a9152cd4ae7667c80557c284e413d748cca4c5715b3f02020a5ae1b';
 if (!co.isEmpty(process.env.JWT_SERIAL)){
-    JWTSerial = process.env.JWT_SERIAL;
+  JWTSerial = process.env.JWT_SERIAL;
 }
 
 module.exports = {

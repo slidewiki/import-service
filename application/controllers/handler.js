@@ -7,6 +7,8 @@ let fs = require('fs');
 let he = require('he');
 let rp = require('request-promise-native');
 
+const boom = require('boom');
+
 const config = require('../configuration');
 
 const Microservices = require('../configs/microservices');
@@ -49,7 +51,7 @@ module.exports = {
       });
       form.append('contentType', 'application/vnd.oasis.opendocument.presentation');
 
-      let request1 = form.submit({
+      form.submit({
         port: Microservices.unoconv.port,
         host: Microservices.unoconv.host,
         path: Microservices.unoconv.path,
@@ -62,11 +64,11 @@ module.exports = {
         let data = '';
         res.setEncoding('binary');
 
-        res.on('data', function(chunk){
+        res.on('data', (chunk) => {
           data += chunk;
         });
 
-        res.on('end', function(){
+        res.on('end', () => {
           createDeckFromPPTX(new Buffer(data, 'binary'), user, jwt, language, license, deckName, description, tags, theme, request, reply);
         });
       });
@@ -97,7 +99,7 @@ module.exports = {
         content += '</script>';
         reply(content);
       }).catch((err) => {
-        request.log('error', error);
+        request.log('error', err);
         reply(boom.badImplementation());
       });
     }
@@ -115,7 +117,7 @@ module.exports = {
         let content = '{ "uploaded": 1, "fileName": "'+filename+'", "url": "'+filePath+'" }';
         reply(content);
       }).catch((err) => {
-        request.log('error', error);
+        request.log('error', err);
         reply(boom.badImplementation());
       });
     }
@@ -131,7 +133,6 @@ function createDeckFromPPTX(buffer, user, jwt, language, license, deckName, desc
     const noOfSlides = result.noOfSlides;
 
     return createDeck({
-      user,
       language,
       license,
       deckName,
@@ -147,7 +148,7 @@ function createDeckFromPPTX(buffer, user, jwt, language, license, deckName, desc
           let slides = result;
           return findFirstSlideOfADeck(deck.id).then((slideId) => {
             //create the rest of slides
-            createNodesRecursive(user, license, deck.id, slideId, slides, 1, jwt);
+            createNodesRecursive(license, deck.id, slideId, slides, 1, jwt);
           }).catch((error) => {
             request.log('error', error);
             reply(boom.badImplementation());
@@ -194,7 +195,6 @@ function saveImageToFile(imgName, file, user) {
   fileStream.write(file, 'binary');
   fileStream.end();
   fileStream.on('error', (err) => {
-    reply('error in upload!');
     console.log('error', err);
   });
   fileStream.on('finish', () => {
@@ -227,7 +227,7 @@ function sendImageToFileService(imgName, data, jwt) {
         break;
     }
 
-    var options = {
+    let options = {
       method: 'POST',
       uri: Microservices.file.uri + '/picture?license=CC0',
       body: data,
@@ -263,7 +263,7 @@ function sendImageToFileService(imgName, data, jwt) {
   return myPromise;
 }
 
-function createNodesRecursive(user, license, deckId, previousSlideId, slides, index, authToken) {
+function createNodesRecursive(license, deckId, previousSlideId, slides, index, authToken) {
 
   let selector = {
     'id': String(deckId) + '-1',
@@ -279,7 +279,6 @@ function createNodesRecursive(user, license, deckId, previousSlideId, slides, in
   createSlide({
     selector,
     nodeSpec,
-    user,
     slide: slides[index],
     slideNo: String(index + 1),
     license,
@@ -288,18 +287,16 @@ function createNodesRecursive(user, license, deckId, previousSlideId, slides, in
     if (index >= slides.length - 1) {//Last one
       return;
     } else {
-      createNodesRecursive(user, license, deckId, node.id, slides, (index + 1), authToken);
+      createNodesRecursive(license, deckId, node.id, slides, (index + 1), authToken);
     }
   }).catch((error) => {
     console.log('Error createNodesRecursive: ' + error);
-    request.log('error createNodesRecursive', error);
-    reply(boom.badImplementation());
   });
 }
 
 //Send a request to insert a new deck with the first slide
 function createDeck(options) {
-  let {user, language, license, deckName, description, tags, theme, firstSlide, authToken} = options;
+  let {language, license, deckName, description, tags, theme, firstSlide, authToken} = options;
 
   //Send a request to insert a new deck with the first slide
   let myPromise = new Promise((resolve, reject) => {
@@ -354,7 +351,7 @@ function createDeck(options) {
       json: true,
       headers,
     }).then((newDeck) => {
-        resolve(newDeck);
+      resolve(newDeck);
     }).catch((err) => {
       console.log('Error', err);
       reject(err);
@@ -365,7 +362,7 @@ function createDeck(options) {
 }
 
 function createSlide(options) {
-  let {selector, nodeSpec, user, slide, slideNo, license, authToken} = options;
+  let {selector, nodeSpec, slide, slideNo, license, authToken} = options;
 
   let myPromise = new Promise((resolve, reject) => {
     if (slide.content === undefined || slide.content === '') {
@@ -440,7 +437,7 @@ function findFirstSlideOfADeck(deckId) {
       }
     }).catch((err) => {
       console.log('Error', err);
-      reject(e);
+      reject(err);
     });
   });
 

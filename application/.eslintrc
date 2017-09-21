@@ -23,6 +23,7 @@
     "dot-notation": [2, {allowKeywords: true}],
     "no-use-before-define": 0,
     "no-unused-vars": 1, // see https://github.com/babel/babel-eslint/issues/21
+    "no-undef": 2,
     "semi": [2, "always"],
     "yoda": [2, "never"],"no-alert": 2,
     "no-const-assign": 2,

@@ -27,7 +27,7 @@
   },
   "dependencies": {
     "ajv": "^4.11.0",
-    "boom": "^4.2.0",
+    "boom": "^5.2.0",
     "d3": "^3.5.11",
     "database-cleaner": "^1.2.0",
     "form-data": "^2.1.2",

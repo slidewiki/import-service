@@ -8,8 +8,7 @@ This application demonstrates a service which returns previously inserted data f
 //This is our webserver framework (instead of express)
 const hapi = require('hapi'),
   co = require('./common'),
-  config = require('./configuration'),
-  jwt = require('jsonwebtoken');
+  config = require('./configuration');
 
 //Initiate the webserver with standard or given port
 const server = new hapi.Server({ connections: {routes: {validate: { options: {convert : false}}}}});
