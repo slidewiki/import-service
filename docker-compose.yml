@@ -15,5 +15,6 @@ importservice:
     - SERVICE_URL_FILE=https://fileservice.experimental.slidewiki.org
     - SERVICE_HOST_UNOCONV=unoconvservice.experimental.slidewiki.org
     - DATABASE_URL=mongodb # use a url or the name, defined in the docker-compose file
+    - JWT_SERIAL=69aac7f95a9152cd4ae7667c80557c284e413d748cca4c5715b3f02020a5ae1b
   volumes:
     - files:/data/files
