@@ -2083,24 +2083,26 @@ class Convertor {
   }
 
   getHorizontalAlign(node, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles) {
-
-  	var algn = this.getTextByPathList(node, ["a:pPr", "attrs", "algn"]);
+    var algn = this.getTextByPathList(node, ["a:pPr", "attrs", "algn"]);
   	if (algn === undefined) {
   		algn = this.getTextByPathList(slideLayoutSpNode, ["p:txBody", "a:p", "a:pPr", "attrs", "algn"]);
-  		if (algn === undefined) {
-  			algn = this.getTextByPathList(slideMasterSpNode, ["p:txBody", "a:p", "a:pPr", "attrs", "algn"]);
-  			if (algn === undefined) {
-  				switch (type) {
-  					case "title":
-  					case "subTitle":
-  					case "ctrTitle":
-  						algn = this.getTextByPathList(slideMasterTextStyles, ["p:titleStyle", "a:lvl1pPr", "attrs", "alng"]);
-  						break;
-  					default:
-  						algn = this.getTextByPathList(slideMasterTextStyles, ["p:otherStyle", "a:lvl1pPr", "attrs", "alng"]);
-  				}
-  			}
-  		}
+      if (algn === undefined) {
+        algn = this.getTextByPathList(slideLayoutSpNode, ["p:txBody", "a:lstStyle", "a:lvl1pPr", "attrs", "algn"]);
+        if (algn === undefined) {
+    			algn = this.getTextByPathList(slideMasterSpNode, ["p:txBody", "a:p", "a:pPr", "attrs", "algn"]);
+    			if (algn === undefined) {
+    				switch (type) {
+    					case "title":
+    					case "subTitle":
+    					case "ctrTitle":
+    						algn = this.getTextByPathList(slideMasterTextStyles, ["p:titleStyle", "a:lvl1pPr", "attrs", "algn"]);
+    						break;
+    					default:
+    						algn = this.getTextByPathList(slideMasterTextStyles, ["p:otherStyle", "a:lvl1pPr", "attrs", "algn"]);
+    				}
+    			}
+    		}
+      }
   	}
   	// TODO:
   	if (algn === undefined) {
