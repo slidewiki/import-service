@@ -93,8 +93,16 @@ module.exports = {
       const jwt = request.params.jwt;
       sendImageToFileService(filename, request.payload.upload._data, jwt).then((filePath) => {
 
+        // prevent problems with Cross Origin Resource Sharing when import service returns script
+        // set document domain to a suffix of the current domain
+        // see https://stackoverflow.com/questions/3076414/ways-to-circumvent-the-same-origin-policy
+        // TODO: use Cross-Origin Resource Sharing method, e.g., using https://dev.ckeditor.com/ticket/13475
+        let domain = Microservices.import.uri.substring(Microservices.import.uri.indexOf('.')+1);
+        // image upload expects that fileservice runs on same domain,
+        // otherwise Cross-Origin Resource Sharing method is necessary
+
         let content = '<script type="text/javascript">\n';
-        content += 'document.domain = "slidewiki.org";\n';
+        content += 'document.domain = "'+ domain +'";\n';
         content += 'window.parent.CKEDITOR.tools.callFunction('+ request.query.CKEditorFuncNum + ' , "' + filePath + '", "" );\n';
         content += '</script>';
         reply(content);
