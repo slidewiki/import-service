@@ -16,5 +16,11 @@ module.exports = {
     host: (!co.isEmpty(process.env.SERVICE_HOST_UNOCONV)) ? process.env.SERVICE_HOST_UNOCONV : 'unoconvservice',
     path: '/unoconv/pptx',
     port: 443
-  }
+  },
+  'import': {
+    //necessary for document.domain image upload script sent to platform
+    //from line 96- 107 in /application/controllers/handler.js
+    uri: (!co.isEmpty(process.env.VIRTUAL_HOST)) ? process.env.VIRTUAL_HOST : 'importservice.experimental.slidewiki.org'
+  },
+
 };
