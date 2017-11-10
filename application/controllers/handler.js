@@ -87,7 +87,7 @@ module.exports = {
     let domain = Microservices.import.uri.substring(Microservices.import.uri.indexOf('.')+1);
     // image upload expects that fileservice runs on same domain,
     // otherwise Cross-Origin Resource Sharing method is necessary
-    
+
     if (String(userid).length < 10) {// old way of managing images - save to shared folder
       const filePath = saveImageToFile(filename, request.payload.upload._data, userid);
       let content = '<script type="text/javascript">\n';
@@ -156,7 +156,7 @@ function createDeckFromPPTX(buffer, user, jwt, language, license, deckName, desc
           let slides = result;
           return findFirstSlideOfADeck(deck.id).then((slideId) => {
             //create the rest of slides
-            createNodesRecursive(license, deck.id, slideId, slides, 1, jwt);
+            createNodesRecursive(license, deck.id, slideId, slides, theme, 1, jwt);
           }).catch((error) => {
             request.log('error', error);
             reply(boom.badImplementation());
@@ -271,7 +271,7 @@ function sendImageToFileService(imgName, data, jwt) {
   return myPromise;
 }
 
-function createNodesRecursive(license, deckId, previousSlideId, slides, index, authToken) {
+function createNodesRecursive(license, deckId, previousSlideId, slides, theme, index, authToken) {
 
   let selector = {
     'id': String(deckId) + '-1',
@@ -289,13 +289,14 @@ function createNodesRecursive(license, deckId, previousSlideId, slides, index, a
     nodeSpec,
     slide: slides[index],
     slideNo: String(index + 1),
+    theme,
     license,
     authToken,
   }).then((node) => {
     if (index >= slides.length - 1) {//Last one
       return;
     } else {
-      createNodesRecursive(license, deckId, node.id, slides, (index + 1), authToken);
+      createNodesRecursive(license, deckId, node.id, slides, theme, (index + 1), authToken);
     }
   }).catch((error) => {
     console.log('Error createNodesRecursive: ' + error);
@@ -370,7 +371,7 @@ function createDeck(options) {
 }
 
 function createSlide(options) {
-  let {selector, nodeSpec, slide, slideNo, license, authToken} = options;
+  let {selector, nodeSpec, slide, slideNo, theme, license, authToken} = options;
 
   let myPromise = new Promise((resolve, reject) => {
     if (slide.content === undefined || slide.content === '') {
@@ -402,6 +403,7 @@ function createSlide(options) {
       selector: selector,
       nodeSpec: nodeSpec,
       content: encodedContent,
+      theme: theme,
       title: (slideTitle !== '') ? slideTitle : ('Slide ' + slideNo),//It is not allowed to be empty
       speakernotes:encodedNotes,
       license: license
