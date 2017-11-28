@@ -1227,10 +1227,12 @@ class Convertor {
     			break;
     		case "http://schemas.openxmlformats.org/drawingml/2006/diagram":
     			return this.genDiagram(node, warpObj).then((text) => {
-                        return {text: text};
+            return {text: text};
     			});
     			break;
     		default:
+          console.warn("Unrecognised GraphicFrameNode type.", graphicTypeUri);
+          return new Promise((resolve) => {resolve ({text: ''});});
     	}
     } catch(e) {
       console.log('Error in processGraphicFrameNode', e);
