@@ -1176,7 +1176,7 @@ class Convertor {
 
         var options = {
           method: 'POST',
-          uri: Microservices.file.uri + '/picture?license=CC0',
+          uri: Microservices.file.uri + '/v2/picture?license=CC0',
           body: new Buffer(zip.file(imgName).asArrayBuffer(), 'base64'),
           headers: {
               '----jwt----': this.jwt,
