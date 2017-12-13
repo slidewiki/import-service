@@ -30,7 +30,7 @@ module.exports = {
     }
     const license = request.payload.license;
     const title = (request.payload.title !== undefined) ? request.payload.title : '';
-    const description = (request.payload.description) ? request.payload.description : 'empty';
+    const description = request.payload.description;
     const tags = (request.payload.tags !== undefined) ? JSON.parse(request.payload.tags) : [];
     const theme = (request.payload.theme !== undefined) ? request.payload.theme : '';
     const fileName = he.encode(request.payload.filename, {allowUnsafeSymbols: true});//encode special characters
