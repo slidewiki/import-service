@@ -425,7 +425,7 @@ function createSlide(options) {
       resolve(newDeckTreeNode);
     }).catch((err) => {
       console.log('Error createSlide', err);
-      reject(err);
+      resolve(slide);//skip this slide which has errored and continue import
     });
   });
 
