@@ -87,7 +87,7 @@ module.exports = {
     let domain = Microservices.import.uri.substring(Microservices.import.uri.indexOf('.')+1);
     // image upload expects that fileservice runs on same domain,
     // otherwise Cross-Origin Resource Sharing method is necessary
-    
+
     if (String(userid).length < 10) {// old way of managing images - save to shared folder
       const filePath = saveImageToFile(filename, request.payload.upload._data, userid);
       let content = '<script type="text/javascript">\n';
@@ -423,7 +423,7 @@ function createSlide(options) {
       resolve(newDeckTreeNode);
     }).catch((err) => {
       console.log('Error createSlide', err);
-      reject(err);
+      resolve(slide);//skip this slide which has errored and continue import
     });
   });
 
