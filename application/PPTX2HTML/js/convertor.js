@@ -858,11 +858,12 @@ class Convertor {
 
 
     		// type: none, triangle, stealth, diamond, oval, arrow
-    		if ( (headEndNodeAttrs !== undefined && (headEndNodeAttrs["type"] === "triangle" || headEndNodeAttrs["type"] === "arrow")) ||
-    			 (tailEndNodeAttrs !== undefined && (tailEndNodeAttrs["type"] === "triangle" || tailEndNodeAttrs["type"] === "arrow")) ) {
-    			var triangleMarker = "<marker id=\"markerTriangle\" viewBox=\"0 0 10 10\" refX=\"1\" refY=\"5\" markerWidth=\"5\" markerHeight=\"5\" orient=\"auto-start-reverse\" markerUnits=\"strokeWidth\"><path d=\"M 0 0 L 10 5 L 0 10 z\" /></marker>";
-    			result += triangleMarker;
-    		}
+        if ( (headEndNodeAttrs !== undefined && (headEndNodeAttrs["type"] === "triangle" || headEndNodeAttrs["type"] === "arrow")) ||
+          (tailEndNodeAttrs !== undefined && (tailEndNodeAttrs["type"] === "triangle" || tailEndNodeAttrs["type"] === "arrow")) ) {
+          var triangleMarker = "<marker id='markerTriangle_"+shpId+"' viewBox='0 0 10 10' refX='1' refY='5' markerWidth='5' markerHeight='5' stroke='" + border.color + "' fill='" + border.color +
+                          "' orient='auto-start-reverse' markerUnits='strokeWidth'><path d='M 0 0 L 10 5 L 0 10 z' /></marker>";
+          result += triangleMarker;
+        }
         result += '</defs>'
       }
       if (shapType !== undefined && custShapType === undefined) {
@@ -8025,13 +8026,14 @@ class Convertor {
         				"; text-decoration: " + this.getFontDecoration(node, type, slideMasterTextStyles) +
                 "; text-align:" + this.getTextHorizontalAlign(node, type, slideMasterTextStyles) + ";" +
         				"; vertical-align: " + this.getTextVerticalAlign(node, type, slideMasterTextStyles) +
-                ";'";
+                ";";
       //////////////////Amir///////////////
       var highlight = this.getTextByPathList(node, ["a:rPr", "a:highlight"]);
       if(highlight !== undefined){
           textStyle += "background-color:#" + this.getSolidFill(highlight) +";";
           textStyle += "Opacity:"+ this.getColorOpacity(highlight) + ";";
       }
+      textStyle += "'";
       ///////////////////////////////////////////
       let linkID = this.getTextByPathList(node, ["a:rPr", "a:hlinkClick", "attrs", "r:id"]);
 
