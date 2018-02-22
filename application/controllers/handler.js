@@ -87,7 +87,7 @@ module.exports = {
     let domain = Microservices.import.uri.substring(Microservices.import.uri.indexOf('.')+1);
     // image upload expects that fileservice runs on same domain,
     // otherwise Cross-Origin Resource Sharing method is necessary
-    
+
     if (String(userid).length < 10) {// old way of managing images - save to shared folder
       const filePath = saveImageToFile(filename, request.payload.upload._data, userid);
       let content = '<script type="text/javascript">\n';
@@ -139,6 +139,7 @@ function createDeckFromPPTX(buffer, user, jwt, language, license, deckName, desc
 
   return convertor.convertFirstSlide(buffer).then((result) => {
     const noOfSlides = result.noOfSlides;
+    const slideSize = result.slideSize;
 
     return createDeck({
       language,
@@ -149,6 +150,7 @@ function createDeckFromPPTX(buffer, user, jwt, language, license, deckName, desc
       theme,
       firstSlide: result,
       authToken: jwt,
+      slideDimensions: slideSize
     }).then((deck) => {
       reply('import completed').header('deckId', deck.id).header('noOfSlides', noOfSlides);
       if (noOfSlides > 1) {
