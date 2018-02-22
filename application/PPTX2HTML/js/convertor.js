@@ -89,6 +89,7 @@ class Convertor {
       var res = Object.assign(infos[0], infos[1]);
       // Assign the noOfSlides
       res.noOfSlides = noOfSlides;
+      res.slideSize = this.slideSize;
       res.filesInfo = this.filesInfo;
       return res;
     }).catch(function(err){console.log("convertFirstSlide " + err)});
