@@ -139,7 +139,7 @@ function createDeckFromPPTX(buffer, user, jwt, language, license, deckName, desc
 
   return convertor.convertFirstSlide(buffer).then((result) => {
     const noOfSlides = result.noOfSlides;
-    const slideSize = result.slideSize;
+    const slideSize = (result.slideSize) ? result.slideSize : {'width': 0, 'height': 0};
 
     return createDeck({
       language,
