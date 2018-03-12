@@ -7183,7 +7183,6 @@ class Convertor {
   processPicNode(node, warpObj) {
     try {
       let myPromise = new Promise((resolve, reject) => {
-        var blobUtil = require("blob-util");
         var rtrnData = "";
         var mediaPicFlag = false;
         var order = node["attrs"]["order"];
