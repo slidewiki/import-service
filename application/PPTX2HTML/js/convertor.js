@@ -1149,6 +1149,9 @@ class Convertor {
   }
 
   sendImageToFileService(imgName, zip) {
+    if (!zip.file(imgName)) {
+      return new Promise((resolve) => {resolve ('');});
+    }
     try {
       let Microservices = require('../../configs/microservices');
       let rp = require('request-promise-native');
