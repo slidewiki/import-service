@@ -256,12 +256,15 @@ class Convertor {
     	// Open slideLayoutXX.xml
     	var slideLayoutContent = this.readXmlFile(zip, layoutFilename);
     	var slideLayoutTables = this.indexNodes(slideLayoutContent);
-      var sldLayoutClrOvr = slideLayoutContent["p:sldLayout"]["p:clrMapOvr"]["a:overrideClrMapping"];
 
+      if (slideLayoutContent["p:sldLayout"]["p:clrMapOvr"]) {
+        var sldLayoutClrOvr = slideLayoutContent["p:sldLayout"]["p:clrMapOvr"]["a:overrideClrMapping"];
         //console.log(slideLayoutClrOvride);
         if(sldLayoutClrOvr !== undefined){
           this.slideLayoutClrOvride = sldLayoutClrOvr["attrs"];
+        }
       }
+
     	// =====< Step 2 >=====
     	// Read slide master filename of the slidelayout (Get slideMasterXX.xml)
     	// @resName: ppt/slideLayouts/slideLayout1.xml
@@ -8971,7 +8974,7 @@ class Convertor {
         //bgFillStyleLst  in themeContent
         //themeContent["a:fmtScheme"]["a:bgFillStyleLst"]
         var trueIdx = idx - 1000;
-        var bgFillLst = themeContent["a:theme"]["a:themeElements"]["a:fmtScheme"]["a:bgFillStyleLst"];
+        var bgFillLst = this.themeContent["a:theme"]["a:themeElements"]["a:fmtScheme"]["a:bgFillStyleLst"];
         var sortblAry = [];
         Object.keys(bgFillLst).forEach(function(key) {
           var bgFillLstTyp = bgFillLst[key];
@@ -9072,7 +9075,7 @@ class Convertor {
             //bgFillStyleLst  in themeContent
             //themeContent["a:fmtScheme"]["a:bgFillStyleLst"]
             var trueIdx = idx - 1000;
-            var bgFillLst = themeContent["a:theme"]["a:themeElements"]["a:fmtScheme"]["a:bgFillStyleLst"];
+            var bgFillLst = this.themeContent["a:theme"]["a:themeElements"]["a:fmtScheme"]["a:bgFillStyleLst"];
             var sortblAry = [];
             Object.keys(bgFillLst).forEach(function(key) {
               //console.log("cubicBezTo["+key+"]:");
