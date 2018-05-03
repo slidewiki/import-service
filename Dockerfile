@@ -1,5 +1,5 @@
 FROM node:6.9-slim
-MAINTAINER Roy Meissner <meissner@informatik.uni-leipzig.de>
+MAINTAINER Dejan Paunovic <dejan.paunovic@pupin.rs>
 
 RUN mkdir /nodeApp
 WORKDIR /nodeApp
