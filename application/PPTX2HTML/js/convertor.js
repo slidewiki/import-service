@@ -9460,19 +9460,27 @@ class Convertor {
   	}
 
     let that = this; //Klaas - FIXED
-  	if (serNode["c:xVal"] !== undefined) {
+  	if (serNode["c:xVal"] !== undefined || serNode["cft"] !== undefined) {
   		var dataRow = new Array();
-  		this.eachElement(serNode["c:xVal"]["c:numRef"]["c:numCache"]["c:pt"], function(innerNode, index) {
-  			dataRow.push(parseFloat(innerNode["c:v"]));
-  			return "";
-  		});
-  		dataMat.push(dataRow);
-  		dataRow = new Array();
-  		this.eachElement(serNode["c:yVal"]["c:numRef"]["c:numCache"]["c:pt"], function(innerNode, index) {
-  			dataRow.push(parseFloat(innerNode["c:v"]));
-  			return "";
-  		});
-  		dataMat.push(dataRow);
+  		if (serNode["c:xVal"] !== undefined) { // Scatter case (with only one Y set of values)
+            this.eachElement(serNode["c:xVal"]["c:numRef"]["c:numCache"]["c:pt"], function(innerNode, index) {
+                dataRow.push(parseFloat(innerNode["c:v"]));
+                return "";
+            });
+            dataMat.push(dataRow);
+            dataRow = new Array();
+            this.eachElement(serNode["c:yVal"]["c:numRef"]["c:numCache"]["c:pt"], function(innerNode, index) {
+                dataRow.push(parseFloat(innerNode["c:v"]));
+                return "";
+            });
+            dataMat.push(dataRow);
+        } else { // Pie Chart case
+            this.eachElement(serNode["c:val"]["c:numRef"]["c:numCache"]["c:pt"], function(innerNode, index) {
+                dataRow.push(parseFloat(innerNode["c:v"]));
+                return "";
+            });
+        }
+
   	} else {
 
   		this.eachElement(serNode, function(innerNode, index) {
@@ -9480,8 +9488,10 @@ class Convertor {
         //Klaas: Typeerrorconvertor.js:1538 Uncaught TypeError: Cannot read property 'getTextByPathList' of undefined
         //Klaas: is problem with scoping? it should work, unless there is recursion. then we need
         //Klaas: ES7 => fat arrow, .bind(this) or that = this to keep track of lexical/dynamic scope
-  			//var colName = this.getTextByPathList(innerNode, ["c:tx", "c:strRef", "c:strCache", "c:pt", "c:v"]) || index;
-        var colName = that.getTextByPathList(innerNode, ["c:tx", "c:strRef", "c:strCache", "c:pt", "c:v"]) || index;
+        //var colName = this.getTextByPathList(innerNode, ["c:tx", "c:strRef", "c:strCache", "c:pt", "c:v"]) || index;
+
+
+            var colName = that.getTextByPathList(innerNode, ["c:tx", "c:strRef", "c:strCache", "c:pt", "c:v"])[0] || index;
 
   			// Category (string or number)
   			var rowNames = {};
@@ -9493,9 +9503,9 @@ class Convertor {
   			} else if (that.getTextByPathList(innerNode, ["c:cat", "c:numRef", "c:numCache", "c:pt"]) !== undefined) {
                 that.eachElement(innerNode["c:cat"]["c:numRef"]["c:numCache"]["c:pt"], function(innerNode, index) {
                 rowNames[innerNode["attrs"]["idx"]] = innerNode["c:v"];
-            return "";
-          });
-        }
+                return "";
+            });
+            }
 
   			// Value
         /*
@@ -9509,6 +9519,12 @@ class Convertor {
             dataRow.push({x: innerNode["attrs"]["idx"], y: parseFloat(innerNode["c:v"])});
             return "";
           });
+        } else if (that.getTextByPathList(innerNode, ["c:xVal", "c:numRef", "c:numCache", "c:pt"]) !== undefined) {
+            for (var i = 0; i < innerNode["c:xVal"]["c:numRef"]["c:numCache"]["c:pt"].length; i++) {
+                var x1 = parseFloat(innerNode["c:xVal"]["c:numRef"]["c:numCache"]["c:pt"][i]["c:v"][0]);
+                var x2 = parseFloat(innerNode["c:yVal"]["c:numRef"]["c:numCache"]["c:pt"][i]["c:v"][0]);
+                dataRow.push({x: x1, y: x2});
+            }
         }
 
   			dataMat.push({key: colName, values: dataRow, xlabels: rowNames});
