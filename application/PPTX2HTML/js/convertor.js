@@ -9463,17 +9463,14 @@ class Convertor {
   	if (serNode["c:xVal"] !== undefined || serNode["cft"] !== undefined) {
   		var dataRow = new Array();
   		if (serNode["c:xVal"] !== undefined) { // Scatter case (with only one Y set of values)
-            this.eachElement(serNode["c:xVal"]["c:numRef"]["c:numCache"]["c:pt"], function(innerNode, index) {
-                dataRow.push(parseFloat(innerNode["c:v"]));
-                return "";
-            });
-            dataMat.push(dataRow);
-            dataRow = new Array();
-            this.eachElement(serNode["c:yVal"]["c:numRef"]["c:numCache"]["c:pt"], function(innerNode, index) {
-                dataRow.push(parseFloat(innerNode["c:v"]));
-                return "";
-            });
-            dataMat.push(dataRow);
+            // Label
+            var colName = that.getTextByPathList(serNode, ["c:tx", "c:strRef", "c:strCache", "c:pt", "c:v"])[0] || index;
+            for (var i = 0; i < serNode["c:xVal"]["c:numRef"]["c:numCache"]["c:pt"].length; i++) {
+                var x1 = parseFloat(serNode["c:xVal"]["c:numRef"]["c:numCache"]["c:pt"][i]["c:v"][0]);
+                var x2 = parseFloat(serNode["c:yVal"]["c:numRef"]["c:numCache"]["c:pt"][i]["c:v"][0]);
+                dataRow.push({x: x1, y: x2});
+            }
+            dataMat.push({key: colName, values: dataRow});
         } else { // Pie Chart case
             this.eachElement(serNode["c:val"]["c:numRef"]["c:numCache"]["c:pt"], function(innerNode, index) {
                 dataRow.push(parseFloat(innerNode["c:v"]));
@@ -9508,12 +9505,6 @@ class Convertor {
             }
 
   			// Value
-        /*
-  			that.eachElement(innerNode["c:val"]["c:numRef"]["c:numCache"]["c:pt"], function(innerNode, index) {
-  				dataRow.push({x: innerNode["attrs"]["idx"], y: parseFloat(innerNode["c:v"])});
-  				return "";
-  			});
-        */
         if (that.getTextByPathList(innerNode, ["c:val", "c:numRef", "c:numCache", "c:pt"]) !== undefined) {
           that.eachElement(innerNode["c:val"]["c:numRef"]["c:numCache"]["c:pt"], function(innerNode, index) {
             dataRow.push({x: innerNode["attrs"]["idx"], y: parseFloat(innerNode["c:v"])});
