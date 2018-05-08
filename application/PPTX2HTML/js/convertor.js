@@ -6,9 +6,6 @@ let highlight = require('./highlight.min.js');
 let colz = require('./colz.class.min.js');
 let tXml = require('./tXml.js');
 let functions = require('./functions.js');
-var nv = require('nvd3');
-var d3 = require('d3');
-var jsdom = require('jsdom');
 
 function getRandomNumber() {
   return Math.floor((Math.random() * 100000) + 1);
@@ -8169,118 +8166,21 @@ class Convertor {
     }
 
   }
-
-  renderChart(data, resultContainer) {
-    try {
-      var htmlStub = '<div id="stub">'+ resultContainer + '</div>';
-      var chartID = data.chartID;
-      var dataF = data;
-      var out = null;
-
-      return new Promise( function(resolve, reject) {
-      	jsdom.env(
-          htmlStub,
-          [
-              "http://code.jquery.com/jquery.js",
-              "https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.min.js",
-              "https://cdnjs.cloudflare.com/ajax/libs/nvd3/1.8.5/nv.d3.min.js"
-          ],
-
-          function (err, window) {
-            var $ = window.$;
-            var d3 = window.d3;
-            var nv = window.nv;
-            var el = $('#' + chartID);
-
-
-
-            var chartType =  dataF.chartType;
-            var chartData = dataF.chartData;
-            var data = [];
-            var chart = null;
-            switch (chartType) {
-              case 'lineChart':
-                data = chartData;
-                chart = nv.models.lineChart()
-                    .useInteractiveGuideline(true);
-                chart.xAxis.tickFormat(function(d) { return chartData[0].xlabels[d] || d; });
-                break;
-              case 'barChart':
-                data = chartData;
-                chart = nv.models.multiBarChart();
-                chart.xAxis.tickFormat(function(d) { return chartData[0].xlabels[d] || d; });
-                break;
-              case 'pieChart':
-                chartData = chartData[0].values;
-                chart = nv.models.pieChart();
-                break;
-              case 'pie3DChart':
-                chartData = chartData[0].values;
-                chart = nv.models.pieChart();
-                break;
-              case 'areaChart':
-                data = chartData;
-                chart = nv.models.stackedAreaChart()
-                  .clipEdge(true)
-                  .useInteractiveGuideline(true);
-                chart.xAxis.tickFormat(function(d) { return chartData[0].xlabels[d] || d; });
-                break;
-              case 'scatterChart':
-
-                for (let i=0; i<chartData.length; i++) {
-                  let arr = [];
-                  for (let j=0; j<chartData[i].length; j++) {
-                    arr.push({x: j, y: chartData[i][j]});
-                  }
-                  data.push({key: 'data' + (i + 1), values: arr});
-                }
-
-                chart = nv.models.scatterChart()
-                  .showDistX(true)
-                  .showDistY(true)
-                  .color(d3.scale.category10().range());
-                chart.xAxis.axisLabel('X').tickFormat(d3.format('.02f'));
-                chart.yAxis.axisLabel('Y').tickFormat(d3.format('.02f'));
-                chartData = data;
-                break;
-              default:
-            }
-
-            if (chart !== null) {
-                d3.select('#' + chartID)
-                    .append('svg')
-                    .datum(chartData)
-                    .transition().duration(500)
-                    .call(chart);
-
-                nv.utils.windowResize(chart.update);
-            }
-            out = el.parent().html();
-            resolve(out);
-          }
-        )
-      }).catch(function(err){ console.log('Error while rendering chart: ' + err)});
-    } catch(e) {
-      console.log('Error in renderChart', e);
-      return new Promise((resolve) => {resolve ('');});
-    }
-  }
-
+  
   genChart(node, warpObj) {
     try {
     	var order = node["attrs"]["order"];
     	var xfrmNode = this.getTextByPathList(node, ["p:xfrm"]);
-
     	var rid = node["a:graphic"]["a:graphicData"]["c:chart"]["attrs"]["r:id"];
     	var refName = warpObj["slideResObj"][rid]["target"];
     	var content = this.readXmlFile(warpObj["zip"], refName);
     	var plotArea = this.getTextByPathList(content, ["c:chartSpace", "c:chart", "c:plotArea"]);
-      var chartType = null;
+        var chartType = null;
     	var chartData = null;
     	for (var key in plotArea) {
     		switch (key) {
     			case "c:lineChart":
-            chartType = 'lineChart';
+                    chartType = 'lineChart';
     				chartData = {
     					"type": "createChart",
     					"data": {
@@ -8291,7 +8191,7 @@ class Convertor {
     				};
     				break;
     			case "c:barChart":
-            chartType = 'multiBarChart';
+                    chartType = 'multiBarChart';
     				chartData = {
     					"type": "createChart",
     					"data": {
@@ -8302,8 +8202,8 @@ class Convertor {
     				};
     				break;
     			case "c:pieChart":
-            chartType = 'pieChart';
-            chartData = {
+                    chartType = 'pieChart';
+                    chartData = {
     					"type": "createChart",
     					"data": {
     						"chartID": "chart" + this.chartID,
@@ -8313,7 +8213,7 @@ class Convertor {
     				};
     				break;
     			case "c:pie3DChart":
-            chartType = 'pieChart';
+                    chartType = 'pieChart';
     				chartData = {
     					"type": "createChart",
     					"data": {
@@ -8324,7 +8224,7 @@ class Convertor {
     				};
     				break;
     			case "c:areaChart":
-            chartType = 'stackedAreaChart';
+                    chartType = 'stackedAreaChart';
     				chartData = {
     					"type": "createChart",
     					"data": {
@@ -8335,7 +8235,7 @@ class Convertor {
     				};
     				break;
     			case "c:scatterChart":
-            chartType = 'scatterChart';
+                    chartType = 'scatterChart';
     				chartData = {
     					"type": "createChart",
     					"data": {
@@ -8355,11 +8255,9 @@ class Convertor {
 
     	var resultContainer = "<div id='chart" + this.chartID + "' class='block content' style='position: absolute;" +
        					this.getPosition(xfrmNode, undefined, undefined) + this.getSize(xfrmNode, undefined, undefined) +
-       					" z-index: " + order + ";'" + /*"datum='" + JSON.stringify(chartData) + */"></div>";
-    	var chartID = this.chartID;
+       					" z-index: " + order + ";'" + "datum=\'" + JSON.stringify(chartData.data) + '\'></div>';
     	this.chartID++;
-
-      return this.renderChart(chartData.data, resultContainer);
+      return new Promise((resolve) => {resolve(resultContainer)});
     } catch(e) {
       console.log('Error in genChart', e);
       return new Promise((resolve) => {resolve ({text: ''});});
@@ -9562,19 +9460,24 @@ class Convertor {
   	}
 
     let that = this; //Klaas - FIXED
-  	if (serNode["c:xVal"] !== undefined) {
+  	if (serNode["c:xVal"] !== undefined || serNode["cft"] !== undefined) {
   		var dataRow = new Array();
-  		this.eachElement(serNode["c:xVal"]["c:numRef"]["c:numCache"]["c:pt"], function(innerNode, index) {
-  			dataRow.push(parseFloat(innerNode["c:v"]));
-  			return "";
-  		});
-  		dataMat.push(dataRow);
-  		dataRow = new Array();
-  		this.eachElement(serNode["c:yVal"]["c:numRef"]["c:numCache"]["c:pt"], function(innerNode, index) {
-  			dataRow.push(parseFloat(innerNode["c:v"]));
-  			return "";
-  		});
-  		dataMat.push(dataRow);
+  		if (serNode["c:xVal"] !== undefined) { // Scatter case (with only one Y set of values)
+            // Label
+            var colName = that.getTextByPathList(serNode, ["c:tx", "c:strRef", "c:strCache", "c:pt", "c:v"])[0] || index;
+            for (var i = 0; i < serNode["c:xVal"]["c:numRef"]["c:numCache"]["c:pt"].length; i++) {
+                var x1 = parseFloat(serNode["c:xVal"]["c:numRef"]["c:numCache"]["c:pt"][i]["c:v"][0]);
+                var x2 = parseFloat(serNode["c:yVal"]["c:numRef"]["c:numCache"]["c:pt"][i]["c:v"][0]);
+                dataRow.push({x: x1, y: x2});
+            }
+            dataMat.push({key: colName, values: dataRow});
+        } else { // Pie Chart case
+            this.eachElement(serNode["c:val"]["c:numRef"]["c:numCache"]["c:pt"], function(innerNode, index) {
+                dataRow.push(parseFloat(innerNode["c:v"]));
+                return "";
+            });
+        }
+
   	} else {
 
   		this.eachElement(serNode, function(innerNode, index) {
@@ -9582,8 +9485,10 @@ class Convertor {
         //Klaas: Typeerrorconvertor.js:1538 Uncaught TypeError: Cannot read property 'getTextByPathList' of undefined
         //Klaas: is problem with scoping? it should work, unless there is recursion. then we need
         //Klaas: ES7 => fat arrow, .bind(this) or that = this to keep track of lexical/dynamic scope
-  			//var colName = this.getTextByPathList(innerNode, ["c:tx", "c:strRef", "c:strCache", "c:pt", "c:v"]) || index;
-        var colName = that.getTextByPathList(innerNode, ["c:tx", "c:strRef", "c:strCache", "c:pt", "c:v"]) || index;
+        //var colName = this.getTextByPathList(innerNode, ["c:tx", "c:strRef", "c:strCache", "c:pt", "c:v"]) || index;
+
+
+            var colName = that.getTextByPathList(innerNode, ["c:tx", "c:strRef", "c:strCache", "c:pt", "c:v"])[0] || index;
 
   			// Category (string or number)
   			var rowNames = {};
@@ -9593,24 +9498,24 @@ class Convertor {
   					return "";
   				});
   			} else if (that.getTextByPathList(innerNode, ["c:cat", "c:numRef", "c:numCache", "c:pt"]) !== undefined) {
-          that.eachElement(innerNode["c:cat"]["c:numRef"]["c:numCache"]["c:pt"], function(innerNode, index) {
-            rowNames[innerNode["attrs"]["idx"]] = innerNode["c:v"];
-            return "";
-          });
-        }
+                that.eachElement(innerNode["c:cat"]["c:numRef"]["c:numCache"]["c:pt"], function(innerNode, index) {
+                rowNames[innerNode["attrs"]["idx"]] = innerNode["c:v"];
+                return "";
+            });
+            }
 
   			// Value
-        /*
-  			that.eachElement(innerNode["c:val"]["c:numRef"]["c:numCache"]["c:pt"], function(innerNode, index) {
-  				dataRow.push({x: innerNode["attrs"]["idx"], y: parseFloat(innerNode["c:v"])});
-  				return "";
-  			});
-        */
         if (that.getTextByPathList(innerNode, ["c:val", "c:numRef", "c:numCache", "c:pt"]) !== undefined) {
           that.eachElement(innerNode["c:val"]["c:numRef"]["c:numCache"]["c:pt"], function(innerNode, index) {
             dataRow.push({x: innerNode["attrs"]["idx"], y: parseFloat(innerNode["c:v"])});
             return "";
           });
+        } else if (that.getTextByPathList(innerNode, ["c:xVal", "c:numRef", "c:numCache", "c:pt"]) !== undefined) {
+            for (var i = 0; i < innerNode["c:xVal"]["c:numRef"]["c:numCache"]["c:pt"].length; i++) {
+                var x1 = parseFloat(innerNode["c:xVal"]["c:numRef"]["c:numCache"]["c:pt"][i]["c:v"][0]);
+                var x2 = parseFloat(innerNode["c:yVal"]["c:numRef"]["c:numCache"]["c:pt"][i]["c:v"][0]);
+                dataRow.push({x: x1, y: x2});
+            }
         }
 
   			dataMat.push({key: colName, values: dataRow, xlabels: rowNames});
