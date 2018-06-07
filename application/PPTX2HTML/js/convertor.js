@@ -9487,8 +9487,12 @@ class Convertor {
         //Klaas: ES7 => fat arrow, .bind(this) or that = this to keep track of lexical/dynamic scope
         //var colName = this.getTextByPathList(innerNode, ["c:tx", "c:strRef", "c:strCache", "c:pt", "c:v"]) || index;
 
-
-            var colName = that.getTextByPathList(innerNode, ["c:tx", "c:strRef", "c:strCache", "c:pt", "c:v"])[0] || index;
+            var colName = null;
+            if (that.getTextByPathList(innerNode, ["c:tx", "c:strRef", "c:strCache", "c:pt", "c:v"])) {
+                colName = that.getTextByPathList(innerNode, ["c:tx", "c:strRef", "c:strCache", "c:pt", "c:v"])[0];
+            } else {
+                colName= index;
+            }
 
   			// Category (string or number)
   			var rowNames = {};
