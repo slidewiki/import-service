@@ -1,6 +1,12 @@
 'use strict';
 
 const co = require('../common');
+const URI = require('url');
+
+// prepare unoconv service config
+let unoconvURI = (!co.isEmpty(process.env.SERVICE_URL_UNOCONV)) ? process.env.SERVICE_URL_UNOCONV : 'http://unoconvservice';
+// parse it
+let unoconv = URI.parse(unoconvURI);
 
 module.exports = {
   'deck': {
@@ -11,11 +17,11 @@ module.exports = {
     shareVolume: '/data/files'
   }  ,
   'unoconv': {
-    uri: (!co.isEmpty(process.env.SERVICE_URL_UNOCONV)) ? process.env.SERVICE_URL_UNOCONV : 'http://unoconvservice',
-    protocol: 'https:',
-    host: (!co.isEmpty(process.env.SERVICE_HOST_UNOCONV)) ? process.env.SERVICE_HOST_UNOCONV : 'unoconvservice',
-    path: '/unoconv/pptx',
-    port: 443
+    uri: unoconvURI,
+    host: unoconv.host,
+    protocol: unoconv.protocol,
+    port: unoconv.port || (unoconv.protocol === 'https:' ? 443 : 80),
+    path: (!co.isEmpty(process.env.SERVICE_PATH_UNOCONV)) ? process.env.SERVICE_PATH_UNOCONV : '/unoconv/pptx',
   },
   'import': {
     //necessary for document.domain image upload script sent to platform
