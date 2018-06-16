@@ -153,12 +153,13 @@ function createDeckFromPPTX(buffer, user, jwt, language, license, deckName, desc
       slideDimensions: slideSize
     }).then((deck) => {
       reply('import completed').header('deckId', deck.id).header('noOfSlides', noOfSlides);
+      let deckId = String(deck.id) + '-1';
       if (noOfSlides > 1) {
         convertor.processPPTX(buffer).then((result) => {
           let slides = result;
-          return findFirstSlideOfADeck(deck.id).then((slideId) => {
+          return findFirstSlideOfADeck(deckId).then((slideId) => {
             //create the rest of slides
-            createNodesRecursive(license, deck.id, slideId, slides, 1, jwt);
+            createNodesRecursive(license, deckId, slideId, slides, 1, jwt);
           }).catch((error) => {
             request.log('error', error);
             reply(boom.badImplementation());
@@ -276,9 +277,9 @@ function sendImageToFileService(imgName, data, jwt) {
 function createNodesRecursive(license, deckId, previousSlideId, slides, index, authToken) {
 
   let selector = {
-    'id': String(deckId) + '-1',
-    'spath': String(previousSlideId) + '-1:' + String(index + 1),
-    'sid': String(previousSlideId) + '-1',
+    'id': deckId,
+    'spath': previousSlideId + String(index + 1),
+    'sid': previousSlideId,
     'stype': 'slide'
   };
   let nodeSpec = {
