@@ -18,7 +18,7 @@ module.exports = {
   }  ,
   'unoconv': {
     uri: unoconvURI,
-    host: unoconv.host,
+    host: unoconv.hostname,
     protocol: unoconv.protocol,
     port: unoconv.port || (unoconv.protocol === 'https:' ? 443 : 80),
     path: (!co.isEmpty(process.env.SERVICE_PATH_UNOCONV)) ? process.env.SERVICE_PATH_UNOCONV : '/unoconv/pptx',
