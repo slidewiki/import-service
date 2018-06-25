@@ -278,7 +278,7 @@ function createNodesRecursive(license, deckId, previousSlideId, slides, index, a
 
   let selector = {
     'id': deckId,
-    'spath': previousSlideId + String(index + 1),
+    'spath': previousSlideId + ':' + String(index + 1),
     'sid': previousSlideId,
     'stype': 'slide'
   };
