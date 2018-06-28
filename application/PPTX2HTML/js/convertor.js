@@ -7485,7 +7485,7 @@ class Convertor {
                       let random = this.getRandomId();
 
                       spanElement += '<br id=' + random + ' >';
-                      brNode.splice(k--);//remove just used br element
+                      brNode.splice(k--, 1);//remove just used br element
                     }
                   }
                 }
@@ -8166,7 +8166,7 @@ class Convertor {
     }
 
   }
-  
+
   genChart(node, warpObj) {
     try {
     	var order = node["attrs"]["order"];
