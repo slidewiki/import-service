@@ -184,7 +184,7 @@ function createDeckFromSWHTMLExport(buffer, user, jwt, language, license, deckNa
   let convertor = new Convertor.Convertor();
   convertor.user = user;
   convertor.jwt = jwt;
-console.log(buffer.length);
+  console.log(buffer.length);
   let swHTMLExportConvertor = new SWHTMLExportConvertor.SWHTMLExportConvertor();
 
   return swHTMLExportConvertor.convertHTMLExport(buffer);
