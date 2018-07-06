@@ -21,33 +21,58 @@ class SWHTMLExportConvertor {
     let zip = new JSZip(data);
 
     // var contentJson = this.readXmlFile(zip, 'index.html');
+
     this.parseHTMLFile(zip, 'index.html');
-
-
 
 
   }
 
   parseHTMLFile(zip, filename) {
     let textFile = zip.file(filename).asText();
-    let sectionStart1 = textFile.indexOf('<section');
-    console.log(sectionStart1);
 
-    let sectionStart2 = textFile.indexOf('>', sectionStart1);
-    console.log(sectionStart2);
 
-    let sectionEnd = textFile.indexOf('</section>', sectionStart2);
-    console.log(sectionEnd);
 
-    let slide = textFile.substring(sectionStart2 + 1, sectionEnd);
-    console.log(slide);
+    let slide = null;
+    let currentIndex = 0;
+    do {
+      let sectionStart1 = textFile.indexOf('<section', currentIndex);
+      console.log(sectionStart1);
 
-    let asideStart1 = textFile.indexOf('<aside class="notes"', sectionStart2);
-    let asideStart2 = textFile.indexOf('>', asideStart1);
-    let asideEnd = textFile.indexOf('</aside>', asideStart2);
-    let speakerNotes = textFile.substring(asideStart2 + 1, asideEnd);
-    console.log(speakerNotes);
 
+
+
+      if (sectionStart1 > -1) {
+
+        let sectionStart2 = textFile.indexOf('>', sectionStart1);
+        console.log(sectionStart2);
+        let sectionEnd = textFile.indexOf('</section>', sectionStart2);
+        console.log(sectionEnd);
+
+        let contentAndSpeakerNotes = textFile.substring(sectionStart2 + 1, sectionEnd);
+        let content = contentAndSpeakerNotes;
+
+        let speakerNotes = '';
+        let asideStart1 = contentAndSpeakerNotes.indexOf('<aside class="notes"', sectionStart2);
+        if (asideStart1 > -1) {
+          let asideStart2 = contentAndSpeakerNotes.indexOf('>', asideStart1);
+          let asideEnd = contentAndSpeakerNotes.indexOf('</aside>', asideStart2);
+          content = contentAndSpeakerNotes.substring(sectionStart2 + 1, asideStart2);
+          speakerNotes = contentAndSpeakerNotes.substring(asideStart2 + 1, asideEnd);
+
+          slide = {content: content, speakernotes: speakerNotes};
+          this.slides.push(slide);
+          currentIndex = sectionEnd;
+        } else {
+          slide = null;
+        }
+
+        console.log('content:', content);
+        console.log('notes', speakerNotes);
+
+
+      }
+
+    } while (slide !== null);
 
 
   }

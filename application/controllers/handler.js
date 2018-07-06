@@ -73,7 +73,20 @@ module.exports = {
           createDeckFromPPTX(new Buffer(data, 'binary'), user, jwt, language, license, deckName, description, tags, theme, request, reply);
         });
       });
-    } else if (fileType.toLowerCase() === 'zip' ) {
+
+
+
+
+
+
+    } else if (fileType.toLowerCase() === 'pptx' ) {
+    // } else if (fileType.toLowerCase() === 'zip' ) {
+
+
+
+
+
+
       createDeckFromSWHTMLExport(buffer, user, jwt, language, license, deckName, description, tags, theme, request, reply);
     } else {
       createDeckFromPPTX(buffer, user, jwt, language, license, deckName, description, tags, theme, request, reply);
