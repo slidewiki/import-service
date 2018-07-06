@@ -13,6 +13,7 @@ const config = require('../configuration');
 
 const Microservices = require('../configs/microservices');
 let Convertor = require('../PPTX2HTML/js/convertor.js');
+let SWHTMLExportConvertor = require('./swhtmlexportconvertor.js');
 
 module.exports = {
   //Import uploaded PPTX and transform to HTML via PPTX2HTML  or return ERROR
@@ -72,6 +73,8 @@ module.exports = {
           createDeckFromPPTX(new Buffer(data, 'binary'), user, jwt, language, license, deckName, description, tags, theme, request, reply);
         });
       });
+    } else if (fileType.toLowerCase() === 'zip' ) {
+      createDeckFromSWHTMLExport(buffer, user, jwt, language, license, deckName, description, tags, theme, request, reply);
     } else {
       createDeckFromPPTX(buffer, user, jwt, language, license, deckName, description, tags, theme, request, reply);
     }
@@ -175,6 +178,17 @@ function createDeckFromPPTX(buffer, user, jwt, language, license, deckName, desc
   }).catch((err) => {
     console.log('Error /first slide: ' + err);
   });
+}
+
+function createDeckFromSWHTMLExport(buffer, user, jwt, language, license, deckName, description, tags, theme, request, reply) {
+  let convertor = new Convertor.Convertor();
+  convertor.user = user;
+  convertor.jwt = jwt;
+console.log(buffer.length);
+  let swHTMLExportConvertor = new SWHTMLExportConvertor.SWHTMLExportConvertor();
+
+  return swHTMLExportConvertor.convertHTMLExport(buffer);
+
 }
 
 function saveImageToFile(imgName, file, user) {
