@@ -58,7 +58,7 @@ class Convertor {
       this.eachElement;
       this.slides = [];
 
-      this.user = '';
+      // this.user = '';
       this.jwt = '';
 
       this.allIds = [];
@@ -82,7 +82,7 @@ class Convertor {
     const filename = this.filesInfo["slides"][0];
     var promises = [];
     promises.push(this.processSingleSlide(zip, filename, 0, this.slideSize));
-    promises.push(this.processSingleSlideNotes(zip, filename, 0, this.slideSize));
+    promises.push(this.processSingleSlideNotes(zip, filename, 0));
     return Promise.all(promises).then((infos) => {
   	  //Merge slide content and notes
       var res = Object.assign(infos[0], infos[1]);
@@ -118,7 +118,7 @@ class Convertor {
       var filename = filesInfo["slides"][i];
       promises.push(
         this.processSingleSlide(zip, filename, i, this.slideSize),
-        this.processSingleSlideNotes(zip, filename, i, this.slideSize) //Dejan added this to process notes
+        this.processSingleSlideNotes(zip, filename, i) //Dejan added this to process notes
       );
     }
 
@@ -419,7 +419,7 @@ class Convertor {
     }
   }
 
-  processSingleSlideNotes(zip, sldFileName, index, slideSize) {
+  processSingleSlideNotes(zip, sldFileName, index) {
     try {
     	var resName = sldFileName.replace("slides/slide", "slides/_rels/slide") + ".rels";
     	var resContent = this.readXmlFile(zip, resName);
@@ -7310,71 +7310,8 @@ class Convertor {
   }
 
   sendImageToFileService(imgName, zip) {
-    if (!zip.file(imgName)) {
-      return new Promise((resolve) => {resolve ('');});
-    }
-    try {
-      let Microservices = require('../../configs/microservices');
-      let rp = require('request-promise-native');
-
-      let myPromise = new Promise((resolve, reject) => {
-        //Get file extension
-        const imgNameArray = imgName.split('.');
-        const extension = imgNameArray[imgNameArray.length - 1];
-        let imageName = '';
-
-        let contentType = 'image/png';
-        switch (extension.toLowerCase()) {
-          case 'bmp' :
-            contentType = 'image/bmp';
-            break;
-          case 'tiff' :
-            contentType = 'image/tiff';
-            break;
-          case 'jpg' :
-            contentType = 'image/jpeg';
-            break;
-          case 'jpeg' :
-            contentType = 'image/jpeg';
-            break;
-        }
-
-        var options = {
-          method: 'POST',
-          uri: Microservices.file.uri + '/v2/picture?license=CC0',
-          body: new Buffer(zip.file(imgName).asArrayBuffer(), 'base64'),
-          headers: {
-              '----jwt----': this.jwt,
-              // '----jwt----': 'eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJ1c2VyaWQiOjMzLCJ1c2VybmFtZSI6InJtZWlzc24iLCJpYXQiOjE0Nzg2OTI3MDZ9.5h-UKLioMYK9OBfoNQVuQ25DhZCJ5PzUYlDXT6SFfBpaKLhpYVmK8w0xE5dOSNzw58qLmxuQHGba_CVI-rPnNQ',
-              'content-type': contentType,
-              'Accept':  'application/json'
-          }
-        };
-
-        rp(options)
-          .then( (body) => {
-            imageName = JSON.parse(body).fileName;
-            resolve(Microservices.file.uri + '/picture/' + imageName);
-          })
-          .catch( (err) => {
-            const errorString = String(err);
-            let index1 = errorString.indexOf('File already exists and is stored under ');
-            let index2 = errorString.indexOf('\"}"');
-            if (index1 > -1 && index2 > -1) {
-              imageName = errorString.substring(index1 + 40, index2 - 1);
-            }
-            if (imageName === '') {
-              // console.log('Error while saving image', err);
-            }
-            resolve(Microservices.file.uri + '/picture/' + imageName);
-          });
-      });
-
-      return myPromise;
-    } catch(e) {
-      console.log('Error in sendImageToFileService', e);
-      return new Promise((resolve) => {resolve ('');});
-    }
+    const imagehandler = require('../../controllers/imagehandler.js');
+    return imagehandler.sendImageToFileService(imgName, zip, this.jwt);
   }
 
   processGraphicFrameNode(node, warpObj) {
