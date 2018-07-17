@@ -73,22 +73,9 @@ module.exports = {
           createDeckFromPPTX(new Buffer(data, 'binary'), user, jwt, language, license, deckName, description, tags, theme, request, reply);
         });
       });
-
-
-
-
-
-
-    } else if (fileType.toLowerCase() === 'pptx' ) {
-    // } else if (fileType.toLowerCase() === 'zip' ) {
-
-
-
-
-
-
+    } else if (fileType.toLowerCase() === 'zip' ) {
       createDeckFromSWHTMLExport(buffer, user, jwt, language, license, deckName, description, tags, theme, request, reply);
-    } else {
+    } else {// pptx
       createDeckFromPPTX(buffer, user, jwt, language, license, deckName, description, tags, theme, request, reply);
     }
   },
@@ -194,13 +181,48 @@ function createDeckFromPPTX(buffer, user, jwt, language, license, deckName, desc
 }
 
 function createDeckFromSWHTMLExport(buffer, user, jwt, language, license, deckName, description, tags, theme, request, reply) {
-  let convertor = new Convertor.Convertor();
-  convertor.user = user;
-  convertor.jwt = jwt;
-  console.log(buffer.length);
-  let swHTMLExportConvertor = new SWHTMLExportConvertor.SWHTMLExportConvertor();
 
-  return swHTMLExportConvertor.convertHTMLExport(buffer);
+  let swHTMLExportConvertor = new SWHTMLExportConvertor.SWHTMLExportConvertor();
+  swHTMLExportConvertor.user = user;
+
+  let convertResults = swHTMLExportConvertor.convertHTMLExport(buffer);
+  let slides = convertResults.slides;
+  let firstSlide = slides[0];
+  const slideSize = (convertResults.slideSize) ? convertResults.slideSize : {'width': 0, 'height': 0};
+  const noOfSlides = slides.length;
+
+  //handle images in the first slide
+  swHTMLExportConvertor.extractAndConvertImages(firstSlide.content, buffer, jwt).then((content) => {
+    firstSlide.content = content;
+    return createDeck({
+      language,
+      license,
+      deckName,
+      description,
+      tags,
+      theme,
+      firstSlide: firstSlide,
+      authToken: jwt,
+      slideDimensions: slideSize
+    }).then((deck) => {
+      reply('import completed').header('deckId', deck.id).header('noOfSlides', noOfSlides);
+      let deckId = String(deck.id) + '-1';
+      if (noOfSlides > 1) {
+        return findFirstSlideOfADeck(deckId).then((slideId) => {
+          //create the rest of slides
+          convertImagesAndCreateNodesRecursive(license, deckId, slideId, slides, 1, jwt, buffer, swHTMLExportConvertor);
+        }).catch((error) => {
+          request.log('error', error);
+          reply(boom.badImplementation());
+        });
+      }
+    }).catch((error) => {
+      request.log('error', error);
+      reply(boom.badImplementation());
+    });
+  }).catch((error) => {
+    console.log('Error createDeckFromSWHTMLExport extractAndConvertImages: ' + error);
+  });
 
 }
 
@@ -332,6 +354,43 @@ function createNodesRecursive(license, deckId, previousSlideId, slides, index, a
   });
 }
 
+function convertImagesAndCreateNodesRecursive(license, deckId, previousSlideId, slides, index, authToken, buffer, swHTMLExportConvertor) {
+
+  let selector = {
+    'id': deckId,
+    'spath': previousSlideId + ':' + String(index + 1),
+    'sid': previousSlideId,
+    'stype': 'slide'
+  };
+  let nodeSpec = {
+    'id': '0',
+    'type': 'slide'
+  };
+
+  let slide = slides[index];
+  swHTMLExportConvertor.extractAndConvertImages(slide.content, buffer, authToken).then((content) => {
+    slide.content = content;
+    createSlide({
+      selector,
+      nodeSpec,
+      slide: slide,
+      slideNo: String(index + 1),
+      license,
+      authToken,
+    }).then((node) => {
+      if (index >= slides.length - 1) {//Last one
+        return;
+      } else {
+        convertImagesAndCreateNodesRecursive(license, deckId, node.id, slides, (index + 1), authToken, buffer, swHTMLExportConvertor);
+      }
+    }).catch((error) => {
+      console.log('Error convertImagesAndCreateNodesRecursive create slide: ' + error);
+    });
+  }).catch((error) => {
+    console.log('Error convertImagesAndCreateNodesRecursive extractAndConvertImages: ' + error);
+  });
+}
+
 //Send a request to insert a new deck with the first slide
 function createDeck(options) {
   let {language, license, deckName, description, tags, theme, firstSlide, authToken} = options;
@@ -356,6 +415,7 @@ function createDeck(options) {
     let firstSlideTitle = replaceSpecialSymbols(title);//deck tree does not display some encoded symbols properly
     firstSlideTitle = he.encode(firstSlideTitle, {allowUnsafeSymbols: true});//encode some symbols which were not replaced
     //Encode special characters (e.g. bullets)
+    console.log(firstSlide);
     let encodedFirstSlideContent = he.encode(firstSlide.content, {allowUnsafeSymbols: true});
     let encodedFirstSlideNotes = he.encode(firstSlide.notes, {allowUnsafeSymbols: true});
 

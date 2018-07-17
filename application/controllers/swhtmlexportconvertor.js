@@ -1,45 +1,33 @@
 'use strict';
+let imagehandler = require('./imagehandler.js');
 let JSZip = require('../PPTX2HTML/js/jszip.min.js');
-
-
-let highlight = require('../PPTX2HTML/js/highlight.min.js');
-let colz = require('../PPTX2HTML/js/colz.class.min.js');
-let tXml = require('../PPTX2HTML/js/tXml.js');
-let functions = require('../PPTX2HTML/js/functions.js');
 
 class SWHTMLExportConvertor {
   constructor() {
-
-    this.slides = [];
-
-    this.user = '';
-    this.jwt = '';
-
+    this.fileName = 'index.html';
   }
 
   convertHTMLExport(data) {
     let zip = new JSZip(data);
 
-    // var contentJson = this.readXmlFile(zip, 'index.html');
+    let textFile = zip.file(this.fileName).asText();
 
-    this.parseHTMLFile(zip, 'index.html');
+    //extract slide size
+    const outerDiv1 = textFile.indexOf('class="pptx2html"', 0);
+    const widthStart = textFile.indexOf('width:', outerDiv1);
+    const widthEnd = textFile.indexOf('px', widthStart);
+    const width = parseInt(textFile.substring(widthStart + 1, widthEnd));
+    const heightStart = textFile.indexOf('height:', outerDiv1);
+    const heightEnd = textFile.indexOf('px', heightStart);
+    const height = parseInt(textFile.substring(heightStart + 1, heightEnd));
 
-
-  }
-
-  parseHTMLFile(zip, filename) {
-    let textFile = zip.file(filename).asText();
-
-
-
+    //extract slides
+    let slides = [];
     let slide = null;
     let currentIndex = 0;
     do {
       let sectionStart1 = textFile.indexOf('<section', currentIndex);
       console.log(sectionStart1);
-
-
-
 
       if (sectionStart1 > -1) {
 
@@ -58,38 +46,75 @@ class SWHTMLExportConvertor {
           let asideEnd = contentAndSpeakerNotes.indexOf('</aside>', asideStart2);
           content = contentAndSpeakerNotes.substring(sectionStart2 + 1, asideStart2);
           speakerNotes = contentAndSpeakerNotes.substring(asideStart2 + 1, asideEnd);
-
-          slide = {content: content, speakernotes: speakerNotes};
-          this.slides.push(slide);
-          currentIndex = sectionEnd;
-        } else {
-          slide = null;
         }
+        slide = {content: content, notes: speakerNotes};
+        slides.push(slide);
+        currentIndex = sectionEnd;
 
-        console.log('content:', content);
-        console.log('notes', speakerNotes);
+        // console.log('content:', content);
+        // console.log('notes', speakerNotes);
 
 
+      } else {
+        slide = null;
       }
 
     } while (slide !== null);
 
-
+    return {slides: slides, slideSize: {'width': width, 'height': height}};
   }
 
-  readXmlFile(zip, filename) {
+  extractAndConvertImages(slide, data, jwt) {
 
-    // textFile = textFile.replace(/\n/g, '');
+    let zip = new JSZip(data);
+    let imagePromises = [];
+    let imgSources = [];
 
 
-    // let x = new tXml(textFile);
-    // try {
-    //   console.log( x.parseChildren(zip.file(filename).asText()));
-    // } catch (e) {
-    //   console.log(e);
-    // }
+    let imgSource = null;
+    let currentIndex = 0;
+    do {
+      let imgStart1 = slide.indexOf('<img', currentIndex);
+
+      if (imgStart1 > -1) {
+
+        let imgStart2 = slide.indexOf('src="', imgStart1);
+        let imgSrcStart = imgStart2 + 5;
+        let imgEnd = slide.indexOf('"', imgSrcStart);
+
+        imgSource = slide.substring(imgSrcStart, imgEnd);
+        //check if image is local
+        if (imgSource.indexOf('://') < 0) {
+          let imagePromise = imagehandler.sendImageToFileService(imgSource, zip, jwt);
+          imagePromises.push(imagePromise);
+          imgSources.push(imgSource);
+        }
+        currentIndex = imgEnd;
+      } else {
+        imgSource = null;
+      }
+
+    } while (imgSource !== null);
+
+
+
+
+
+    return Promise.all(imagePromises).then((data) => {
+
+      let newContent = slide;
+      for (let i = 0; i < imgSources.length; i++) {
+        //replace img src with new path
+        let searchStr = imgSources[i].replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+        newContent = newContent.replace(new RegExp(searchStr, 'g'), data[i]);
+      }
+
+      return newContent;
+    }).catch((err) => {
+      console.log('Error', err);
+      return new Promise((resolve) => {resolve (slide);});
+    });
   }
-
 
 }
 
