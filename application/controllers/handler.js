@@ -415,7 +415,6 @@ function createDeck(options) {
     let firstSlideTitle = replaceSpecialSymbols(title);//deck tree does not display some encoded symbols properly
     firstSlideTitle = he.encode(firstSlideTitle, {allowUnsafeSymbols: true});//encode some symbols which were not replaced
     //Encode special characters (e.g. bullets)
-    console.log(firstSlide);
     let encodedFirstSlideContent = he.encode(firstSlide.content, {allowUnsafeSymbols: true});
     let encodedFirstSlideNotes = he.encode(firstSlide.notes, {allowUnsafeSymbols: true});
 

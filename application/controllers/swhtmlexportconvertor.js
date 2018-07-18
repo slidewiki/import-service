@@ -9,7 +9,6 @@ class SWHTMLExportConvertor {
 
   convertHTMLExport(data) {
     let zip = new JSZip(data);
-
     let textFile = zip.file(this.fileName).asText();
 
     //extract slide size
@@ -27,14 +26,11 @@ class SWHTMLExportConvertor {
     let currentIndex = 0;
     do {
       let sectionStart1 = textFile.indexOf('<section', currentIndex);
-      console.log(sectionStart1);
 
       if (sectionStart1 > -1) {
 
         let sectionStart2 = textFile.indexOf('>', sectionStart1);
-        console.log(sectionStart2);
         let sectionEnd = textFile.indexOf('</section>', sectionStart2);
-        console.log(sectionEnd);
 
         let contentAndSpeakerNotes = textFile.substring(sectionStart2 + 1, sectionEnd);
         let content = contentAndSpeakerNotes;
@@ -50,34 +46,24 @@ class SWHTMLExportConvertor {
         slide = {content: content, notes: speakerNotes};
         slides.push(slide);
         currentIndex = sectionEnd;
-
-        // console.log('content:', content);
-        // console.log('notes', speakerNotes);
-
-
       } else {
         slide = null;
       }
-
     } while (slide !== null);
 
     return {slides: slides, slideSize: {'width': width, 'height': height}};
   }
 
   extractAndConvertImages(slide, data, jwt) {
-
     let zip = new JSZip(data);
     let imagePromises = [];
     let imgSources = [];
-
 
     let imgSource = null;
     let currentIndex = 0;
     do {
       let imgStart1 = slide.indexOf('<img', currentIndex);
-
       if (imgStart1 > -1) {
-
         let imgStart2 = slide.indexOf('src="', imgStart1);
         let imgSrcStart = imgStart2 + 5;
         let imgEnd = slide.indexOf('"', imgSrcStart);
@@ -96,12 +82,7 @@ class SWHTMLExportConvertor {
 
     } while (imgSource !== null);
 
-
-
-
-
     return Promise.all(imagePromises).then((data) => {
-
       let newContent = slide;
       for (let i = 0; i < imgSources.length; i++) {
         //replace img src with new path
@@ -115,7 +96,6 @@ class SWHTMLExportConvertor {
       return new Promise((resolve) => {resolve (slide);});
     });
   }
-
 }
 
 module.exports = {
