@@ -7,6 +7,17 @@ function extractChartData(plotArea, chartID){
 
     for (var key in plotArea) {
         switch (key) {
+            case "c:bar3DChart":
+                chartType = 'bar3DChart';
+                chartData = {
+                    "type": "createChart",
+                    "data": {
+                        "chartID": "chart" + chartID,
+                        "chartType": "bar3DChart",
+                        "chartData": getData(plotArea[key]["c:ser"], chartType)
+                    }
+                };
+                break;
             case "c:lineChart":
                 chartType = 'lineChart';
                 chartData = {
@@ -14,7 +25,7 @@ function extractChartData(plotArea, chartID){
                     "data": {
                         "chartID": "chart" + chartID,
                         "chartType": "lineChart",
-                        "chartData": getData(plotArea[key]["c:ser"])
+                        "chartData": getData(plotArea[key]["c:ser"], chartType)
                     }
                 };
                 break;
@@ -25,7 +36,7 @@ function extractChartData(plotArea, chartID){
                     "data": {
                         "chartID": "chart" + chartID,
                         "chartType": "barChart",
-                        "chartData": getData(plotArea[key]["c:ser"])
+                        "chartData": getData(plotArea[key]["c:ser"], chartType)
                     }
                 };
                 break;
@@ -36,7 +47,7 @@ function extractChartData(plotArea, chartID){
                     "data": {
                         "chartID": "chart" + chartID,
                         "chartType": "pieChart",
-                        "chartData": getData(plotArea[key]["c:ser"])
+                        "chartData": getData(plotArea[key]["c:ser"], chartType)
                     }
                 };
                 break;
@@ -47,7 +58,7 @@ function extractChartData(plotArea, chartID){
                     "data": {
                         "chartID": "chart" + chartID,
                         "chartType": "pie3DChart",
-                        "chartData": getData(plotArea[key]["c:ser"])
+                        "chartData": getData(plotArea[key]["c:ser"], chartType)
                     }
                 };
                 break;
@@ -58,7 +69,7 @@ function extractChartData(plotArea, chartID){
                     "data": {
                         "chartID": "chart" + chartID,
                         "chartType": "areaChart",
-                        "chartData": getData(plotArea[key]["c:ser"])
+                        "chartData": getData(plotArea[key]["c:ser"], chartType)
                     }
                 };
                 break;
@@ -69,7 +80,7 @@ function extractChartData(plotArea, chartID){
                     "data": {
                         "chartID": "chart" + chartID,
                         "chartType": "scatterChart",
-                        "chartData": getData(plotArea[key]["c:ser"])
+                        "chartData": getData(plotArea[key]["c:ser"], chartType)
                     }
                 };
                 break;
@@ -84,7 +95,7 @@ function extractChartData(plotArea, chartID){
     return chartData;
 }
 
-function getData(serNode){
+function getData(serNode, chartType){
 
     let convertorUtils = new ConvertorUtils.ConvertorUtils();
     var dataMat = new Array();
