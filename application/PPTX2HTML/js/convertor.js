@@ -542,9 +542,9 @@ class Convertor {
           let that = this;
     			for (var i=0; i<targetNode.length; i++) {
     				var nvSpPrNode = targetNode[i]["p:nvSpPr"];
-    				var id = this.convertorUtils.getTextByPathList(nvSpPrNode, ["p:cNvPr", "attrs", "id"]);
-    				var idx = this.convertorUtils.getTextByPathList(nvSpPrNode, ["p:nvPr", "p:ph", "attrs", "idx"]);
-    				var type = this.convertorUtils.getTextByPathList(nvSpPrNode, ["p:nvPr", "p:ph", "attrs", "type"]);
+    				var id = that.convertorUtils.getTextByPathList(nvSpPrNode, ["p:cNvPr", "attrs", "id"]);
+    				var idx = that.convertorUtils.getTextByPathList(nvSpPrNode, ["p:nvPr", "p:ph", "attrs", "idx"]);
+    				var type = that.convertorUtils.getTextByPathList(nvSpPrNode, ["p:nvPr", "p:ph", "attrs", "type"]);
 
     				if (id !== undefined) {
     					idTable[id] = targetNode[i];
@@ -8023,10 +8023,10 @@ class Convertor {
     			    colPromises.push(
                 that.genTextBody(tcNodes[j]["a:txBody"], tcNodes[j], undefined, undefined, undefined, warpObj).then((info) => {
 
-                	var rowSpan = this.convertorUtils.getTextByPathList(tcNodes[j], ["attrs", "rowSpan"]);
-                    var colSpan = this.convertorUtils.getTextByPathList(tcNodes[j], ["attrs", "gridSpan"]);
-                    var vMerge = this.convertorUtils.getTextByPathList(tcNodes[j], ["attrs", "vMerge"]);
-                    var hMerge = this.convertorUtils.getTextByPathList(tcNodes[j], ["attrs", "hMerge"]);
+                	var rowSpan = that.convertorUtils.getTextByPathList(tcNodes[j], ["attrs", "rowSpan"]);
+                    var colSpan = that.convertorUtils.getTextByPathList(tcNodes[j], ["attrs", "gridSpan"]);
+                    var vMerge = that.convertorUtils.getTextByPathList(tcNodes[j], ["attrs", "vMerge"]);
+                    var hMerge = that.convertorUtils.getTextByPathList(tcNodes[j], ["attrs", "hMerge"]);
 
                     let random2 = that.getRandomId();
 
@@ -8118,11 +8118,14 @@ class Convertor {
         var chartType = null;
     	var chartData = null;
 
+        let resultConatiner = "<div>Chart Type not yet supported.</div>"
     	chartData = extractChartData(plotArea, this.chartID);
 
-    	let resultContainer = "<div id='chart" + this.chartID + "' class='block content' style='position: absolute;" +
-       					this.getPosition(xfrmNode, undefined, undefined) + this.getSize(xfrmNode, undefined, undefined) +
-       					" z-index: " + order + ";'" + "datum=\'" + JSON.stringify(chartData.data) + '\'></div>';
+    	if (chartData) {
+            resultContainer = "<div id='chart" + this.chartID + "' class='block content' style='position: absolute;" +
+                this.getPosition(xfrmNode, undefined, undefined) + this.getSize(xfrmNode, undefined, undefined) +
+                " z-index: " + order + ";'" + "datum=\'" + JSON.stringify(chartData.data) + '\'></div>';
+        }
 
     	console.log(resultContainer);
     	this.chartID++;
