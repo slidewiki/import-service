@@ -7,57 +7,13 @@ function extractChartData(plotArea, chartID){
 
     for (var key in plotArea) {
         switch (key) {
-            case "c:bar3DChart":
-                chartType = 'bar3DChart';
+            case "c:area3DChart":
+                chartType = 'area3DChart';
                 chartData = {
                     "type": "createChart",
                     "data": {
                         "chartID": "chart" + chartID,
-                        "chartType": "bar3DChart",
-                        "chartData": getData(plotArea[key]["c:ser"], chartType)
-                    }
-                };
-                break;
-            case "c:lineChart":
-                chartType = 'lineChart';
-                chartData = {
-                    "type": "createChart",
-                    "data": {
-                        "chartID": "chart" + chartID,
-                        "chartType": "lineChart",
-                        "chartData": getData(plotArea[key]["c:ser"], chartType)
-                    }
-                };
-                break;
-            case "c:barChart":
-                chartType = 'multiBarChart';
-                chartData = {
-                    "type": "createChart",
-                    "data": {
-                        "chartID": "chart" + chartID,
-                        "chartType": "barChart",
-                        "chartData": getData(plotArea[key]["c:ser"], chartType)
-                    }
-                };
-                break;
-            case "c:pieChart":
-                chartType = 'pieChart';
-                chartData = {
-                    "type": "createChart",
-                    "data": {
-                        "chartID": "chart" + chartID,
-                        "chartType": "pieChart",
-                        "chartData": getData(plotArea[key]["c:ser"], chartType)
-                    }
-                };
-                break;
-            case "c:pie3DChart":
-                chartType = 'pieChart';
-                chartData = {
-                    "type": "createChart",
-                    "data": {
-                        "chartID": "chart" + chartID,
-                        "chartType": "pie3DChart",
+                        "chartType": "area3DChart",
                         "chartData": getData(plotArea[key]["c:ser"], chartType)
                     }
                 };
@@ -73,6 +29,105 @@ function extractChartData(plotArea, chartID){
                     }
                 };
                 break;
+            case "c:bar3DChart":
+                chartType = 'bar3DChart';
+                chartData = {
+                    "type": "createChart",
+                    "data": {
+                        "chartID": "chart" + chartID,
+                        "chartType": "bar3DChart",
+                        "chartData": getData(plotArea[key]["c:ser"], chartType)
+                    }
+                };
+                break;
+            case "c:barChart":
+                chartType = 'multiBarChart';
+                chartData = {
+                    "type": "createChart",
+                    "data": {
+                        "chartID": "chart" + chartID,
+                        "chartType": "barChart",
+                        "chartData": getData(plotArea[key]["c:ser"], chartType)
+                    }
+                };
+                break;
+            case "c:doughnutChart":
+                chartType = 'doughnutChart';
+                chartData = {
+                    "type": "createChart",
+                    "data": {
+                        "chartID": "chart" + chartID,
+                        "chartType": "doughnutChart",
+                        "chartData": getData(plotArea[key]["c:ser"], chartType)
+                    }
+                };
+                break;
+            case "c:line3DChart":
+                chartType = 'line3DChart';
+                chartData = {
+                    "type": "createChart",
+                    "data": {
+                        "chartID": "chart" + chartID,
+                        "chartType": "line3DChart",
+                        "chartData": getData(plotArea[key]["c:ser"], chartType)
+                    }
+                };
+                break;
+            case "c:lineChart":
+                chartType = 'lineChart';
+                chartData = {
+                    "type": "createChart",
+                    "data": {
+                        "chartID": "chart" + chartID,
+                        "chartType": "lineChart",
+                        "chartData": getData(plotArea[key]["c:ser"], chartType)
+                    }
+                };
+                break;
+            case "c:ofPieChart":
+                chartType = 'ofPieChart';
+                chartData = {
+                    "type": "createChart",
+                    "data": {
+                        "chartID": "chart" + chartID,
+                        "chartType": "ofPieChart",
+                        "chartData": getData(plotArea[key]["c:ser"], chartType)
+                    }
+                };
+                break;
+            case "c:pie3DChart":
+                chartType = 'pieChart';
+                chartData = {
+                    "type": "createChart",
+                    "data": {
+                        "chartID": "chart" + chartID,
+                        "chartType": "pie3DChart",
+                        "chartData": getData(plotArea[key]["c:ser"], chartType)
+                    }
+                };
+                break;
+            case "c:pieChart":
+                chartType = 'pieChart';
+                chartData = {
+                    "type": "createChart",
+                    "data": {
+                        "chartID": "chart" + chartID,
+                        "chartType": "pieChart",
+                        "chartData": getData(plotArea[key]["c:ser"], chartType)
+                    }
+                };
+                break;
+            case "c:radarChart":
+                chartType = 'radarChart';
+                chartData = {
+                    "type": "createChart",
+                    "data": {
+                        "chartID": "chart" + chartID,
+                        "chartType": "radarChart",
+                        "chartData": getData(plotArea[key]["c:ser"], chartType)
+                    }
+                };
+                break;
             case "c:scatterChart":
                 chartType = 'scatterChart';
                 chartData = {
@@ -80,6 +135,17 @@ function extractChartData(plotArea, chartID){
                     "data": {
                         "chartID": "chart" + chartID,
                         "chartType": "scatterChart",
+                        "chartData": getData(plotArea[key]["c:ser"], chartType)
+                    }
+                };
+                break;
+            case "c:surface3DChart":
+                chartType = 'surface3DChart';
+                chartData = {
+                    "type": "createChart",
+                    "data": {
+                        "chartID": "chart" + chartID,
+                        "chartType": "surface3DChart",
                         "chartData": getData(plotArea[key]["c:ser"], chartType)
                     }
                 };
