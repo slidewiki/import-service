@@ -8118,7 +8118,7 @@ class Convertor {
         var chartType = null;
     	var chartData = null;
 
-        let resultConatiner = "<div>Chart Type not yet supported.</div>"
+        let resultContainer = "<div>Chart Type not yet supported.</div>"
     	chartData = extractChartData(plotArea, this.chartID);
 
     	if (chartData) {
