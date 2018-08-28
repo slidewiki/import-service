@@ -28,6 +28,12 @@ class SWHTMLExportConvertor {
       let sectionStart1 = textFile.indexOf('<section', currentIndex);
 
       if (sectionStart1 > -1) {
+        let slideTitle = '';
+        let titleStart = textFile.indexOf('data-menu-item="', sectionStart1);
+        if (titleStart > -1) {
+          let titleEnd = textFile.indexOf('"', titleStart);
+          slideTitle = textFile.substring(titleStart + 1, titleEnd);
+        }
 
         let sectionStart2 = textFile.indexOf('>', sectionStart1);
         let sectionEnd = textFile.indexOf('</section>', sectionStart2);
@@ -43,7 +49,7 @@ class SWHTMLExportConvertor {
           content = contentAndSpeakerNotes.substring(sectionStart2 + 1, asideStart2);
           speakerNotes = contentAndSpeakerNotes.substring(asideStart2 + 1, asideEnd);
         }
-        slide = {content: content, notes: speakerNotes};
+        slide = {content: content, notes: speakerNotes, title: slideTitle};
         slides.push(slide);
         currentIndex = sectionEnd;
       } else {
