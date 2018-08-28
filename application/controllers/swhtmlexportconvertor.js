@@ -31,8 +31,8 @@ class SWHTMLExportConvertor {
         let slideTitle = '';
         let titleStart = textFile.indexOf('data-menu-item="', sectionStart1);
         if (titleStart > -1) {
-          let titleEnd = textFile.indexOf('"', titleStart);
-          slideTitle = textFile.substring(titleStart + 1, titleEnd);
+          let titleEnd = textFile.indexOf('"', titleStart + 16);
+          slideTitle = textFile.substring(titleStart + 16, titleEnd);
         }
 
         let sectionStart2 = textFile.indexOf('>', sectionStart1);
