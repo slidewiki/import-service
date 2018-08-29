@@ -46,7 +46,7 @@ class SWHTMLExportConvertor {
         if (asideStart1 > -1) {
           let asideStart2 = contentAndSpeakerNotes.indexOf('>', asideStart1);
           let asideEnd = contentAndSpeakerNotes.indexOf('</aside>', asideStart2);
-          content = contentAndSpeakerNotes.substring(sectionStart2 + 1, asideStart2);
+          content = contentAndSpeakerNotes.substring(0, asideStart1);
           speakerNotes = contentAndSpeakerNotes.substring(asideStart2 + 1, asideEnd);
         }
         slide = {content: content, notes: speakerNotes, title: slideTitle};
