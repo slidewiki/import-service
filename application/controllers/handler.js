@@ -4,13 +4,10 @@ Handles the requests by executing stuff and replying to the client. Uses promise
 
 'use strict';
 let fs = require('fs');
-let he = require('he');
 let rp = require('request-promise-native');
 
 const boom = require('boom');
-
 const config = require('../configuration');
-
 const Microservices = require('../configs/microservices');
 let Convertor = require('../PPTX2HTML/js/convertor.js');
 let SWHTMLExportConvertor = require('./swhtmlexportconvertor.js');
@@ -34,7 +31,7 @@ module.exports = {
     const description = request.payload.description;
     const tags = (request.payload.tags !== undefined) ? JSON.parse(request.payload.tags) : [];
     const theme = (request.payload.theme !== undefined) ? request.payload.theme : '';
-    const fileName = he.encode(request.payload.filename, {allowUnsafeSymbols: true});//encode special characters
+    const fileName = request.payload.filename;
     const fileNameSplit = fileName.split('.');
     const deckName = (title !== '') ? title : fileNameSplit[0];
     const fileType = fileNameSplit[fileNameSplit.length - 1];
@@ -265,7 +262,7 @@ function saveImageToFile(imgName, file, user) {
 }
 
 function sendImageToFileService(imgName, data, jwt) {
-  let myPromise = new Promise((resolve, reject) => {
+  let myPromise = new Promise((resolve) => {
     //Get file extension
     const imgNameArray = imgName.split('.');
     const extension = imgNameArray[imgNameArray.length - 1];
@@ -412,12 +409,6 @@ function createDeck(options) {
       title = title.substring(0,99) + '...';
     }
 
-    let firstSlideTitle = replaceSpecialSymbols(title);//deck tree does not display some encoded symbols properly
-    firstSlideTitle = he.encode(firstSlideTitle, {allowUnsafeSymbols: true});//encode some symbols which were not replaced
-    //Encode special characters (e.g. bullets)
-    let encodedFirstSlideContent = he.encode(firstSlide.content, {allowUnsafeSymbols: true});
-    let encodedFirstSlideNotes = he.encode(firstSlide.notes, {allowUnsafeSymbols: true});
-
     let jsonData = {
       language: language,
       license: license,
@@ -429,9 +420,9 @@ function createDeck(options) {
       tags: tags,
       theme: theme,
       first_slide: {
-        content: encodedFirstSlideContent,
-        title: (firstSlideTitle !== '') ? firstSlideTitle : 'Slide 1',//It is not allowed to be empty
-        speakernotes:encodedFirstSlideNotes
+        content: firstSlide.content,
+        title: (title !== '') ? title : 'Slide 1',//It is not allowed to be empty
+        speakernotes: firstSlide.notes
       }
     };
 
@@ -461,7 +452,7 @@ function createDeck(options) {
 function createSlide(options) {
   let {selector, nodeSpec, slide, slideNo, license, authToken} = options;
 
-  let myPromise = new Promise((resolve, reject) => {
+  let myPromise = new Promise((resolve) => {
     if (slide.content === undefined || slide.content === '') {
       console.log('Error in createSlide - invalid slide', slideNo);
       resolve({id: selector.sid.substring(0, selector.sid.length - 2)});// invalid slide, continue without it
@@ -480,19 +471,12 @@ function createSlide(options) {
       title = title.substring(0,99) + '...';
     }
 
-    let slideTitle = replaceSpecialSymbols(title);//deck tree does not display some encoded symbols properly
-    slideTitle = he.encode(slideTitle, {allowUnsafeSymbols: true});//encode some symbols which were not replaced
-    //Encode special characters (e.g. bullets)
-
-    let encodedContent = he.encode(slide.content, {allowUnsafeSymbols: true});
-    let encodedNotes = (slide.notes !== undefined) ? he.encode(slide.notes, {allowUnsafeSymbols: true}) : '';
-
     let jsonData = {
       selector: selector,
       nodeSpec: nodeSpec,
-      content: encodedContent,
-      title: (slideTitle !== '') ? slideTitle : ('Slide ' + slideNo),//It is not allowed to be empty
-      speakernotes:encodedNotes,
+      content: slide.content,
+      title: (title !== '') ? title : ('Slide ' + slideNo),//It is not allowed to be empty
+      speakernotes: slide.notes,
       license: license
     };
 
@@ -539,20 +523,4 @@ function findFirstSlideOfADeck(deckId) {
   });
 
   return myPromise;
-}
-
-function replaceSpecialSymbols(string) {
-  if (string === undefined) {
-    return '';
-  }
-  let newString = string.replace('’', '\'');
-  newString = newString.replace('‘', '\'');
-  newString = newString.replace('“', '"');
-  newString = newString.replace('”', '"');
-  newString = newString.replace('„', '"');
-  newString = newString.replace('…', '...');
-  newString = newString.replace('—', '-');
-  newString = newString.replace('–', '-');//not the same as previous
-  newString = newString.replace('&amp;', '&');
-  return newString;
 }
