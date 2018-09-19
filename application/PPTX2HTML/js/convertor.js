@@ -6,6 +6,8 @@ let highlight = require('./highlight.min.js');
 let colz = require('./colz.class.min.js');
 let tXml = require('./tXml.js');
 let functions = require('./functions.js');
+let extractChartData = require('./chart/extractChartData');
+let ConvertorUtils = require('./utils/convertorUtils');
 
 function getRandomNumber() {
   return Math.floor((Math.random() * 100000) + 1);
@@ -45,6 +47,8 @@ onmessage = function(e) {
 
 class Convertor {
   constructor() {
+
+      this.convertorUtils = new ConvertorUtils.ConvertorUtils();
       this.chartID = 0;
 
       this.titleFontSize = 42;
@@ -55,7 +59,6 @@ class Convertor {
       this.slideSize;
       this.themeContent;
       this.slideHtml;
-      this.eachElement;
       this.slides = [];
 
       // this.user = '';
@@ -289,7 +292,7 @@ class Convertor {
     	}
     	// Open slideMasterXX.xml
     	var slideMasterContent = this.readXmlFile(zip, masterFilename);
-    	var slideMasterTextStyles = this.getTextByPathList(slideMasterContent, ["p:sldMaster", "p:txStyles"]);
+    	var slideMasterTextStyles = this.convertorUtils.getTextByPathList(slideMasterContent, ["p:sldMaster", "p:txStyles"]);
     	var slideMasterTables = this.indexNodes(slideMasterContent);
 
       /////////////////Amir/////////////
@@ -328,7 +331,7 @@ class Convertor {
     	if (bgColor === undefined) {
         //klaas: try scheme color == needs convertion to HEX RGB!!! e.g. accent2 is dark-red in default schemeClr
         //this is an improvement over PPTX2HTML, however, the drawback is that the colors can be incorrect if a different scheme is assigned.
-        bgColor = this.getTextByPathList(slideContent, ["p:sld", "p:cSld", "p:bg", "p:bgPr", "a:solidFill", "a:schemeClr", "attrs", "val"]);
+        bgColor = this.convertorUtils.getTextByPathList(slideContent, ["p:sld", "p:cSld", "p:bg", "p:bgPr", "a:solidFill", "a:schemeClr", "attrs", "val"]);
 
         //assign default scheme RGB color codes for powerpoint 2016 for mac
         //this does not work well if people change the default color scheme, or if they apply a different theme
@@ -539,9 +542,9 @@ class Convertor {
           let that = this;
     			for (var i=0; i<targetNode.length; i++) {
     				var nvSpPrNode = targetNode[i]["p:nvSpPr"];
-    				var id = that.getTextByPathList(nvSpPrNode, ["p:cNvPr", "attrs", "id"]);
-    				var idx = that.getTextByPathList(nvSpPrNode, ["p:nvPr", "p:ph", "attrs", "idx"]);
-    				var type = that.getTextByPathList(nvSpPrNode, ["p:nvPr", "p:ph", "attrs", "type"]);
+    				var id = that.convertorUtils.getTextByPathList(nvSpPrNode, ["p:cNvPr", "attrs", "id"]);
+    				var idx = that.convertorUtils.getTextByPathList(nvSpPrNode, ["p:nvPr", "p:ph", "attrs", "idx"]);
+    				var type = that.convertorUtils.getTextByPathList(nvSpPrNode, ["p:nvPr", "p:ph", "attrs", "type"]);
 
     				if (id !== undefined) {
     					idTable[id] = targetNode[i];
@@ -555,9 +558,9 @@ class Convertor {
     			}
     		} else {
     			var nvSpPrNode = targetNode["p:nvSpPr"];
-    			var id = this.getTextByPathList(nvSpPrNode, ["p:cNvPr", "attrs", "id"]);
-    			var idx = this.getTextByPathList(nvSpPrNode, ["p:nvPr", "p:ph", "attrs", "idx"]);
-    			var type = this.getTextByPathList(nvSpPrNode, ["p:nvPr", "p:ph", "attrs", "type"]);
+    			var id = this.convertorUtils.getTextByPathList(nvSpPrNode, ["p:cNvPr", "attrs", "id"]);
+    			var idx = this.convertorUtils.getTextByPathList(nvSpPrNode, ["p:nvPr", "p:ph", "attrs", "idx"]);
+    			var type = this.convertorUtils.getTextByPathList(nvSpPrNode, ["p:nvPr", "p:ph", "attrs", "type"]);
 
     			if (id !== undefined) {
     				idTable[id] = targetNode;
@@ -598,7 +601,7 @@ class Convertor {
     			return this.processGroupSpNode(nodeValue, warpObj);
     			break;
         case "mc:AlternateContent": //Equations and formulas as Image
-          var mcFallbackNode = this.getTextByPathList(nodeValue, ["mc:Fallback", "p:sp"]);
+          var mcFallbackNode = this.convertorUtils.getTextByPathList(nodeValue, ["mc:Fallback", "p:sp"]);
           return this.processSpNode(mcFallbackNode, warpObj);
           break;
     		default:
@@ -680,11 +683,11 @@ class Convertor {
   	 *  966 </xsd:complexType>
   	 */
     try {
-      var id = this.getTextByPathList(node, ["p:nvSpPr","p:cNvPr","attrs","id"]);
-      var name = this.getTextByPathList(node, ["p:nvSpPr","p:cNvPr","attrs","name"]);
-      var idx = (this.getTextByPathList(node, ["p:nvSpPr","p:nvPr","p:ph"]) === undefined) ? undefined : this.getTextByPathList(node, ["p:nvSpPr","p:nvPr","p:ph","attrs","idx"]);
-      var type = (this.getTextByPathList(node, ["p:nvSpPr","p:nvPr","p:ph"]) === undefined) ? undefined : this.getTextByPathList(node, ["p:nvSpPr","p:nvPr","p:ph","attrs","type"]);
-      var order = this.getTextByPathList(node, ["attrs","order"]);
+      var id = this.convertorUtils.getTextByPathList(node, ["p:nvSpPr","p:cNvPr","attrs","id"]);
+      var name = this.convertorUtils.getTextByPathList(node, ["p:nvSpPr","p:cNvPr","attrs","name"]);
+      var idx = (this.convertorUtils.getTextByPathList(node, ["p:nvSpPr","p:nvPr","p:ph"]) === undefined) ? undefined : this.convertorUtils.getTextByPathList(node, ["p:nvSpPr","p:nvPr","p:ph","attrs","idx"]);
+      var type = (this.convertorUtils.getTextByPathList(node, ["p:nvSpPr","p:nvPr","p:ph"]) === undefined) ? undefined : this.convertorUtils.getTextByPathList(node, ["p:nvSpPr","p:nvPr","p:ph","attrs","type"]);
+      var order = this.convertorUtils.getTextByPathList(node, ["attrs","order"]);
     	var slideLayoutSpNode = undefined;
     	var slideMasterSpNode = undefined;
 
@@ -718,9 +721,9 @@ class Convertor {
     	}
 
     	if (type === undefined) {
-    		type = this.getTextByPathList(slideLayoutSpNode, ["p:nvSpPr", "p:nvPr", "p:ph", "attrs", "type"]);
+    		type = this.convertorUtils.getTextByPathList(slideLayoutSpNode, ["p:nvSpPr", "p:nvPr", "p:ph", "attrs", "type"]);
     		if (type === undefined) {
-    			type = this.getTextByPathList(slideMasterSpNode, ["p:nvSpPr", "p:nvPr", "p:ph", "attrs", "type"]);
+    			type = this.convertorUtils.getTextByPathList(slideMasterSpNode, ["p:nvSpPr", "p:nvPr", "p:ph", "attrs", "type"]);
     		}
     	}
 
@@ -754,30 +757,30 @@ class Convertor {
   genShape(node, slideLayoutSpNode, slideMasterSpNode, id, name, idx, type, order, warpObj) {
     try {
     	var xfrmList = ["p:spPr", "a:xfrm"];
-    	var slideXfrmNode = this.getTextByPathList(node, xfrmList);
-    	var slideLayoutXfrmNode = this.getTextByPathList(slideLayoutSpNode, xfrmList);
-    	var slideMasterXfrmNode = this.getTextByPathList(slideMasterSpNode, xfrmList);
+    	var slideXfrmNode = this.convertorUtils.getTextByPathList(node, xfrmList);
+    	var slideLayoutXfrmNode = this.convertorUtils.getTextByPathList(slideLayoutSpNode, xfrmList);
+    	var slideMasterXfrmNode = this.convertorUtils.getTextByPathList(slideMasterSpNode, xfrmList);
 
     	var result = "";
-      var shpId = this.getTextByPathList(node, ["attrs","order"]);
+      var shpId = this.convertorUtils.getTextByPathList(node, ["attrs","order"]);
       //console.log("shpId: ",shpId)
-    	var shapType = this.getTextByPathList(node, ["p:spPr", "a:prstGeom", "attrs", "prst"]);
+    	var shapType = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:prstGeom", "attrs", "prst"]);
 
       //custGeom - Amir
-      var custShapType = this.getTextByPathList(node, ["p:spPr", "a:custGeom"]);
+      var custShapType = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:custGeom"]);
 
     	var isFlipV = false;
-    	if ( this.getTextByPathList(slideXfrmNode, ["attrs", "flipV"]) === "1" || this.getTextByPathList(slideXfrmNode, ["attrs", "flipH"]) === "1") {
+    	if ( this.convertorUtils.getTextByPathList(slideXfrmNode, ["attrs", "flipV"]) === "1" || this.convertorUtils.getTextByPathList(slideXfrmNode, ["attrs", "flipH"]) === "1") {
     		isFlipV = true;
     	}
       /////////////////////////Amir////////////////////////
       //rotate
-      var rotate = this.angleToDegrees(this.getTextByPathList(slideXfrmNode, ["attrs", "rot"]));
+      var rotate = this.angleToDegrees(this.convertorUtils.getTextByPathList(slideXfrmNode, ["attrs", "rot"]));
       //console.log("rotate: "+rotate);
       var txtRotate;
-      var txtXframeNode = this.getTextByPathList(node, ["p:txXfrm"]);
+      var txtXframeNode = this.convertorUtils.getTextByPathList(node, ["p:txXfrm"]);
       if (txtXframeNode !== undefined){
-        var txtXframeRot = this.getTextByPathList(txtXframeNode,["attrs","rot"]);
+        var txtXframeRot = this.convertorUtils.getTextByPathList(txtXframeNode,["attrs","rot"]);
         if (txtXframeRot !== undefined){
           txtRotate = this.angleToDegrees(txtXframeRot)+90;
         }
@@ -787,11 +790,11 @@ class Convertor {
       //////////////////////////////////////////////////
     	if (shapType !== undefined || custShapType !== undefined) {
 
-    		var off = this.getTextByPathList(slideXfrmNode, ["a:off", "attrs"]);
+    		var off = this.convertorUtils.getTextByPathList(slideXfrmNode, ["a:off", "attrs"]);
     		var x = (off !== undefined) ? parseInt(off["x"]) * 96 / 914400 : 0;
     		var y = (off !== undefined) ? parseInt(off["y"]) * 96 / 914400 : 0;
 
-    		var ext = this.getTextByPathList(slideXfrmNode, ["a:ext", "attrs"]);
+    		var ext = this.convertorUtils.getTextByPathList(slideXfrmNode, ["a:ext", "attrs"]);
     		var w = (ext !== undefined) ? parseInt(ext["cx"]) * 96 / 914400 : 0;
     		var h = (ext !== undefined) ? parseInt(ext["cy"]) * 96 / 914400 : 0;
 
@@ -823,7 +826,7 @@ class Convertor {
         var fillColor = this.getShapeFill(node, true,warpObj);
         var grndFillFlg = false;
         var imgFillFlg = false;
-        var clrFillType = this.getFillType(this.getTextByPathList(node, ["p:spPr"]));
+        var clrFillType = this.getFillType(this.convertorUtils.getTextByPathList(node, ["p:spPr"]));
         /////////////////////////////////////////
         if(clrFillType == "GRADIENT_FILL"){
           grndFillFlg = true;
@@ -854,8 +857,8 @@ class Convertor {
     		// Border Color
     		var border = this.getBorder(node, true, "shape");
 
-    		var headEndNodeAttrs = this.getTextByPathList(node, ["p:spPr", "a:ln", "a:headEnd", "attrs"]);
-    		var tailEndNodeAttrs = this.getTextByPathList(node, ["p:spPr", "a:ln", "a:tailEnd", "attrs"]);
+    		var headEndNodeAttrs = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:ln", "a:headEnd", "attrs"]);
+    		var tailEndNodeAttrs = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:ln", "a:tailEnd", "attrs"]);
 
 
     		// type: none, triangle, stealth, diamond, oval, arrow
@@ -1618,23 +1621,23 @@ class Convertor {
           case "snip2SameRect":
           case "flowChartAlternateProcess":
           case "flowChartPunchedCard":
-              var shapAdjst_ary = this.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
+              var shapAdjst_ary = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
               var sAdj1,sAdj1_val;// = 0.33334;
               var sAdj2,sAdj2_val;// = 0.33334;
               var shpTyp, adjTyp;
               if(shapAdjst_ary !== undefined && shapAdjst_ary.constructor === Array){
                   for(var i=0; i<shapAdjst_ary.length; i++){
-                      var sAdj_name = this.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
+                      var sAdj_name = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
                       if(sAdj_name =="adj1"){
-                          sAdj1 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj1 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           sAdj1_val = parseInt(sAdj1.substr(4)) /50000;
                       }else if(sAdj_name =="adj2"){
-                          sAdj2 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj2 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           sAdj2_val = parseInt(sAdj2.substr(4)) /50000;
                       }
                   }
               }else if(shapAdjst_ary !== undefined && shapAdjst_ary.constructor !== Array){
-                  var sAdj = this.getTextByPathList(shapAdjst_ary,["attrs","fmla"]);
+                  var sAdj = this.convertorUtils.getTextByPathList(shapAdjst_ary,["attrs","fmla"]);
                   sAdj1_val = parseInt(sAdj.substr(4)) /50000;
                   sAdj2_val = 0;
               }
@@ -1694,17 +1697,17 @@ class Convertor {
                   "' stroke='" + border.color + "' stroke-width='" + border.width + "' stroke-dasharray='" + border.strokeDasharray + "' />";
               break;
           case "snipRoundRect":
-              var shapAdjst_ary = this.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
+              var shapAdjst_ary = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
               var sAdj1,sAdj1_val = 0.33334;
               var sAdj2,sAdj2_val = 0.33334;
               if(shapAdjst_ary !== undefined){
                   for(var i=0; i<shapAdjst_ary.length; i++){
-                      var sAdj_name = this.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
+                      var sAdj_name = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
                       if(sAdj_name =="adj1"){
-                          sAdj1 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj1 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           sAdj1_val = parseInt(sAdj1.substr(4)) /50000;
                       }else if(sAdj_name =="adj2"){
-                          sAdj2 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj2 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           sAdj2_val = parseInt(sAdj2.substr(4)) /50000;
                       }
                   }
@@ -1739,7 +1742,7 @@ class Convertor {
           case "triangle":
           case "flowChartExtract":
           case "flowChartMerge":
-              var shapAdjst = this.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd", "attrs", "fmla"]);
+              var shapAdjst = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd", "attrs", "fmla"]);
               var shapAdjst_val = 0.5;
               if(shapAdjst !== undefined){
                   shapAdjst_val = parseInt(shapAdjst.substr(4)) * 96 / 9144000;
@@ -1764,7 +1767,7 @@ class Convertor {
           case "trapezoid":
           case "flowChartManualOperation":
           case "flowChartManualInput":
-              var shapAdjst = this.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd", "attrs", "fmla"]);
+              var shapAdjst = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd", "attrs", "fmla"]);
               var adjst_val = 0.2;
               var max_adj_const = 0.7407;
               if(shapAdjst !== undefined){
@@ -1786,7 +1789,7 @@ class Convertor {
               break;
           case "parallelogram":
           case "flowChartInputOutput":
-              var shapAdjst = this.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd", "attrs", "fmla"]);
+              var shapAdjst = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd", "attrs", "fmla"]);
               var adjst_val = 0.25;
               var max_adj_const;
               if(w > h){
@@ -1810,7 +1813,7 @@ class Convertor {
               break;
           case "hexagon":
           case "flowChartPreparation":
-              var shapAdjst = this.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd","attrs","fmla"]);
+              var shapAdjst = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd","attrs","fmla"]);
               var adj = 25000*96/914400;
               var vf = 115470*96/914400;;
               var cnstVal1 = 50000*96/914400;
@@ -1847,7 +1850,7 @@ class Convertor {
                   "' stroke='" + border.color + "' stroke-width='" + border.width + "' stroke-dasharray='" + border.strokeDasharray + "' />";
               break;
           case "octagon":
-              var shapAdjst = this.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd", "attrs", "fmla"]);
+              var shapAdjst = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd", "attrs", "fmla"]);
               var adj1 = 0.25;
               if(shapAdjst !== undefined){
                   adj1 = parseInt(shapAdjst.substr(4)) /100000;
@@ -1880,7 +1883,7 @@ class Convertor {
           case "star16":
           case "star24":
           case "star32":
-              var shapAdjst = this.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);//[0]["attrs"]["fmla"];
+              var shapAdjst = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);//[0]["attrs"]["fmla"];
               var starNum = shapType.substr(4);
               var shapAdjst1 , adj;
               switch(starNum){
@@ -1910,7 +1913,7 @@ class Convertor {
                       break;
               }
               if(shapAdjst !== undefined){
-                  shapAdjst1 = this.getTextByPathList(shapAdjst, ["attrs", "fmla"]);
+                  shapAdjst1 = this.convertorUtils.getTextByPathList(shapAdjst, ["attrs", "fmla"]);
                   if(shapAdjst1 === undefined){
                       shapAdjst1 = shapAdjst[0]["attrs"]["fmla"];
                   }
@@ -1926,7 +1929,7 @@ class Convertor {
           case "pie":
           case "pieWedge":
           case "arc":
-              var shapAdjst = this.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
+              var shapAdjst = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
               var adj1, adj2 ,H, shapAdjst1 , shapAdjst2 ,isClose;
               if(shapType == "pie"){
                   adj1 = 0;
@@ -1945,7 +1948,7 @@ class Convertor {
                   isClose = false;
               }
               if(shapAdjst !== undefined){
-                  shapAdjst1 = this.getTextByPathList(shapAdjst, ["attrs", "fmla"]);
+                  shapAdjst1 = this.convertorUtils.getTextByPathList(shapAdjst, ["attrs", "fmla"]);
                   shapAdjst2 = shapAdjst1;
                   if(shapAdjst1 === undefined){
                       shapAdjst1 = shapAdjst[0]["attrs"]["fmla"];
@@ -1964,17 +1967,17 @@ class Convertor {
                   "' stroke='" + border.color + "' stroke-width='" + border.width + "' stroke-dasharray='" + border.strokeDasharray + "' />";
               break;
           case "chord":
-              var shapAdjst_ary = this.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
+              var shapAdjst_ary = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
               var sAdj1,sAdj1_val = 45;
               var sAdj2,sAdj2_val = 270;
               if(shapAdjst_ary !== undefined){
                   for(var i=0; i<shapAdjst_ary.length; i++){
-                      var sAdj_name = this.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
+                      var sAdj_name = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
                       if(sAdj_name =="adj1"){
-                          sAdj1 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj1 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           sAdj1_val = parseInt(sAdj1.substr(4)) /60000;
                       }else if(sAdj_name =="adj2"){
-                          sAdj2 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj2 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           sAdj2_val = parseInt(sAdj2.substr(4)) /60000;
                       }
                   }
@@ -1987,7 +1990,7 @@ class Convertor {
               "' stroke='" + border.color + "' stroke-width='" + border.width + "' stroke-dasharray='" + border.strokeDasharray + "' />";
               break;
           case "frame":
-              var shapAdjst = this.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd","attrs","fmla"]);
+              var shapAdjst = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd","attrs","fmla"]);
               var adj1 = 12500*96/914400;
               var cnstVal1 = 50000*96/914400;
               var cnstVal2 = 100000*96/914400;
@@ -2015,7 +2018,7 @@ class Convertor {
                   "' stroke='" + border.color + "' stroke-width='" + border.width + "' stroke-dasharray='" + border.strokeDasharray + "' />";
               break;
           case "donut":
-              var shapAdjst = this.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd","attrs","fmla"]);
+              var shapAdjst = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd","attrs","fmla"]);
               var adj = 25000*96/914400;
               var cnstVal1 = 50000*96/914400;
               var cnstVal2 = 100000*96/914400;
@@ -2045,7 +2048,7 @@ class Convertor {
                   "' stroke='" + border.color + "' stroke-width='" + border.width + "' stroke-dasharray='" + border.strokeDasharray + "' />";
               break;
           case "noSmoking":
-              var shapAdjst = this.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd","attrs","fmla"]);
+              var shapAdjst = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd","attrs","fmla"]);
               var adj = 18750*96/914400;
               var cnstVal1 = 50000*96/914400;
               var cnstVal2 = 100000*96/914400;
@@ -2104,18 +2107,18 @@ class Convertor {
                   "' stroke='" + border.color + "' stroke-width='" + border.width + "' stroke-dasharray='" + border.strokeDasharray + "' />";
               break;
           case "halfFrame":
-              var shapAdjst_ary = this.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
+              var shapAdjst_ary = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
               var sAdj1,sAdj1_val= 3.5;
               var sAdj2,sAdj2_val = 3.5;
               var cnsVal = 100000*96/914400;
               if(shapAdjst_ary !== undefined){
                   for(var i=0; i<shapAdjst_ary.length; i++){
-                      var sAdj_name = this.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
+                      var sAdj_name = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
                       if(sAdj_name =="adj1"){
-                          sAdj1 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj1 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           sAdj1_val = parseInt(sAdj1.substr(4))* 96/914400;
                       }else if(sAdj_name =="adj2"){
-                          sAdj2 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj2 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           sAdj2_val = parseInt(sAdj2.substr(4))* 96/914400;
                       }
                   }
@@ -2150,7 +2153,7 @@ class Convertor {
               //console.log("w: ",w,", h: ",h,", sAdj1_val: ",sAdj1_val,", sAdj2_val: ",sAdj2_val,",maxAdj1: ",maxAdj1,",maxAdj2: ",maxAdj2)
               break;
           case "blockArc":
-              var shapAdjst_ary = this.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
+              var shapAdjst_ary = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
               var sAdj1,adj1= 180;
               var sAdj2,adj2 = 0;
               var sAdj3,adj3 = 25000*96/914400;
@@ -2158,15 +2161,15 @@ class Convertor {
               var cnstVal2 = 100000*96/914400;
               if(shapAdjst_ary !== undefined){
                   for(var i=0; i<shapAdjst_ary.length; i++){
-                      var sAdj_name = this.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
+                      var sAdj_name = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
                       if(sAdj_name =="adj1"){
-                          sAdj1 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj1 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj1 = parseInt(sAdj1.substr(4))/60000;
                       }else if(sAdj_name =="adj2"){
-                          sAdj2 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj2 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj2 = parseInt(sAdj2.substr(4))/60000;
                       }else if(sAdj_name =="adj3"){
-                          sAdj3 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj3 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj3 = parseInt(sAdj3.substr(4))* 96/914400;
                       }
                   }
@@ -2250,7 +2253,7 @@ class Convertor {
                   "' stroke='" + border.color + "' stroke-width='" + border.width + "' stroke-dasharray='" + border.strokeDasharray + "' />";
               break;
           case "bracePair":
-              var shapAdjst = this.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd","attrs","fmla"]);
+              var shapAdjst = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd","attrs","fmla"]);
               var adj = 8333*96/914400;
               var cnstVal1 = 25000*96/914400;
               var cnstVal2 = 50000*96/914400;
@@ -2290,18 +2293,18 @@ class Convertor {
                   "' stroke='" + border.color + "' stroke-width='" + border.width + "' stroke-dasharray='" + border.strokeDasharray + "' />";
               break;
           case "leftBrace":
-              var shapAdjst_ary = this.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
+              var shapAdjst_ary = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
               var sAdj1,adj1 = 8333*96/914400;
               var sAdj2,adj2 = 50000*96/914400;
               var cnstVal2 = 100000*96/914400;
               if(shapAdjst_ary !== undefined){
                   for(var i=0; i<shapAdjst_ary.length; i++){
-                      var sAdj_name = this.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
+                      var sAdj_name = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
                       if(sAdj_name =="adj1"){
-                          sAdj1 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj1 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj1 = parseInt(sAdj1.substr(4))*96/914400;
                       }else if(sAdj_name =="adj2"){
-                          sAdj2 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj2 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj2 = parseInt(sAdj2.substr(4))*96/914400;
                       }
                   }
@@ -2336,18 +2339,18 @@ class Convertor {
                    "' stroke='" + border.color + "' stroke-width='" + border.width + "' stroke-dasharray='" + border.strokeDasharray + "' />";
               break;
           case "rightBrace":
-              var shapAdjst_ary = this.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
+              var shapAdjst_ary = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
               var sAdj1,adj1 = 8333*96/914400;
               var sAdj2,adj2 = 50000*96/914400;
               var cnstVal2 = 100000*96/914400;
               if(shapAdjst_ary !== undefined){
                   for(var i=0; i<shapAdjst_ary.length; i++){
-                      var sAdj_name = this.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
+                      var sAdj_name = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
                       if(sAdj_name =="adj1"){
-                          sAdj1 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj1 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj1 = parseInt(sAdj1.substr(4))*96/914400;
                       }else if(sAdj_name =="adj2"){
-                          sAdj2 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj2 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj2 = parseInt(sAdj2.substr(4))*96/914400;
                       }
                   }
@@ -2382,7 +2385,7 @@ class Convertor {
                   "' stroke='" + border.color + "' stroke-width='" + border.width + "' stroke-dasharray='" + border.strokeDasharray + "' />";
               break;
           case "bracketPair":
-              var shapAdjst = this.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd","attrs","fmla"]);
+              var shapAdjst = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd","attrs","fmla"]);
               var adj = 16667*96/914400;
               var cnstVal1 = 50000*96/914400;
               var cnstVal2 = 100000*96/914400;
@@ -2405,7 +2408,7 @@ class Convertor {
                   "' stroke='" + border.color + "' stroke-width='" + border.width + "' stroke-dasharray='" + border.strokeDasharray + "' />";
               break;
           case "leftBracket":
-              var shapAdjst = this.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd","attrs","fmla"]);
+              var shapAdjst = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd","attrs","fmla"]);
               var adj = 8333*96/914400;
               var cnstVal1 = 50000*96/914400;
               var cnstVal2 = 100000*96/914400;
@@ -2429,7 +2432,7 @@ class Convertor {
                   "' stroke='" + border.color + "' stroke-width='" + border.width + "' stroke-dasharray='" + border.strokeDasharray + "' />";
               break;
           case "rightBracket":
-              var shapAdjst = this.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd","attrs","fmla"]);
+              var shapAdjst = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd","attrs","fmla"]);
               var adj = 8333*96/914400;
               var cnstVal1 = 50000*96/914400;
               var cnstVal2 = 100000*96/914400;
@@ -2455,7 +2458,7 @@ class Convertor {
                   "' stroke='" + border.color + "' stroke-width='" + border.width + "' stroke-dasharray='" + border.strokeDasharray + "' />";
               break;
           case "moon":
-              var shapAdjst = this.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd","attrs","fmla"]);
+              var shapAdjst = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd","attrs","fmla"]);
               var adj = 0.5;
               if(shapAdjst !== undefined){
                   adj = parseInt(shapAdjst.substr(4))/100000;//*96/914400;;
@@ -2475,18 +2478,18 @@ class Convertor {
               "' stroke='" + border.color + "' stroke-width='" + border.width + "' stroke-dasharray='" + border.strokeDasharray + "' />";
               break;
           case "corner":
-              var shapAdjst_ary = this.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
+              var shapAdjst_ary = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
               var sAdj1,sAdj1_val= 50000*96/914400;
               var sAdj2,sAdj2_val = 50000*96/914400;
               var cnsVal = 100000*96/914400;
               if(shapAdjst_ary !== undefined){
                   for(var i=0; i<shapAdjst_ary.length; i++){
-                      var sAdj_name = this.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
+                      var sAdj_name = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
                       if(sAdj_name =="adj1"){
-                          sAdj1 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj1 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           sAdj1_val = parseInt(sAdj1.substr(4))* 96/914400;
                       }else if(sAdj_name =="adj2"){
-                          sAdj2 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj2 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           sAdj2_val = parseInt(sAdj2.substr(4))* 96/914400;
                       }
                   }
@@ -2517,7 +2520,7 @@ class Convertor {
                   "' stroke='" + border.color + "' stroke-width='" + border.width + "' stroke-dasharray='" + border.strokeDasharray + "' />";
               break;
           case "diagStripe":
-              var shapAdjst = this.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd", "attrs", "fmla"]);
+              var shapAdjst = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd", "attrs", "fmla"]);
               var sAdj1_val= 50000*96/914400;
               var cnsVal = 100000*96/914400;
               if(shapAdjst !== undefined){
@@ -2550,7 +2553,7 @@ class Convertor {
               "' stroke='" + border.color + "' stroke-width='" + border.width + "' stroke-dasharray='" + border.strokeDasharray + "' />";
               break;
           case "bentConnector3":
-              var shapAdjst = this.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd", "attrs", "fmla"]);
+              var shapAdjst = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd", "attrs", "fmla"]);
               var shapAdjst_val = 0.5;
               if(shapAdjst !== undefined){
                   shapAdjst_val = parseInt(shapAdjst.substr(4)) /100000;
@@ -2571,7 +2574,7 @@ class Convertor {
               }
               break;
           case "plus":
-              var shapAdjst = this.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd", "attrs", "fmla"]);
+              var shapAdjst = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd", "attrs", "fmla"]);
               var adj1 = 0.25;
               if(shapAdjst !== undefined){
                   adj1 = parseInt(shapAdjst.substr(4)) /100000;
@@ -2584,7 +2587,7 @@ class Convertor {
                   "' stroke='" + border.color + "' stroke-width='" + border.width + "' stroke-dasharray='" + border.strokeDasharray + "' />";
               break;
           case "teardrop":
-              var shapAdjst = this.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd", "attrs", "fmla"]);
+              var shapAdjst = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd", "attrs", "fmla"]);
               var adj1 = 100000*96/914400;
               var cnsVal1 = adj1;
               var cnsVal2 = 200000*96/914400;
@@ -2619,7 +2622,7 @@ class Convertor {
              // console.log("shapAdjst: ",shapAdjst,", adj1: ",adj1);
               break;
           case "plaque":
-              var shapAdjst = this.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd", "attrs", "fmla"]);
+              var shapAdjst = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd", "attrs", "fmla"]);
               var adj1 = 16667*96/914400;
               var cnsVal1 = 50000*96/914400;
               var cnsVal2 = 100000*96/914400;
@@ -2647,7 +2650,7 @@ class Convertor {
 
               break;
           case "sun":
-              var shapAdjst = this.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd", "attrs", "fmla"]);
+              var shapAdjst = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd", "attrs", "fmla"]);
               var refr = 96/914400;
               var adj1 = 25000*refr;
               var cnstVal1 = 12500*refr;
@@ -2808,7 +2811,7 @@ class Convertor {
 
               break;
           case "cube":
-              var shapAdjst = this.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd", "attrs", "fmla"]);
+              var shapAdjst = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd", "attrs", "fmla"]);
               var refr = 96/914400;
               var adj = 25000*refr;
               if(shapAdjst !== undefined){
@@ -2841,7 +2844,7 @@ class Convertor {
 
               break;
           case "bevel":
-              var shapAdjst = this.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd", "attrs", "fmla"]);
+              var shapAdjst = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd", "attrs", "fmla"]);
               var refr = 96/914400;
               var adj = 12500*refr;
               if(shapAdjst !== undefined){
@@ -2880,7 +2883,7 @@ class Convertor {
 
               break;
           case "foldedCorner":
-              var shapAdjst = this.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd", "attrs", "fmla"]);
+              var shapAdjst = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd", "attrs", "fmla"]);
               var refr = 96/914400;
               var adj = 16667*refr;
               if(shapAdjst !== undefined){
@@ -3013,18 +3016,18 @@ class Convertor {
                       arc11 +
                       " z";
               if(shapType == "cloudCallout"){
-                  var shapAdjst_ary = this.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
+                  var shapAdjst_ary = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
                   var refr = 96/914400;
                   var sAdj1,adj1= -20833*refr;
                   var sAdj2,adj2 = 62500*refr;
                   if(shapAdjst_ary !== undefined){
                       for(var i=0; i<shapAdjst_ary.length; i++){
-                          var sAdj_name = this.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
+                          var sAdj_name = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
                           if(sAdj_name =="adj1"){
-                              sAdj1 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                              sAdj1 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                               adj1 = parseInt(sAdj1.substr(4))*refr;
                           }else if(sAdj_name =="adj2"){
-                              sAdj2 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                              sAdj2 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                               adj2 = parseInt(sAdj2.substr(4))*refr;
                           }
                       }
@@ -3094,7 +3097,7 @@ class Convertor {
 
               break;
           case "smileyFace":
-              var shapAdjst = this.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd", "attrs", "fmla"]);
+              var shapAdjst = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd", "attrs", "fmla"]);
               var refr = 96/914400;
               var adj = 4653*refr;
               if(shapAdjst !== undefined){
@@ -3142,7 +3145,7 @@ class Convertor {
               break;
           case "verticalScroll":
           case "horizontalScroll":
-              var shapAdjst = this.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd", "attrs", "fmla"]);
+              var shapAdjst = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd", "attrs", "fmla"]);
               var refr = 96/914400;
               var adj = 12500*refr;
               if(shapAdjst !== undefined){
@@ -3231,18 +3234,18 @@ class Convertor {
 
               break;
           case "wedgeEllipseCallout":
-              var shapAdjst_ary = this.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
+              var shapAdjst_ary = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
               var refr = 96/914400;
               var sAdj1,adj1= -20833*refr;
               var sAdj2,adj2 = 62500*refr;
               if(shapAdjst_ary !== undefined){
                   for(var i=0; i<shapAdjst_ary.length; i++){
-                      var sAdj_name = this.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
+                      var sAdj_name = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
                       if(sAdj_name =="adj1"){
-                          sAdj1 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj1 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj1 = parseInt(sAdj1.substr(4))*refr;
                       }else if(sAdj_name =="adj2"){
-                          sAdj2 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj2 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj2 = parseInt(sAdj2.substr(4))*refr;
                       }
                   }
@@ -3311,18 +3314,18 @@ class Convertor {
 
               break;
           case "wedgeRectCallout":
-              var shapAdjst_ary = this.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
+              var shapAdjst_ary = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
               var refr = 96/914400;
               var sAdj1,adj1= -20833*refr;
               var sAdj2,adj2 = 62500*refr;
               if(shapAdjst_ary !== undefined){
                   for(var i=0; i<shapAdjst_ary.length; i++){
-                      var sAdj_name = this.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
+                      var sAdj_name = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
                       if(sAdj_name =="adj1"){
-                          sAdj1 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj1 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj1 = parseInt(sAdj1.substr(4))*refr;
                       }else if(sAdj_name =="adj2"){
-                          sAdj2 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj2 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj2 = parseInt(sAdj2.substr(4))*refr;
                       }
                   }
@@ -3390,22 +3393,22 @@ class Convertor {
 
               break;
           case "wedgeRoundRectCallout":
-              var shapAdjst_ary = this.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
+              var shapAdjst_ary = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
               var refr = 96/914400;
               var sAdj1,adj1= -20833*refr;
               var sAdj2,adj2 = 62500*refr;
               var sAdj3,adj3 = 16667*refr;
               if(shapAdjst_ary !== undefined){
                   for(var i=0; i<shapAdjst_ary.length; i++){
-                      var sAdj_name = this.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
+                      var sAdj_name = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
                       if(sAdj_name =="adj1"){
-                          sAdj1 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj1 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj1 = parseInt(sAdj1.substr(4))*refr;
                       }else if(sAdj_name =="adj2"){
-                          sAdj2 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj2 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj2 = parseInt(sAdj2.substr(4))*refr;
                       }else if(sAdj_name =="adj3"){
-                          sAdj3 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj3 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj3 = parseInt(sAdj3.substr(4))*refr;
                       }
                   }
@@ -3488,7 +3491,7 @@ class Convertor {
           case "callout1":
           case "callout2":
           case "callout3":
-              var shapAdjst_ary = this.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
+              var shapAdjst_ary = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
               var refr = 96/914400;
               var sAdj1,adj1= 18750*refr;
               var sAdj2,adj2 = -8333*refr;
@@ -3500,30 +3503,30 @@ class Convertor {
               var sAdj8,adj8 = -8333*refr;
               if(shapAdjst_ary !== undefined){
                   for(var i=0; i<shapAdjst_ary.length; i++){
-                      var sAdj_name = this.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
+                      var sAdj_name = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
                       if(sAdj_name =="adj1"){
-                          sAdj1 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj1 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj1 = parseInt(sAdj1.substr(4))*refr;
                       }else if(sAdj_name =="adj2"){
-                          sAdj2 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj2 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj2 = parseInt(sAdj2.substr(4))*refr;
                       }else if(sAdj_name =="adj3"){
-                          sAdj3 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj3 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj3 = parseInt(sAdj3.substr(4))*refr;
                       }else if(sAdj_name =="adj4"){
-                          sAdj4 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj4 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj4 = parseInt(sAdj4.substr(4))*refr;
                       }else if(sAdj_name =="adj5"){
-                          sAdj5 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj5 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj5 = parseInt(sAdj5.substr(4))*refr;
                       }else if(sAdj_name =="adj6"){
-                          sAdj6 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj6 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj6 = parseInt(sAdj6.substr(4))*refr;
                       }else if(sAdj_name =="adj7"){
-                          sAdj7 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj7 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj7 = parseInt(sAdj7.substr(4))*refr;
                       }else if(sAdj_name =="adj8"){
-                          sAdj8 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj8 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj8 = parseInt(sAdj8.substr(4))*refr;
                       }
                   }
@@ -3769,22 +3772,22 @@ class Convertor {
               //}
               break;
           case "leftRightRibbon":
-              var shapAdjst_ary = this.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
+              var shapAdjst_ary = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
               var refr = 96/914400;
               var sAdj1,adj1= 50000*refr;
               var sAdj2,adj2 = 50000*refr;
               var sAdj3,adj3 = 16667*refr;
               if(shapAdjst_ary !== undefined){
                   for(var i=0; i<shapAdjst_ary.length; i++){
-                      var sAdj_name = this.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
+                      var sAdj_name = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
                       if(sAdj_name =="adj1"){
-                          sAdj1 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj1 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj1 = parseInt(sAdj1.substr(4))*refr;
                       }else if(sAdj_name =="adj2"){
-                          sAdj2 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj2 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj2 = parseInt(sAdj2.substr(4))*refr;
                       }else if(sAdj_name =="adj3"){
-                          sAdj3 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj3 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj3 = parseInt(sAdj3.substr(4))*refr;
                       }
                   }
@@ -3850,17 +3853,17 @@ class Convertor {
               break;
           case "ribbon":
           case "ribbon2":
-              var shapAdjst_ary = this.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
+              var shapAdjst_ary = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
               var sAdj1,adj1= 16667*96/914400;
               var sAdj2,adj2 = 50000*96/914400;
               if(shapAdjst_ary !== undefined){
                   for(var i=0; i<shapAdjst_ary.length; i++){
-                      var sAdj_name = this.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
+                      var sAdj_name = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
                       if(sAdj_name =="adj1"){
-                          sAdj1 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj1 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj1 = parseInt(sAdj1.substr(4))* 96/914400;
                       }else if(sAdj_name =="adj2"){
-                          sAdj2 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj2 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj2 = parseInt(sAdj2.substr(4))* 96/914400;
                       }
                   }
@@ -3972,17 +3975,17 @@ class Convertor {
               break;
           case "doubleWave":
           case "wave":
-              var shapAdjst_ary = this.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
+              var shapAdjst_ary = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
               var sAdj1, adj1 = (shapType == "doubleWave")?6250*96/914400:12500*96/914400;
               var sAdj2,adj2 = 0;
               if(shapAdjst_ary !== undefined){
                   for(var i=0; i<shapAdjst_ary.length; i++){
-                      var sAdj_name = this.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
+                      var sAdj_name = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
                       if(sAdj_name =="adj1"){
-                          sAdj1 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj1 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj1 = parseInt(sAdj1.substr(4))* 96/914400;
                       }else if(sAdj_name =="adj2"){
-                          sAdj2 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj2 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj2 = parseInt(sAdj2.substr(4))* 96/914400;
                       }
                   }
@@ -4068,21 +4071,21 @@ class Convertor {
               break;
           case "ellipseRibbon":
           case "ellipseRibbon2":
-              var shapAdjst_ary = this.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
+              var shapAdjst_ary = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
               var sAdj1,adj1= 25000*96/914400;
               var sAdj2,adj2 = 50000*96/914400;
               var sAdj3,adj3 = 12500*96/914400;
               if(shapAdjst_ary !== undefined){
                   for(var i=0; i<shapAdjst_ary.length; i++){
-                      var sAdj_name = this.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
+                      var sAdj_name = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
                       if(sAdj_name =="adj1"){
-                          sAdj1 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj1 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj1 = parseInt(sAdj1.substr(4))* 96/914400;
                       }else if(sAdj_name =="adj2"){
-                          sAdj2 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj2 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj2 = parseInt(sAdj2.substr(4))* 96/914400;
                       }else if(sAdj_name =="adj3"){
-                          sAdj3 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj3 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj3 = parseInt(sAdj3.substr(4))* 96/914400;
                       }
                   }
@@ -4246,18 +4249,18 @@ class Convertor {
               result += "/>";
               break;
           case "rightArrow":
-              var shapAdjst_ary = this.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
+              var shapAdjst_ary = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
               var sAdj1,sAdj1_val = 0.25;//0.5;
               var sAdj2,sAdj2_val = 0.5;
               var max_sAdj2_const = w/h;
               if(shapAdjst_ary !== undefined){
                   for(var i=0; i<shapAdjst_ary.length; i++){
-                      var sAdj_name = this.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
+                      var sAdj_name = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
                       if(sAdj_name =="adj1"){
-                          sAdj1 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj1 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           sAdj1_val = 0.5-(parseInt(sAdj1.substr(4)) /200000);
                       }else if(sAdj_name =="adj2"){
-                          sAdj2 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj2 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           var sAdj2_val2 = parseInt(sAdj2.substr(4)) /100000;
                           sAdj2_val = 1 - ((sAdj2_val2)/max_sAdj2_const);
                       }
@@ -4270,18 +4273,18 @@ class Convertor {
                   "' stroke='" + border.color + "' stroke-width='" + border.width + "' stroke-dasharray='" + border.strokeDasharray + "' />";
               break;
           case "leftArrow":
-              var shapAdjst_ary = this.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
+              var shapAdjst_ary = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
               var sAdj1,sAdj1_val = 0.25;//0.5;
               var sAdj2,sAdj2_val = 0.5;
               var max_sAdj2_const = w/h;
               if(shapAdjst_ary !== undefined){
                   for(var i=0; i<shapAdjst_ary.length; i++){
-                      var sAdj_name = this.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
+                      var sAdj_name = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
                       if(sAdj_name =="adj1"){
-                          sAdj1 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj1 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           sAdj1_val = 0.5-(parseInt(sAdj1.substr(4)) /200000);
                       }else if(sAdj_name =="adj2"){
-                          sAdj2 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj2 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           var sAdj2_val2 = parseInt(sAdj2.substr(4)) /100000;
                           sAdj2_val = (sAdj2_val2)/max_sAdj2_const;
                       }
@@ -4295,18 +4298,18 @@ class Convertor {
               break;
           case "downArrow":
           case "flowChartOffpageConnector":
-              var shapAdjst_ary = this.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
+              var shapAdjst_ary = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
               var sAdj1,sAdj1_val = 0.25;//0.5;
               var sAdj2,sAdj2_val = 0.5;
               var max_sAdj2_const = h/w;
               if(shapAdjst_ary !== undefined){
                   for(var i=0; i<shapAdjst_ary.length; i++){
-                      var sAdj_name = this.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
+                      var sAdj_name = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
                       if(sAdj_name =="adj1"){
-                          sAdj1 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj1 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           sAdj1_val = parseInt(sAdj1.substr(4)) /200000;
                       }else if(sAdj_name =="adj2"){
-                          sAdj2 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj2 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           var sAdj2_val2 = parseInt(sAdj2.substr(4)) /100000;
                           sAdj2_val = (sAdj2_val2)/max_sAdj2_const;
                       }
@@ -4322,18 +4325,18 @@ class Convertor {
                   "' stroke='" + border.color + "' stroke-width='" + border.width + "' stroke-dasharray='" + border.strokeDasharray + "' />";
               break;
           case "upArrow":
-              var shapAdjst_ary = this.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
+              var shapAdjst_ary = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
               var sAdj1,sAdj1_val = 0.25;//0.5;
               var sAdj2,sAdj2_val = 0.5;
               var max_sAdj2_const = h/w;
               if(shapAdjst_ary !== undefined){
                   for(var i=0; i<shapAdjst_ary.length; i++){
-                      var sAdj_name = this.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
+                      var sAdj_name = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
                       if(sAdj_name =="adj1"){
-                          sAdj1 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj1 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           sAdj1_val = parseInt(sAdj1.substr(4)) /200000;
                       }else if(sAdj_name =="adj2"){
-                          sAdj2 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj2 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           var sAdj2_val2 = parseInt(sAdj2.substr(4)) /100000;
                           sAdj2_val = (sAdj2_val2)/max_sAdj2_const;
                       }
@@ -4344,18 +4347,18 @@ class Convertor {
                   "' stroke='" + border.color + "' stroke-width='" + border.width + "' stroke-dasharray='" + border.strokeDasharray + "' />";
               break;
           case "leftRightArrow":
-              var shapAdjst_ary = this.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
+              var shapAdjst_ary = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
               var sAdj1,sAdj1_val = 0.25;
               var sAdj2,sAdj2_val = 0.25;
               var max_sAdj2_const = w/h;
               if(shapAdjst_ary !== undefined){
                   for(var i=0; i<shapAdjst_ary.length; i++){
-                      var sAdj_name = this.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
+                      var sAdj_name = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
                       if(sAdj_name =="adj1"){
-                          sAdj1 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj1 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           sAdj1_val = 0.5-(parseInt(sAdj1.substr(4)) /200000);
                       }else if(sAdj_name =="adj2"){
-                          sAdj2 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj2 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           var sAdj2_val2 = parseInt(sAdj2.substr(4)) /100000;
                           sAdj2_val = (sAdj2_val2)/max_sAdj2_const;
                       }
@@ -4369,18 +4372,18 @@ class Convertor {
                   "' stroke='" + border.color + "' stroke-width='" + border.width + "' stroke-dasharray='" + border.strokeDasharray + "' />";
               break;
           case "upDownArrow":
-              var shapAdjst_ary = this.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
+              var shapAdjst_ary = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
               var sAdj1,sAdj1_val = 0.25;
               var sAdj2,sAdj2_val = 0.25;
               var max_sAdj2_const = h/w;
               if(shapAdjst_ary !== undefined){
                   for(var i=0; i<shapAdjst_ary.length; i++){
-                      var sAdj_name = this.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
+                      var sAdj_name = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
                       if(sAdj_name =="adj1"){
-                          sAdj1 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj1 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           sAdj1_val = 0.5-(parseInt(sAdj1.substr(4)) /200000);
                       }else if(sAdj_name =="adj2"){
-                          sAdj2 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj2 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           var sAdj2_val2 = parseInt(sAdj2.substr(4)) /100000;
                           sAdj2_val = (sAdj2_val2)/max_sAdj2_const;
                       }
@@ -4394,7 +4397,7 @@ class Convertor {
                   "' stroke='" + border.color + "' stroke-width='" + border.width + "' stroke-dasharray='" + border.strokeDasharray + "' />";
               break;
           case "quadArrow":
-              var shapAdjst_ary = this.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
+              var shapAdjst_ary = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
               var sAdj1,adj1 = 22500*96/914400;
               var sAdj2,adj2 = 22500*96/914400;
               var sAdj3,adj3 = 22500*96/914400;
@@ -4403,15 +4406,15 @@ class Convertor {
               var cnstVal3 = 200000*96/914400;
               if(shapAdjst_ary !== undefined){
                   for(var i=0; i<shapAdjst_ary.length; i++){
-                      var sAdj_name = this.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
+                      var sAdj_name = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
                       if(sAdj_name =="adj1"){
-                          sAdj1 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj1 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj1 = parseInt(sAdj1.substr(4))*96/914400;
                       }else if(sAdj_name =="adj2"){
-                          sAdj2 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj2 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj2 = parseInt(sAdj2.substr(4))*96/914400;
                       }else if(sAdj_name =="adj3"){
-                          sAdj3 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj3 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj3 = parseInt(sAdj3.substr(4))*96/914400;
                       }
                   }
@@ -4473,7 +4476,7 @@ class Convertor {
 
               break;
           case "leftRightUpArrow":
-              var shapAdjst_ary = this.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
+              var shapAdjst_ary = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
               var sAdj1,adj1 = 25000*96/914400;
               var sAdj2,adj2 = 25000*96/914400;
               var sAdj3,adj3 = 25000*96/914400;
@@ -4482,15 +4485,15 @@ class Convertor {
               var cnstVal3 = 200000*96/914400;
               if(shapAdjst_ary !== undefined){
                   for(var i=0; i<shapAdjst_ary.length; i++){
-                      var sAdj_name = this.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
+                      var sAdj_name = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
                       if(sAdj_name =="adj1"){
-                          sAdj1 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj1 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj1 = parseInt(sAdj1.substr(4))*96/914400;
                       }else if(sAdj_name =="adj2"){
-                          sAdj2 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj2 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj2 = parseInt(sAdj2.substr(4))*96/914400;
                       }else if(sAdj_name =="adj3"){
-                          sAdj3 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj3 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj3 = parseInt(sAdj3.substr(4))*96/914400;
                       }
                   }
@@ -4545,7 +4548,7 @@ class Convertor {
 
               break;
           case "leftUpArrow":
-              var shapAdjst_ary = this.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
+              var shapAdjst_ary = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
               var sAdj1,adj1 = 25000*96/914400;
               var sAdj2,adj2 = 25000*96/914400;
               var sAdj3,adj3 = 25000*96/914400;
@@ -4554,15 +4557,15 @@ class Convertor {
               var cnstVal3 = 200000*96/914400;
               if(shapAdjst_ary !== undefined){
                   for(var i=0; i<shapAdjst_ary.length; i++){
-                      var sAdj_name = this.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
+                      var sAdj_name = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
                       if(sAdj_name =="adj1"){
-                          sAdj1 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj1 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj1 = parseInt(sAdj1.substr(4))*96/914400;
                       }else if(sAdj_name =="adj2"){
-                          sAdj2 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj2 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj2 = parseInt(sAdj2.substr(4))*96/914400;
                       }else if(sAdj_name =="adj3"){
-                          sAdj3 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj3 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj3 = parseInt(sAdj3.substr(4))*96/914400;
                       }
                   }
@@ -4610,7 +4613,7 @@ class Convertor {
 
               break;
           case "bentUpArrow":
-              var shapAdjst_ary = this.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
+              var shapAdjst_ary = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
               var sAdj1,adj1 = 25000*96/914400;
               var sAdj2,adj2 = 25000*96/914400;
               var sAdj3,adj3 = 25000*96/914400;
@@ -4619,15 +4622,15 @@ class Convertor {
               var cnstVal3 = 200000*96/914400;
               if(shapAdjst_ary !== undefined){
                   for(var i=0; i<shapAdjst_ary.length; i++){
-                      var sAdj_name = this.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
+                      var sAdj_name = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
                       if(sAdj_name =="adj1"){
-                          sAdj1 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj1 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj1 = parseInt(sAdj1.substr(4))*96/914400;
                       }else if(sAdj_name =="adj2"){
-                          sAdj2 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj2 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj2 = parseInt(sAdj2.substr(4))*96/914400;
                       }else if(sAdj_name =="adj3"){
-                          sAdj3 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj3 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj3 = parseInt(sAdj3.substr(4))*96/914400;
                       }
                   }
@@ -4668,7 +4671,7 @@ class Convertor {
 
               break;
           case "bentArrow":
-              var shapAdjst_ary = this.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
+              var shapAdjst_ary = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
               var sAdj1,adj1 = 25000*96/914400;
               var sAdj2,adj2 = 25000*96/914400;
               var sAdj3,adj3 = 25000*96/914400;
@@ -4677,18 +4680,18 @@ class Convertor {
               var cnstVal2 = 100000*96/914400;
               if(shapAdjst_ary !== undefined){
                   for(var i=0; i<shapAdjst_ary.length; i++){
-                      var sAdj_name = this.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
+                      var sAdj_name = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
                       if(sAdj_name =="adj1"){
-                          sAdj1 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj1 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj1 = parseInt(sAdj1.substr(4))*96/914400;
                       }else if(sAdj_name =="adj2"){
-                          sAdj2 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj2 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj2 = parseInt(sAdj2.substr(4))*96/914400;
                       }else if(sAdj_name =="adj3"){
-                          sAdj3 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj3 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj3 = parseInt(sAdj3.substr(4))*96/914400;
                       }else if(sAdj_name =="adj4"){
-                          sAdj4 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj4 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj4 = parseInt(sAdj4.substr(4))*96/914400;
                       }
                   }
@@ -4745,7 +4748,7 @@ class Convertor {
 
               break;
           case "uturnArrow":
-              var shapAdjst_ary = this.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
+              var shapAdjst_ary = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
               var sAdj1,adj1 = 25000*96/914400;
               var sAdj2,adj2 = 25000*96/914400;
               var sAdj3,adj3 = 25000*96/914400;
@@ -4755,21 +4758,21 @@ class Convertor {
               var cnstVal2 = 100000*96/914400;
               if(shapAdjst_ary !== undefined){
                   for(var i=0; i<shapAdjst_ary.length; i++){
-                      var sAdj_name = this.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
+                      var sAdj_name = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
                       if(sAdj_name =="adj1"){
-                          sAdj1 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj1 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj1 = parseInt(sAdj1.substr(4))*96/914400;
                       }else if(sAdj_name =="adj2"){
-                          sAdj2 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj2 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj2 = parseInt(sAdj2.substr(4))*96/914400;
                       }else if(sAdj_name =="adj3"){
-                          sAdj3 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj3 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj3 = parseInt(sAdj3.substr(4))*96/914400;
                       }else if(sAdj_name =="adj4"){
-                          sAdj4 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj4 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj4 = parseInt(sAdj4.substr(4))*96/914400;
                       }else if(sAdj_name =="adj5"){
-                          sAdj5 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj5 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj5 = parseInt(sAdj5.substr(4))*96/914400;
                       }
                   }
@@ -4842,7 +4845,7 @@ class Convertor {
 
               break;
           case "stripedRightArrow":
-              var shapAdjst_ary = this.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
+              var shapAdjst_ary = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
               var sAdj1,adj1 = 50000*96/914400;
               var sAdj2,adj2 = 50000*96/914400;
               var cnstVal1 = 100000*96/914400;
@@ -4850,12 +4853,12 @@ class Convertor {
               var cnstVal3 = 84375*96/914400;
               if(shapAdjst_ary !== undefined){
                   for(var i=0; i<shapAdjst_ary.length; i++){
-                      var sAdj_name = this.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
+                      var sAdj_name = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
                       if(sAdj_name =="adj1"){
-                          sAdj1 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj1 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj1 = parseInt(sAdj1.substr(4))*96/914400;
                       }else if(sAdj_name =="adj2"){
-                          sAdj2 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj2 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj2 = parseInt(sAdj2.substr(4))*96/914400;
                       }
                   }
@@ -4901,19 +4904,19 @@ class Convertor {
 
               break;
           case "notchedRightArrow":
-              var shapAdjst_ary = this.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
+              var shapAdjst_ary = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
               var sAdj1,adj1 = 50000*96/914400;
               var sAdj2,adj2 = 50000*96/914400;
               var cnstVal1 = 100000*96/914400;
               var cnstVal2 = 200000*96/914400;
               if(shapAdjst_ary !== undefined){
                   for(var i=0; i<shapAdjst_ary.length; i++){
-                      var sAdj_name = this.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
+                      var sAdj_name = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
                       if(sAdj_name =="adj1"){
-                          sAdj1 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj1 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj1 = parseInt(sAdj1.substr(4))*96/914400;
                       }else if(sAdj_name =="adj2"){
-                          sAdj2 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj2 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj2 = parseInt(sAdj2.substr(4))*96/914400;
                       }
                   }
@@ -4947,7 +4950,7 @@ class Convertor {
 
               break;
           case "homePlate":
-              var shapAdjst = this.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd","attrs","fmla"]);
+              var shapAdjst = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd","attrs","fmla"]);
               var adj = 50000*96/914400;
               var cnstVal1 = 100000*96/914400;
               if(shapAdjst !== undefined){
@@ -4972,7 +4975,7 @@ class Convertor {
 
               break;
           case "chevron":
-              var shapAdjst = this.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd","attrs","fmla"]);
+              var shapAdjst = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd","attrs","fmla"]);
               var adj = 50000*96/914400;
               var cnstVal1 = 100000*96/914400;
               if(shapAdjst !== undefined){
@@ -4999,7 +5002,7 @@ class Convertor {
 
               break;
           case "rightArrowCallout":
-              var shapAdjst_ary = this.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
+              var shapAdjst_ary = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
               var sAdj1,adj1 = 25000*96/914400;
               var sAdj2,adj2 = 25000*96/914400;
               var sAdj3,adj3 = 25000*96/914400;
@@ -5009,18 +5012,18 @@ class Convertor {
               var cnstVal3 = 200000*96/914400;
               if(shapAdjst_ary !== undefined){
                   for(var i=0; i<shapAdjst_ary.length; i++){
-                      var sAdj_name = this.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
+                      var sAdj_name = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
                       if(sAdj_name =="adj1"){
-                          sAdj1 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj1 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj1 = parseInt(sAdj1.substr(4))*96/914400;
                       }else if(sAdj_name =="adj2"){
-                          sAdj2 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj2 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj2 = parseInt(sAdj2.substr(4))*96/914400;
                       }else if(sAdj_name =="adj3"){
-                          sAdj3 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj3 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj3 = parseInt(sAdj3.substr(4))*96/914400;
                       }else if(sAdj_name =="adj4"){
-                          sAdj4 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj4 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj4 = parseInt(sAdj4.substr(4))*96/914400;
                       }
                   }
@@ -5064,7 +5067,7 @@ class Convertor {
 
               break;
           case "downArrowCallout":
-              var shapAdjst_ary = this.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
+              var shapAdjst_ary = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
               var sAdj1,adj1 = 25000*96/914400;
               var sAdj2,adj2 = 25000*96/914400;
               var sAdj3,adj3 = 25000*96/914400;
@@ -5074,18 +5077,18 @@ class Convertor {
               var cnstVal3 = 200000*96/914400;
               if(shapAdjst_ary !== undefined){
                   for(var i=0; i<shapAdjst_ary.length; i++){
-                      var sAdj_name = this.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
+                      var sAdj_name = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
                       if(sAdj_name =="adj1"){
-                          sAdj1 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj1 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj1 = parseInt(sAdj1.substr(4))*96/914400;
                       }else if(sAdj_name =="adj2"){
-                          sAdj2 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj2 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj2 = parseInt(sAdj2.substr(4))*96/914400;
                       }else if(sAdj_name =="adj3"){
-                          sAdj3 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj3 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj3 = parseInt(sAdj3.substr(4))*96/914400;
                       }else if(sAdj_name =="adj4"){
-                          sAdj4 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj4 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj4 = parseInt(sAdj4.substr(4))*96/914400;
                       }
                   }
@@ -5130,7 +5133,7 @@ class Convertor {
 
               break;
           case "leftArrowCallout":
-              var shapAdjst_ary = this.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
+              var shapAdjst_ary = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
               var sAdj1,adj1 = 25000*96/914400;
               var sAdj2,adj2 = 25000*96/914400;
               var sAdj3,adj3 = 25000*96/914400;
@@ -5140,18 +5143,18 @@ class Convertor {
               var cnstVal3 = 200000*96/914400;
               if(shapAdjst_ary !== undefined){
                   for(var i=0; i<shapAdjst_ary.length; i++){
-                      var sAdj_name = this.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
+                      var sAdj_name = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
                       if(sAdj_name =="adj1"){
-                          sAdj1 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj1 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj1 = parseInt(sAdj1.substr(4))*96/914400;
                       }else if(sAdj_name =="adj2"){
-                          sAdj2 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj2 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj2 = parseInt(sAdj2.substr(4))*96/914400;
                       }else if(sAdj_name =="adj3"){
-                          sAdj3 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj3 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj3 = parseInt(sAdj3.substr(4))*96/914400;
                       }else if(sAdj_name =="adj4"){
-                          sAdj4 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj4 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj4 = parseInt(sAdj4.substr(4))*96/914400;
                       }
                   }
@@ -5196,7 +5199,7 @@ class Convertor {
 
               break;
           case "upArrowCallout":
-              var shapAdjst_ary = this.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
+              var shapAdjst_ary = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
               var sAdj1,adj1 = 25000*96/914400;
               var sAdj2,adj2 = 25000*96/914400;
               var sAdj3,adj3 = 25000*96/914400;
@@ -5206,18 +5209,18 @@ class Convertor {
               var cnstVal3 = 200000*96/914400;
               if(shapAdjst_ary !== undefined){
                   for(var i=0; i<shapAdjst_ary.length; i++){
-                      var sAdj_name = this.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
+                      var sAdj_name = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
                       if(sAdj_name =="adj1"){
-                          sAdj1 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj1 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj1 = parseInt(sAdj1.substr(4))*96/914400;
                       }else if(sAdj_name =="adj2"){
-                          sAdj2 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj2 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj2 = parseInt(sAdj2.substr(4))*96/914400;
                       }else if(sAdj_name =="adj3"){
-                          sAdj3 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj3 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj3 = parseInt(sAdj3.substr(4))*96/914400;
                       }else if(sAdj_name =="adj4"){
-                          sAdj4 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj4 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj4 = parseInt(sAdj4.substr(4))*96/914400;
                       }
                   }
@@ -5262,7 +5265,7 @@ class Convertor {
 
               break;
           case "leftRightArrowCallout":
-              var shapAdjst_ary = this.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
+              var shapAdjst_ary = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
               var sAdj1,adj1 = 25000*96/914400;
               var sAdj2,adj2 = 25000*96/914400;
               var sAdj3,adj3 = 25000*96/914400;
@@ -5272,18 +5275,18 @@ class Convertor {
               var cnstVal3 = 200000*96/914400;
               if(shapAdjst_ary !== undefined){
                   for(var i=0; i<shapAdjst_ary.length; i++){
-                      var sAdj_name = this.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
+                      var sAdj_name = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
                       if(sAdj_name =="adj1"){
-                          sAdj1 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj1 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj1 = parseInt(sAdj1.substr(4))*96/914400;
                       }else if(sAdj_name =="adj2"){
-                          sAdj2 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj2 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj2 = parseInt(sAdj2.substr(4))*96/914400;
                       }else if(sAdj_name =="adj3"){
-                          sAdj3 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj3 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj3 = parseInt(sAdj3.substr(4))*96/914400;
                       }else if(sAdj_name =="adj4"){
-                          sAdj4 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj4 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj4 = parseInt(sAdj4.substr(4))*96/914400;
                       }
                   }
@@ -5335,7 +5338,7 @@ class Convertor {
 
               break;
           case "quadArrowCallout":
-              var shapAdjst_ary = this.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
+              var shapAdjst_ary = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
               var sAdj1,adj1 = 18515*96/914400;
               var sAdj2,adj2 = 18515*96/914400;
               var sAdj3,adj3 = 18515*96/914400;
@@ -5345,18 +5348,18 @@ class Convertor {
               var cnstVal3 = 200000*96/914400;
               if(shapAdjst_ary !== undefined){
                   for(var i=0; i<shapAdjst_ary.length; i++){
-                      var sAdj_name = this.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
+                      var sAdj_name = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
                       if(sAdj_name =="adj1"){
-                          sAdj1 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj1 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj1 = parseInt(sAdj1.substr(4))*96/914400;
                       }else if(sAdj_name =="adj2"){
-                          sAdj2 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj2 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj2 = parseInt(sAdj2.substr(4))*96/914400;
                       }else if(sAdj_name =="adj3"){
-                          sAdj3 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj3 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj3 = parseInt(sAdj3.substr(4))*96/914400;
                       }else if(sAdj_name =="adj4"){
-                          sAdj4 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj4 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj4 = parseInt(sAdj4.substr(4))*96/914400;
                       }
                   }
@@ -5430,7 +5433,7 @@ class Convertor {
 
               break;
           case "curvedDownArrow":
-              var shapAdjst_ary = this.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
+              var shapAdjst_ary = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
               var sAdj1,adj1 = 25000*96/914400;
               var sAdj2,adj2 = 50000*96/914400;
               var sAdj3,adj3 = 25000*96/914400;
@@ -5438,15 +5441,15 @@ class Convertor {
               var cnstVal2 = 100000*96/914400;
               if(shapAdjst_ary !== undefined){
                   for(var i=0; i<shapAdjst_ary.length; i++){
-                      var sAdj_name = this.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
+                      var sAdj_name = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
                       if(sAdj_name =="adj1"){
-                          sAdj1 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj1 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj1 = parseInt(sAdj1.substr(4))*96/914400;
                       }else if(sAdj_name =="adj2"){
-                          sAdj2 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj2 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj2 = parseInt(sAdj2.substr(4))*96/914400;
                       }else if(sAdj_name =="adj3"){
-                          sAdj3 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj3 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj3 = parseInt(sAdj3.substr(4))*96/914400;
                       }
                   }
@@ -5519,7 +5522,7 @@ class Convertor {
 
               break;
           case "curvedLeftArrow":
-              var shapAdjst_ary = this.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
+              var shapAdjst_ary = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
               var sAdj1,adj1 = 25000*96/914400;
               var sAdj2,adj2 = 50000*96/914400;
               var sAdj3,adj3 = 25000*96/914400;
@@ -5527,15 +5530,15 @@ class Convertor {
               var cnstVal2 = 100000*96/914400;
               if(shapAdjst_ary !== undefined){
                   for(var i=0; i<shapAdjst_ary.length; i++){
-                      var sAdj_name = this.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
+                      var sAdj_name = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
                       if(sAdj_name =="adj1"){
-                          sAdj1 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj1 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj1 = parseInt(sAdj1.substr(4))*96/914400;
                       }else if(sAdj_name =="adj2"){
-                          sAdj2 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj2 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj2 = parseInt(sAdj2.substr(4))*96/914400;
                       }else if(sAdj_name =="adj3"){
-                          sAdj3 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj3 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj3 = parseInt(sAdj3.substr(4))*96/914400;
                       }
                   }
@@ -5610,7 +5613,7 @@ class Convertor {
 
               break;
           case "curvedRightArrow":
-              var shapAdjst_ary = this.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
+              var shapAdjst_ary = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
               var sAdj1,adj1 = 25000*96/914400;
               var sAdj2,adj2 = 50000*96/914400;
               var sAdj3,adj3 = 25000*96/914400;
@@ -5618,15 +5621,15 @@ class Convertor {
               var cnstVal2 = 100000*96/914400;
               if(shapAdjst_ary !== undefined){
                   for(var i=0; i<shapAdjst_ary.length; i++){
-                      var sAdj_name = this.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
+                      var sAdj_name = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
                       if(sAdj_name =="adj1"){
-                          sAdj1 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj1 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj1 = parseInt(sAdj1.substr(4))*96/914400;
                       }else if(sAdj_name =="adj2"){
-                          sAdj2 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj2 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj2 = parseInt(sAdj2.substr(4))*96/914400;
                       }else if(sAdj_name =="adj3"){
-                          sAdj3 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj3 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj3 = parseInt(sAdj3.substr(4))*96/914400;
                       }
                   }
@@ -5701,7 +5704,7 @@ class Convertor {
 
               break;
           case "curvedUpArrow":
-              var shapAdjst_ary = this.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
+              var shapAdjst_ary = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
               var sAdj1,adj1 = 25000*96/914400;
               var sAdj2,adj2 = 50000*96/914400;
               var sAdj3,adj3 = 25000*96/914400;
@@ -5709,15 +5712,15 @@ class Convertor {
               var cnstVal2 = 100000*96/914400;
               if(shapAdjst_ary !== undefined){
                   for(var i=0; i<shapAdjst_ary.length; i++){
-                      var sAdj_name = this.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
+                      var sAdj_name = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
                       if(sAdj_name =="adj1"){
-                          sAdj1 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj1 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj1 = parseInt(sAdj1.substr(4))*96/914400;
                       }else if(sAdj_name =="adj2"){
-                          sAdj2 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj2 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj2 = parseInt(sAdj2.substr(4))*96/914400;
                       }else if(sAdj_name =="adj3"){
-                          sAdj3 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj3 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj3 = parseInt(sAdj3.substr(4))*96/914400;
                       }
                   }
@@ -5798,27 +5801,27 @@ class Convertor {
           case "mathMultiply":
           case "mathNotEqual":
           case "mathPlus":
-              var shapAdjst_ary = this.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
+              var shapAdjst_ary = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
               var sAdj1,adj1;
               var sAdj2,adj2;
               var sAdj3,adj3;
               if(shapAdjst_ary !== undefined){
                   if(shapAdjst_ary.constructor === Array){
                       for(var i=0; i<shapAdjst_ary.length; i++){
-                          var sAdj_name = this.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
+                          var sAdj_name = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
                           if(sAdj_name =="adj1"){
-                              sAdj1 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                              sAdj1 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                               adj1 = parseInt(sAdj1.substr(4));
                           }else if(sAdj_name =="adj2"){
-                              sAdj2 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                              sAdj2 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                               adj2 = parseInt(sAdj2.substr(4));
                           }else if(sAdj_name =="adj3"){
-                              sAdj3 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                              sAdj3 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                               adj3 = parseInt(sAdj3.substr(4));
                           }
                       }
                   }else{
-                      sAdj1 = this.getTextByPathList(shapAdjst_ary,["attrs","fmla"]);
+                      sAdj1 = this.convertorUtils.getTextByPathList(shapAdjst_ary,["attrs","fmla"]);
                       adj1 = parseInt(sAdj1.substr(4));
                   }
               }
@@ -6132,7 +6135,7 @@ class Convertor {
           case "can":
           case "flowChartMagneticDisk":
           case "flowChartMagneticDrum":
-              var shapAdjst = this.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd","attrs","fmla"]);
+              var shapAdjst = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd","attrs","fmla"]);
               var adj = 25000*96/914400;
               var cnstVal1 = 50000*96/914400;
               var cnstVal2 = 200000*96/914400;
@@ -6166,18 +6169,18 @@ class Convertor {
 
               break;
           case "swooshArrow":
-              var shapAdjst_ary = this.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
+              var shapAdjst_ary = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
               var refr = 96/914400;
               var sAdj1,adj1 = 25000*refr;
               var sAdj2,adj2 = 16667*refr;
               if(shapAdjst_ary !== undefined){
                   for(var i=0; i<shapAdjst_ary.length; i++){
-                      var sAdj_name = this.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
+                      var sAdj_name = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
                       if(sAdj_name =="adj1"){
-                          sAdj1 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj1 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj1 = parseInt(sAdj1.substr(4))*refr;
                       }else if(sAdj_name =="adj2"){
-                          sAdj2 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj2 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj2 = parseInt(sAdj2.substr(4))*refr;
                       }
                   }
@@ -6232,7 +6235,7 @@ class Convertor {
 
               break;
           case "circularArrow":
-              var shapAdjst_ary = this.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
+              var shapAdjst_ary = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
               var sAdj1,adj1 = 12500*96/914400;
               var sAdj2,adj2 = (1142319/60000)*Math.PI/180;
               var sAdj3,adj3 = (20457681/60000)*Math.PI/180;
@@ -6240,21 +6243,21 @@ class Convertor {
               var sAdj5,adj5 = 12500*96/914400;
               if(shapAdjst_ary !== undefined){
                   for(var i=0; i<shapAdjst_ary.length; i++){
-                      var sAdj_name = this.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
+                      var sAdj_name = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
                       if(sAdj_name =="adj1"){
-                          sAdj1 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj1 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj1 = parseInt(sAdj1.substr(4))*96/914400;
                       }else if(sAdj_name =="adj2"){
-                          sAdj2 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj2 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj2 = (parseInt(sAdj2.substr(4))/60000)*Math.PI/180;
                       }else if(sAdj_name =="adj3"){
-                          sAdj3 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj3 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj3 = (parseInt(sAdj3.substr(4))/60000)*Math.PI/180;
                       }else if(sAdj_name =="adj4"){
-                          sAdj4 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj4 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj4 = (parseInt(sAdj4.substr(4))/60000)*Math.PI/180;
                       }else if(sAdj_name =="adj5"){
-                          sAdj5 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj5 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj5 = parseInt(sAdj5.substr(4))*96/914400;
                       }
                   }
@@ -6493,7 +6496,7 @@ class Convertor {
 
               break;
           case "leftCircularArrow":
-              var shapAdjst_ary = this.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
+              var shapAdjst_ary = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:prstGeom","a:avLst","a:gd"]);
               var sAdj1,adj1 = 12500*96/914400;
               var sAdj2,adj2 = (-1142319/60000)*Math.PI/180;
               var sAdj3,adj3 = (1142319/60000)*Math.PI/180;
@@ -6501,21 +6504,21 @@ class Convertor {
               var sAdj5,adj5 = 12500*96/914400;
               if(shapAdjst_ary !== undefined){
                   for(var i=0; i<shapAdjst_ary.length; i++){
-                      var sAdj_name = this.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
+                      var sAdj_name = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","name"]);
                       if(sAdj_name =="adj1"){
-                          sAdj1 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj1 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj1 = parseInt(sAdj1.substr(4))*96/914400;
                       }else if(sAdj_name =="adj2"){
-                          sAdj2 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj2 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj2 = (parseInt(sAdj2.substr(4))/60000)*Math.PI/180;
                       }else if(sAdj_name =="adj3"){
-                          sAdj3 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj3 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj3 = (parseInt(sAdj3.substr(4))/60000)*Math.PI/180;
                       }else if(sAdj_name =="adj4"){
-                          sAdj4 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj4 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj4 = (parseInt(sAdj4.substr(4))/60000)*Math.PI/180;
                       }else if(sAdj_name =="adj5"){
-                          sAdj5 = this.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
+                          sAdj5 = this.convertorUtils.getTextByPathList(shapAdjst_ary[i],["attrs","fmla"]);
                           adj5 = parseInt(sAdj5.substr(4))*96/914400;
                       }
                   }
@@ -6795,18 +6798,18 @@ class Convertor {
       }else if(custShapType !== undefined){
         //custGeom here - Amir ///////////////////////////////////////////////////////
         //http://officeopenxml.com/drwSp-custGeom.php
-        var pathLstNode = this.getTextByPathList(custShapType, ["a:pathLst"]);
-        var pathNode = this.getTextByPathList(pathLstNode, ["a:path", "attrs"]);
+        var pathLstNode = this.convertorUtils.getTextByPathList(custShapType, ["a:pathLst"]);
+        var pathNode = this.convertorUtils.getTextByPathList(pathLstNode, ["a:path", "attrs"]);
         var maxX = parseInt(pathNode["w"]) * 96 / 914400;
         var maxY = parseInt(pathNode["h"]) * 96 / 914400;
         //console.log("w = "+w+"\nh = "+h+"\nmaxX = "+maxX +"\nmaxY = " + maxY);
         //cheke if it is close shape
-        var closeNode = this.getTextByPathList(pathLstNode, ["a:path","a:close"]);
-        var startPoint = this.getTextByPathList(pathLstNode, ["a:path","a:moveTo","a:pt","attrs"]);
+        var closeNode = this.convertorUtils.getTextByPathList(pathLstNode, ["a:path","a:close"]);
+        var startPoint = this.convertorUtils.getTextByPathList(pathLstNode, ["a:path","a:moveTo","a:pt","attrs"]);
         var spX = parseInt(startPoint["x"]) * 96 / 914400;
         var spY = parseInt(startPoint["y"]) * 96 / 914400;
         var d = "M"+spX+","+spY;
-        var pathNodes =  this.getTextByPathList(pathLstNode, ["a:path"]);
+        var pathNodes =  this.convertorUtils.getTextByPathList(pathLstNode, ["a:path"]);
         var lnToNodes = pathNodes["a:lnTo"];
         var cubicBezToNodes = pathNodes["a:cubicBezTo"];
         var arcToNodes = pathNodes["a:arcTo"];
@@ -6867,7 +6870,7 @@ class Convertor {
           var swAng = arcToNodesAttrs["swAng"];
           var shftX = 0;
           var shftY = 0;
-          var arcToPtNode = this.getTextByPathList(arcToNodes, ["a:pt","attrs"]);
+          var arcToPtNode = this.convertorUtils.getTextByPathList(arcToNodes, ["a:pt","attrs"]);
           if(arcToPtNode !== undefined){
             shftX = arcToPtNode["x"];
             shftY = arcToPtNode["y"];
@@ -7197,12 +7200,12 @@ class Convertor {
 
         ///////////////////////////////////////Amir//////////////////////////////
         var rotate = 0;
-        var rotateNode =  this.getTextByPathList(node, ["p:spPr","a:xfrm","attrs","rot"]);
+        var rotateNode =  this.convertorUtils.getTextByPathList(node, ["p:spPr","a:xfrm","attrs","rot"]);
         if(rotateNode !== undefined){
           rotate = this.angleToDegrees(rotateNode);
         }
         //video
-        var vdoNode =  this.getTextByPathList(node, ["p:nvPicPr","p:nvPr","a:videoFile"]);
+        var vdoNode =  this.convertorUtils.getTextByPathList(node, ["p:nvPicPr","p:nvPr","a:videoFile"]);
         var vdoRid,vdoFile,vdoFileExt,vdoMimeType,uInt8Array,blob,vdoBlob,mediaSupportFlag=false;
         var mediaProcess = true;/** true,false: if true then process video and audio files */
         if(vdoNode !== undefined & mediaProcess){
@@ -7221,7 +7224,7 @@ class Convertor {
           }
         }
         //Audio
-        var audioNode =  this.getTextByPathList(node, ["p:nvPicPr","p:nvPr","a:audioFile"]);
+        var audioNode =  this.convertorUtils.getTextByPathList(node, ["p:nvPicPr","p:nvPr","a:audioFile"]);
         var audioRid,audioFile,audioFileExt,audioMimeType,uInt8ArrayAudio,blobAudio,audioBlob;
         var audioPlayerFlag = false;
         var audioObjc;
@@ -7316,7 +7319,7 @@ class Convertor {
 
   processGraphicFrameNode(node, warpObj) {
     try {
-    	var graphicTypeUri = this.getTextByPathList(node, ["a:graphic", "a:graphicData", "attrs", "uri"]);
+    	var graphicTypeUri = this.convertorUtils.getTextByPathList(node, ["a:graphic", "a:graphicData", "attrs", "uri"]);
 
     	switch (graphicTypeUri) {
     		case "http://schemas.openxmlformats.org/drawingml/2006/table":
@@ -7381,7 +7384,7 @@ class Convertor {
         const isCtrTitle = (type === 'ctrTitle');
         const isSomeKindOfTitle = (isTitle || isSubTitle || isCtrTitle);
         const isSldNum = (type === 'sldNum');
-        const layoutType = this.getTextByPathList(slideLayoutSpNode, ["p:nvSpPr", "p:nvPr", "p:ph", "attrs", "type"]);
+        const layoutType = this.convertorUtils.getTextByPathList(slideLayoutSpNode, ["p:nvSpPr", "p:nvPr", "p:ph", "attrs", "type"]);
 
         var title = '';
 
@@ -7649,7 +7652,7 @@ class Convertor {
     try {
       let text = node["a:t"];
     	if (typeof text !== 'string') {
-        text = this.getTextByPathList(node, ["a:t"]);
+        text = this.convertorUtils.getTextByPathList(node, ["a:t"]);
     		if (typeof text !== 'string') {
     		  if (typeof text !== 'undefined') {
     			  text = text[0];
@@ -7705,7 +7708,7 @@ class Convertor {
       ///////////////////////////////////////Amir///////////////////////////////
       var sldMstrTxtStyles = warpObj["slideMasterTextStyles"];
 
-      var rNode = this.getTextByPathList(node,["a:r"]);
+      var rNode = this.convertorUtils.getTextByPathList(node,["a:r"]);
       if(rNode !== undefined && rNode.constructor === Array){
         rNode = rNode[0];
       }
@@ -7724,19 +7727,19 @@ class Convertor {
 
       var pPrNode = node["a:pPr"];
       //////////////////cheke if is rtl ///Amir ////////////////////////////////////
-      var getRtlVal = this.getTextByPathList(pPrNode, ["attrs", "rtl"])
+      var getRtlVal = this.convertorUtils.getTextByPathList(pPrNode, ["attrs", "rtl"])
       var isRTL = false;
       if(getRtlVal !== undefined && getRtlVal=="1"){
         isRTL = true;
       }
       ////////////////////////////////////////////////////////////
-    	var lvl = parseInt( this.getTextByPathList(pPrNode, ["attrs", "lvl"]) );
+    	var lvl = parseInt( this.convertorUtils.getTextByPathList(pPrNode, ["attrs", "lvl"]) );
     	if (isNaN(lvl)) {
     		lvl = 0;
     	}
       let random = this.getRandomId();
 
-    	var buChar = this.getTextByPathList(pPrNode, ["a:buChar", "attrs", "char"]);
+    	var buChar = this.convertorUtils.getTextByPathList(pPrNode, ["a:buChar", "attrs", "char"]);
 
 
 
@@ -7745,8 +7748,8 @@ class Convertor {
 
       /////////////////////////////////Amir///////////////////////////////////
       var buType = "TYPE_NONE";
-      var buNum = this.getTextByPathList(pPrNode, ["a:buAutoNum", "attrs", "type"]);
-      var buPic = this.getTextByPathList(pPrNode, ["a:buBlip"]);
+      var buNum = this.convertorUtils.getTextByPathList(pPrNode, ["a:buAutoNum", "attrs", "type"]);
+      var buPic = this.convertorUtils.getTextByPathList(pPrNode, ["a:buBlip"]);
       if(buChar !== undefined){
         buType = "TYPE_BULLET";
         // console.log("Bullet Chr to code: " + buChar.charCodeAt(0));
@@ -7759,13 +7762,13 @@ class Convertor {
       }
 
       if(buType != "TYPE_NONE"){
-        var buFontAttrs = this.getTextByPathList(pPrNode, ["a:buFont", "attrs"]);
+        var buFontAttrs = this.convertorUtils.getTextByPathList(pPrNode, ["a:buFont", "attrs"]);
       }
       //console.log("Bullet Type: " + buType);
       //console.log("NumericTypr: " + buNum);
       //console.log("buChar: " + (buChar === undefined?'':buChar.charCodeAt(0)));
       //get definde bullet COLOR
-      var buClrNode = this.getTextByPathList(pPrNode,["a:buClr"]);
+      var buClrNode = this.convertorUtils.getTextByPathList(pPrNode,["a:buClr"]);
       var defBultColor = "NoNe";
       if(buClrNode !== undefined){
         defBultColor = this.getSolidFill(buClrNode);
@@ -7780,11 +7783,11 @@ class Convertor {
       }
       //get definde bullet SIZE
       var buFontSize;
-      buFontSize = this.getTextByPathList(pPrNode, ["a:buSzPts", "attrs","val"]); //pt
+      buFontSize = this.convertorUtils.getTextByPathList(pPrNode, ["a:buSzPts", "attrs","val"]); //pt
       if(buFontSize !== undefined){
         bultSize = parseInt(buFontSize) / 100 +"pt";
       }else{
-        buFontSize = this.getTextByPathList(pPrNode, ["a:buSzPct", "attrs","val"]);
+        buFontSize = this.convertorUtils.getTextByPathList(pPrNode, ["a:buSzPct", "attrs","val"]);
         if(buFontSize !== undefined){
           var prcnt = parseInt(buFontSize) /100000;
           //dfltBultSize = XXpt
@@ -7796,9 +7799,9 @@ class Convertor {
       }
       ////////////////////////////////////////////////////////////////////////
       if (buType == "TYPE_BULLET") {
-        //var buFontAttrs = this.getTextByPathList(pPrNode, ["a:buFont", "attrs"]);
+        //var buFontAttrs = this.convertorUtils.getTextByPathList(pPrNode, ["a:buFont", "attrs"]);
         if (buFontAttrs !== undefined) {
-          var marginLeft = parseInt( this.getTextByPathList(pPrNode, ["attrs", "marL"]) ) * 96 / 914400;
+          var marginLeft = parseInt( this.convertorUtils.getTextByPathList(pPrNode, ["attrs", "marL"]) ) * 96 / 914400;
           var marginRight = parseInt(buFontAttrs["pitchFamily"]);
           if (isNaN(marginLeft)) {
             marginLeft = 328600 * 96 / 914400;
@@ -7824,7 +7827,7 @@ class Convertor {
         }
       } else if(buType == "TYPE_NUMERIC") { ///////////Amir///////////////////////////////
         if (buFontAttrs !== undefined) {
-            var marginLeft = parseInt( this.getTextByPathList(pPrNode, ["attrs", "marL"]) ) * 96 / 914400;
+            var marginLeft = parseInt( this.convertorUtils.getTextByPathList(pPrNode, ["attrs", "marL"]) ) * 96 / 914400;
             var marginRight = parseInt(buFontAttrs["pitchFamily"]);
 
             if (isNaN(marginLeft)) {
@@ -7857,8 +7860,8 @@ class Convertor {
           }
 
       }else if(buType == "TYPE_BULPIC"){ //PIC BULLET
-        var marginLeft = parseInt( this.getTextByPathList(pPrNode, ["attrs", "marL"]) ) * 96 / 914400;
-        var marginRight = parseInt( this.getTextByPathList(pPrNode, ["attrs", "marR"]) ) * 96 / 914400;
+        var marginLeft = parseInt( this.convertorUtils.getTextByPathList(pPrNode, ["attrs", "marL"]) ) * 96 / 914400;
+        var marginRight = parseInt( this.convertorUtils.getTextByPathList(pPrNode, ["attrs", "marR"]) ) * 96 / 914400;
 
         if (isNaN(marginRight)) {
           marginRight = 0;
@@ -7870,15 +7873,15 @@ class Convertor {
         }else{
           marginLeft = 0;
         }
-        //var buPicId = this.getTextByPathList(buPic, ["a:blip","a:extLst","a:ext","asvg:svgBlip" , "attrs", "r:embed"]);
-        var buPicId = this.getTextByPathList(buPic, ["a:blip", "attrs", "r:embed"]);
+        //var buPicId = this.convertorUtils.getTextByPathList(buPic, ["a:blip","a:extLst","a:ext","asvg:svgBlip" , "attrs", "r:embed"]);
+        var buPicId = this.convertorUtils.getTextByPathList(buPic, ["a:blip", "attrs", "r:embed"]);
         var svgPicPath = "";
         var buImg;
         if(buPicId !== undefined){
           //svgPicPath = warpObj["slideResObj"][buPicId]["target"];
           //buImg = warpObj["zip"].file(svgPicPath).asText();
           //}else{
-          //buPicId = this.getTextByPathList(buPic, ["a:blip", "attrs", "r:embed"]);
+          //buPicId = this.convertorUtils.getTextByPathList(buPic, ["a:blip", "attrs", "r:embed"]);
           var imgPath =  warpObj["slideResObj"][buPicId]["target"];
           var imgArrayBuffer = warpObj["zip"].file(imgPath).asArrayBuffer();
           var imgExt = imgPath.split(".").pop();
@@ -7929,8 +7932,8 @@ class Convertor {
 
     	if (typeof text !== 'string') {
             //Klaas: getTextByPathList() gets undefefined node if it contains text...
-    		//text = this.getTextByPathList(node, ["a:fld", "a:t"]);
-        text = this.getTextByPathList(node, ["a:t"]);
+    		//text = this.convertorUtils.getTextByPathList(node, ["a:fld", "a:t"]);
+        text = this.convertorUtils.getTextByPathList(node, ["a:t"]);
 
     		if (typeof text !== 'string') {
           if (typeof text !== 'undefined') { //klaas test
@@ -7942,7 +7945,7 @@ class Convertor {
 
       //Dejan added this to handle slide numbers
       if (typeof text !== 'string' && type === 'sldNum') {
-        text = this.getTextByPathList(node, ["a:fld", "a:t"]);
+        text = this.convertorUtils.getTextByPathList(node, ["a:fld", "a:t"]);
         if (typeof text !== 'string') {
           if (typeof text !== 'undefined') { //klaas test
               text = text[0]; //klaas test
@@ -7968,14 +7971,14 @@ class Convertor {
         				"; vertical-align: " + this.getTextVerticalAlign(node, type, slideMasterTextStyles) +
                 ";";
       //////////////////Amir///////////////
-      var highlight = this.getTextByPathList(node, ["a:rPr", "a:highlight"]);
+      var highlight = this.convertorUtils.getTextByPathList(node, ["a:rPr", "a:highlight"]);
       if(highlight !== undefined){
           textStyle += "background-color:#" + this.getSolidFill(highlight) +";";
           textStyle += "Opacity:"+ this.getColorOpacity(highlight) + ";";
       }
       textStyle += "'";
       ///////////////////////////////////////////
-      let linkID = this.getTextByPathList(node, ["a:rPr", "a:hlinkClick", "attrs", "r:id"]);
+      let linkID = this.convertorUtils.getTextByPathList(node, ["a:rPr", "a:hlinkClick", "attrs", "r:id"]);
 
       let random = this.getRandomId();
 
@@ -7999,8 +8002,8 @@ class Convertor {
   genTable(node, warpObj) {
     try {
     	var order = node["attrs"]["order"];
-    	var tableNode = this.getTextByPathList(node, ["a:graphic", "a:graphicData", "a:tbl"]);
-    	var xfrmNode = this.getTextByPathList(node, ["p:xfrm"]);
+    	var tableNode = this.convertorUtils.getTextByPathList(node, ["a:graphic", "a:graphicData", "a:tbl"]);
+    	var xfrmNode = this.convertorUtils.getTextByPathList(node, ["p:xfrm"]);
     	var rowPromises = [];
 
       let random = this.getRandomId();
@@ -8020,10 +8023,10 @@ class Convertor {
     			    colPromises.push(
                 that.genTextBody(tcNodes[j]["a:txBody"], tcNodes[j], undefined, undefined, undefined, warpObj).then((info) => {
 
-                	var rowSpan = that.getTextByPathList(tcNodes[j], ["attrs", "rowSpan"]);
-                    var colSpan = that.getTextByPathList(tcNodes[j], ["attrs", "gridSpan"]);
-                    var vMerge = that.getTextByPathList(tcNodes[j], ["attrs", "vMerge"]);
-                    var hMerge = that.getTextByPathList(tcNodes[j], ["attrs", "hMerge"]);
+                	var rowSpan = that.convertorUtils.getTextByPathList(tcNodes[j], ["attrs", "rowSpan"]);
+                    var colSpan = that.convertorUtils.getTextByPathList(tcNodes[j], ["attrs", "gridSpan"]);
+                    var vMerge = that.convertorUtils.getTextByPathList(tcNodes[j], ["attrs", "vMerge"]);
+                    var hMerge = that.convertorUtils.getTextByPathList(tcNodes[j], ["attrs", "hMerge"]);
 
                     let random2 = that.getRandomId();
 
@@ -8107,92 +8110,24 @@ class Convertor {
   genChart(node, warpObj) {
     try {
     	var order = node["attrs"]["order"];
-    	var xfrmNode = this.getTextByPathList(node, ["p:xfrm"]);
+    	var xfrmNode = this.convertorUtils.getTextByPathList(node, ["p:xfrm"]);
     	var rid = node["a:graphic"]["a:graphicData"]["c:chart"]["attrs"]["r:id"];
     	var refName = warpObj["slideResObj"][rid]["target"];
     	var content = this.readXmlFile(warpObj["zip"], refName);
-    	var plotArea = this.getTextByPathList(content, ["c:chartSpace", "c:chart", "c:plotArea"]);
+    	var plotArea = this.convertorUtils.getTextByPathList(content, ["c:chartSpace", "c:chart", "c:plotArea"]);
         var chartType = null;
     	var chartData = null;
-    	for (var key in plotArea) {
-    		switch (key) {
-    			case "c:lineChart":
-                    chartType = 'lineChart';
-    				chartData = {
-    					"type": "createChart",
-    					"data": {
-    						"chartID": "chart" + this.chartID,
-    						"chartType": "lineChart",
-    						"chartData": this.extractChartData(plotArea[key]["c:ser"])
-    					}
-    				};
-    				break;
-    			case "c:barChart":
-                    chartType = 'multiBarChart';
-    				chartData = {
-    					"type": "createChart",
-    					"data": {
-    						"chartID": "chart" + this.chartID,
-    						"chartType": "barChart",
-    						"chartData": this.extractChartData(plotArea[key]["c:ser"])
-    					}
-    				};
-    				break;
-    			case "c:pieChart":
-                    chartType = 'pieChart';
-                    chartData = {
-    					"type": "createChart",
-    					"data": {
-    						"chartID": "chart" + this.chartID,
-    						"chartType": "pieChart",
-    						"chartData": this.extractChartData(plotArea[key]["c:ser"])
-    					}
-    				};
-    				break;
-    			case "c:pie3DChart":
-                    chartType = 'pieChart';
-    				chartData = {
-    					"type": "createChart",
-    					"data": {
-    						"chartID": "chart" + this.chartID,
-    						"chartType": "pie3DChart",
-    						"chartData": this.extractChartData(plotArea[key]["c:ser"])
-    					}
-    				};
-    				break;
-    			case "c:areaChart":
-                    chartType = 'stackedAreaChart';
-    				chartData = {
-    					"type": "createChart",
-    					"data": {
-    						"chartID": "chart" + this.chartID,
-    						"chartType": "areaChart",
-    						"chartData": this.extractChartData(plotArea[key]["c:ser"])
-    					}
-    				};
-    				break;
-    			case "c:scatterChart":
-                    chartType = 'scatterChart';
-    				chartData = {
-    					"type": "createChart",
-    					"data": {
-    						"chartID": "chart" + this.chartID,
-    						"chartType": "scatterChart",
-    						"chartData": this.extractChartData(plotArea[key]["c:ser"])
-    					}
-    				};
-    				break;
-    			case "c:catAx":
-    				break;
-    			case "c:valAx":
-    				break;
-    			default:
-    		}
-    	}
 
-    	var resultContainer = "<div id='chart" + this.chartID + "' class='block content' style='position: absolute;" +
-       					this.getPosition(xfrmNode, undefined, undefined) + this.getSize(xfrmNode, undefined, undefined) +
-       					" z-index: " + order + ";'" + "datum=\'" + JSON.stringify(chartData.data) + '\'></div>';
+        let resultContainer = "<div>Chart Type not yet supported.</div>"
+    	chartData = extractChartData(plotArea, this.chartID);
+
+    	if (chartData) {
+            resultContainer = "<div id='chart" + this.chartID + "' class='block content' style='position: absolute;" +
+                this.getPosition(xfrmNode, undefined, undefined) + this.getSize(xfrmNode, undefined, undefined) +
+                " z-index: " + order + ";'" + "datum=\'" + JSON.stringify(chartData.data) + '\'></div>';
+        }
+
+    	console.log(resultContainer);
     	this.chartID++;
       return new Promise((resolve) => {resolve(resultContainer)});
     } catch(e) {
@@ -8205,8 +8140,8 @@ class Convertor {
     try {
       var order = node["attrs"]["order"];
       var zip = warpObj["zip"];
-      var xfrmNode = this.getTextByPathList(node, ["p:xfrm"]);
-      var dgmRelIds = this.getTextByPathList(node, ["a:graphic","a:graphicData","dgm:relIds","attrs"]);
+      var xfrmNode = this.convertorUtils.getTextByPathList(node, ["p:xfrm"]);
+      var dgmRelIds = this.convertorUtils.getTextByPathList(node, ["a:graphic","a:graphicData","dgm:relIds","attrs"]);
        //console.log(dgmRelIds)
       var dgmClrFileId = dgmRelIds["r:cs"];
       var dgmDataFileId = dgmRelIds["r:dm"];
@@ -8224,7 +8159,7 @@ class Convertor {
       //console.log(dgmClr,dgmData,dgmLayout,dgmQuickStyle)
        ///get drawing#.xml
        var dgmDrwFileName = "";
-       var dataModelExt = this.getTextByPathList(dgmData, ["dgm:dataModel","dgm:extLst","a:ext","dsp:dataModelExt","attrs"]);
+       var dataModelExt = this.convertorUtils.getTextByPathList(dgmData, ["dgm:dataModel","dgm:extLst","a:ext","dsp:dataModelExt","attrs"]);
       if(dataModelExt !== undefined){
         var dgmDrwFileId = dataModelExt["relId"];
         dgmDrwFileName =  warpObj["slideResObj"][dgmDrwFileId]["target"];
@@ -8236,7 +8171,7 @@ class Convertor {
       }
       //console.log("dgmDrwFile: ",dgmDrwFile);
       //processSpNode(node, warpObj)
-      var dgmDrwSpArray = this.getTextByPathList(dgmDrwFile,["dsp:drawing","dsp:spTree","dsp:sp"]);
+      var dgmDrwSpArray = this.convertorUtils.getTextByPathList(dgmDrwFile,["dsp:drawing","dsp:spTree","dsp:sp"]);
       var rslt="";
       let promises = [];
       if(dgmDrwSpArray !== undefined){
@@ -8314,22 +8249,22 @@ class Convertor {
   }
 
   getHorizontalAlign(node, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles) {
-    var algn = this.getTextByPathList(node, ["a:pPr", "attrs", "algn"]);
+    var algn = this.convertorUtils.getTextByPathList(node, ["a:pPr", "attrs", "algn"]);
   	if (algn === undefined) {
-  		algn = this.getTextByPathList(slideLayoutSpNode, ["p:txBody", "a:p", "a:pPr", "attrs", "algn"]);
+  		algn = this.convertorUtils.getTextByPathList(slideLayoutSpNode, ["p:txBody", "a:p", "a:pPr", "attrs", "algn"]);
       if (algn === undefined) {
-        algn = this.getTextByPathList(slideLayoutSpNode, ["p:txBody", "a:lstStyle", "a:lvl1pPr", "attrs", "algn"]);
+        algn = this.convertorUtils.getTextByPathList(slideLayoutSpNode, ["p:txBody", "a:lstStyle", "a:lvl1pPr", "attrs", "algn"]);
         if (algn === undefined) {
-    			algn = this.getTextByPathList(slideMasterSpNode, ["p:txBody", "a:p", "a:pPr", "attrs", "algn"]);
+    			algn = this.convertorUtils.getTextByPathList(slideMasterSpNode, ["p:txBody", "a:p", "a:pPr", "attrs", "algn"]);
     			if (algn === undefined) {
     				switch (type) {
     					case "title":
     					case "subTitle":
     					case "ctrTitle":
-    						algn = this.getTextByPathList(slideMasterTextStyles, ["p:titleStyle", "a:lvl1pPr", "attrs", "algn"]);
+    						algn = this.convertorUtils.getTextByPathList(slideMasterTextStyles, ["p:titleStyle", "a:lvl1pPr", "attrs", "algn"]);
     						break;
     					default:
-    						algn = this.getTextByPathList(slideMasterTextStyles, ["p:otherStyle", "a:lvl1pPr", "attrs", "algn"]);
+    						algn = this.convertorUtils.getTextByPathList(slideMasterTextStyles, ["p:otherStyle", "a:lvl1pPr", "attrs", "algn"]);
     				}
     			}
     		}
@@ -8349,11 +8284,11 @@ class Convertor {
   getVerticalAlign(node, slideLayoutSpNode, slideMasterSpNode, type, slideMasterTextStyles) {
 
   	// 上中下對齊: X, <a:bodyPr anchor="ctr">, <a:bodyPr anchor="b">
-  	var anchor = this.getTextByPathList(node, ["p:txBody", "a:bodyPr", "attrs", "anchor"]);
+  	var anchor = this.convertorUtils.getTextByPathList(node, ["p:txBody", "a:bodyPr", "attrs", "anchor"]);
   	if (anchor === undefined) {
-  		anchor = this.getTextByPathList(slideLayoutSpNode, ["p:txBody", "a:bodyPr", "attrs", "anchor"]);
+  		anchor = this.convertorUtils.getTextByPathList(slideLayoutSpNode, ["p:txBody", "a:bodyPr", "attrs", "anchor"]);
   		if (anchor === undefined) {
-  			anchor = this.getTextByPathList(slideMasterSpNode, ["p:txBody", "a:bodyPr", "attrs", "anchor"]);
+  			anchor = this.convertorUtils.getTextByPathList(slideMasterSpNode, ["p:txBody", "a:bodyPr", "attrs", "anchor"]);
   		}
   	}
 
@@ -8361,16 +8296,16 @@ class Convertor {
   }
 
   getFontType(node, type, slideMasterTextStyles) {
-  	var typeface = this.getTextByPathList(node, ["a:rPr", "a:latin", "attrs", "typeface"]);
+  	var typeface = this.convertorUtils.getTextByPathList(node, ["a:rPr", "a:latin", "attrs", "typeface"]);
       // SWIK-1123 HF: I'm butchering the function to avoid inline CSS so we can use themes.
   	// if (typeface === undefined) {
-  	// 	var fontSchemeNode = this.getTextByPathList(this.themeContent, ["a:theme", "a:themeElements", "a:fontScheme"]);
+  	// 	var fontSchemeNode = this.convertorUtils.getTextByPathList(this.themeContent, ["a:theme", "a:themeElements", "a:fontScheme"]);
   	// 	if (type == "title" || type == "subTitle" || type == "ctrTitle") {
-  	// 		typeface = this.getTextByPathList(fontSchemeNode, ["a:majorFont", "a:latin", "attrs", "typeface"]);
+  	// 		typeface = this.convertorUtils.getTextByPathList(fontSchemeNode, ["a:majorFont", "a:latin", "attrs", "typeface"]);
   	// 	} else if (type == "body") {
-  	// 		typeface = this.getTextByPathList(fontSchemeNode, ["a:minorFont", "a:latin", "attrs", "typeface"]);
+  	// 		typeface = this.convertorUtils.getTextByPathList(fontSchemeNode, ["a:minorFont", "a:latin", "attrs", "typeface"]);
   	// 	} else {
-  	// 		typeface = this.getTextByPathList(fontSchemeNode, ["a:minorFont", "a:latin", "attrs", "typeface"]);
+  	// 		typeface = this.convertorUtils.getTextByPathList(fontSchemeNode, ["a:minorFont", "a:latin", "attrs", "typeface"]);
   	// 	}
   	// }
       //
@@ -8387,18 +8322,18 @@ class Convertor {
     //https://stackoverflow.com/questions/2570972/css-font-border
     //https://www.w3schools.com/cssref/css3_pr_text-shadow.asp
     //console.log(node)
-    var rPrNode =  this.getTextByPathList(node, ["a:rPr"]);
+    var rPrNode =  this.convertorUtils.getTextByPathList(node, ["a:rPr"]);
     var filTyp , color , textBordr;
     if(rPrNode !== undefined){
       filTyp = this.getFillType(rPrNode);
       if(filTyp == "SOLID_FILL"){
-        var solidFillNode = this.getTextByPathList(node, ["a:rPr","a:solidFill"]);
+        var solidFillNode = this.convertorUtils.getTextByPathList(node, ["a:rPr","a:solidFill"]);
         color =   this.getSolidFill(solidFillNode);
       }else if(filTyp=="PATTERN_FILL"){
-        var pattFill = this.getTextByPathList(node, ["a:rPr","a:pattFill"]);
+        var pattFill = this.convertorUtils.getTextByPathList(node, ["a:rPr","a:pattFill"]);
         color = this.getPatternFill(pattFill);
       }else{
-        var sPstyle = this.getTextByPathList(spNode, ["p:style","a:fontRef"]);
+        var sPstyle = this.convertorUtils.getTextByPathList(spNode, ["p:style","a:fontRef"]);
         if(sPstyle !== undefined){
           color = this.getSolidFill(sPstyle);
         }
@@ -8411,7 +8346,7 @@ class Convertor {
       color = "#" + color;
     }
     //textBordr
-    var txtBrdrNode = this.getTextByPathList(node, ["a:rPr","a:ln"]);
+    var txtBrdrNode = this.convertorUtils.getTextByPathList(node, ["a:rPr","a:ln"]);
     if(txtBrdrNode !== undefined){
       var txBrd = this.getBorder(node,false,"text");
       var txBrdAry = txBrd.split(" ");
@@ -8432,24 +8367,24 @@ class Convertor {
   	}
       // SWIK-1123  HF: I'm butchering the function to avoid inline CSS so we can use themes.
   	// if ((isNaN(fontSize) || fontSize === undefined)) {
-  	// 	var sz = this.getTextByPathList(slideLayoutSpNode, ["p:txBody", "a:lstStyle", "a:lvl1pPr", "a:defRPr", "attrs", "sz"]);
+  	// 	var sz = this.convertorUtils.getTextByPathList(slideLayoutSpNode, ["p:txBody", "a:lstStyle", "a:lvl1pPr", "a:defRPr", "attrs", "sz"]);
   	// 	fontSize = parseInt(sz) / 100;
   	// }
       //
   	// if (isNaN(fontSize) || fontSize === undefined) {
   	// 	if (type == "title" || type == "subTitle" || type == "ctrTitle") {
-  	// 		var sz = this.getTextByPathList(slideMasterTextStyles, ["p:titleStyle", "a:lvl1pPr", "a:defRPr", "attrs", "sz"]);
+  	// 		var sz = this.convertorUtils.getTextByPathList(slideMasterTextStyles, ["p:titleStyle", "a:lvl1pPr", "a:defRPr", "attrs", "sz"]);
   	// 	} else if (type == "body") {
-  	// 		var sz = this.getTextByPathList(slideMasterTextStyles, ["p:bodyStyle", "a:lvl1pPr", "a:defRPr", "attrs", "sz"]);
+  	// 		var sz = this.convertorUtils.getTextByPathList(slideMasterTextStyles, ["p:bodyStyle", "a:lvl1pPr", "a:defRPr", "attrs", "sz"]);
   	// 	} else if (type == "dt" || type == "sldNum") {
   	// 		var sz = "1200";
   	// 	} else if (type === undefined) {
-  	// 		var sz = this.getTextByPathList(slideMasterTextStyles, ["p:otherStyle", "a:lvl1pPr", "a:defRPr", "attrs", "sz"]);
+  	// 		var sz = this.convertorUtils.getTextByPathList(slideMasterTextStyles, ["p:otherStyle", "a:lvl1pPr", "a:defRPr", "attrs", "sz"]);
   	// 	}
   	// 	fontSize = parseInt(sz) / 100;
   	// }
       //
-  	// var baseline = this.getTextByPathList(node, ["a:rPr", "attrs", "baseline"]);
+  	// var baseline = this.convertorUtils.getTextByPathList(node, ["a:rPr", "attrs", "baseline"]);
   	// if (baseline !== undefined && !isNaN(fontSize)) {
   	// 	fontSize -= 10;
   	// }
@@ -8491,7 +8426,7 @@ class Convertor {
   }
   ////////////////////////////////////Amir/////////////////////////////////////
   getTextHorizontalAlign(node, type, slideMasterTextStyles){
-    var getAlgn = this.getTextByPathList(node, ["a:pPr", "attrs", "algn"]);
+    var getAlgn = this.convertorUtils.getTextByPathList(node, ["a:pPr", "attrs", "algn"]);
     var align = "initial";
     if(getAlgn !== undefined){
       switch(getAlgn){
@@ -8518,7 +8453,7 @@ class Convertor {
   }
   /////////////////////////////////////////////////////////////////////
   getTextVerticalAlign(node, type, slideMasterTextStyles) {
-  	var baseline = this.getTextByPathList(node, ["a:rPr", "attrs", "baseline"]);
+  	var baseline = this.convertorUtils.getTextByPathList(node, ["a:rPr", "attrs", "baseline"]);
   	if (baseline === undefined) {
   		return "";
   	} else {
@@ -8529,12 +8464,12 @@ class Convertor {
   ///////////////////////////////////Amir/////////////////////////////
   getTextDirection(node, type, slideMasterTextStyles){
     //get lvl
-    var pprLvl = this.getTextByPathList(node, ["a:pPr", "attrs", "lvl"]);
+    var pprLvl = this.convertorUtils.getTextByPathList(node, ["a:pPr", "attrs", "lvl"]);
     var pprLvlNum = pprLvl===undefined?1:Number(pprLvl)+1;
     var lvlNode = "a:lvl"+pprLvlNum+"pPr";
-    var pprAlgn = this.getTextByPathList(node, ["a:pPr", "attrs", "algn"]);
-    var isDir = this.getTextByPathList(slideMasterTextStyles, ["p:bodyStyle",lvlNode, "attrs", "rtl"]);
-    //var tmp = this.getTextByPathList(node, ["a:r", "a:t"]);
+    var pprAlgn = this.convertorUtils.getTextByPathList(node, ["a:pPr", "attrs", "algn"]);
+    var isDir = this.convertorUtils.getTextByPathList(slideMasterTextStyles, ["p:bodyStyle",lvlNode, "attrs", "rtl"]);
+    //var tmp = this.convertorUtils.getTextByPathList(node, ["a:r", "a:t"]);
     var dir = "";
     if (isDir !== undefined){
       if(isDir=="1" && (pprAlgn ===undefined || pprAlgn =="r")){
@@ -8601,14 +8536,14 @@ class Convertor {
       }
 
     	// Border width: 1pt = 12700, default = 0.75pt
-    	var borderWidth = parseInt(this.getTextByPathList(lineNode, ["attrs", "w"])) / 12700;
+    	var borderWidth = parseInt(this.convertorUtils.getTextByPathList(lineNode, ["attrs", "w"])) / 12700;
       if (isNaN(borderWidth) || borderWidth < 1) {
         cssText += "1pt ";
       } else {
         cssText += borderWidth + "pt ";
       }
       // Border type
-      var borderType = this.getTextByPathList(lineNode, ["a:prstDash", "attrs", "val"]);
+      var borderType = this.convertorUtils.getTextByPathList(lineNode, ["a:prstDash", "attrs", "val"]);
       var strokeDasharray = "0";
       switch (borderType) {
         case "solid":
@@ -8658,25 +8593,25 @@ class Convertor {
           strokeDasharray = "0";
       }
     	// Border color
-    	var borderColor = this.getTextByPathList(lineNode, ["a:solidFill", "a:srgbClr", "attrs", "val"]);
+    	var borderColor = this.convertorUtils.getTextByPathList(lineNode, ["a:solidFill", "a:srgbClr", "attrs", "val"]);
     	if (borderColor === undefined) {
-    		var schemeClrNode = this.getTextByPathList(lineNode, ["a:solidFill", "a:schemeClr"]);
+    		var schemeClrNode = this.convertorUtils.getTextByPathList(lineNode, ["a:solidFill", "a:schemeClr"]);
         if(schemeClrNode !== undefined){
-      		var schemeClr = "a:" + this.getTextByPathList(schemeClrNode, ["attrs", "val"]);
+      		var schemeClr = "a:" + this.convertorUtils.getTextByPathList(schemeClrNode, ["attrs", "val"]);
   		    var borderColor = this.getSchemeColorFromTheme(schemeClr, undefined);
         }
     	}
 
     	// 2. drawingML namespace
     	if (borderColor === undefined) {
-    		var schemeClrNode = this.getTextByPathList(node, ["p:style", "a:lnRef", "a:schemeClr"]);
+    		var schemeClrNode = this.convertorUtils.getTextByPathList(node, ["p:style", "a:lnRef", "a:schemeClr"]);
         if(schemeClrNode !== undefined){
-      		var schemeClr = "a:" + this.getTextByPathList(schemeClrNode, ["attrs", "val"]);
+      		var schemeClr = "a:" + this.convertorUtils.getTextByPathList(schemeClrNode, ["attrs", "val"]);
       		var borderColor = this.getSchemeColorFromTheme(schemeClr,undefined);
         }
 
     		if (borderColor !== undefined) {
-    			var shade = this.getTextByPathList(schemeClrNode, ["a:shade", "attrs", "val"]);
+    			var shade = this.convertorUtils.getTextByPathList(schemeClrNode, ["a:shade", "attrs", "val"]);
     			if (shade !== undefined) {
     				shade = parseInt(shade) / 100000;
     				var color = new colz.Color("#" + borderColor);
@@ -8714,24 +8649,24 @@ class Convertor {
   	// 1. presentationML
   	// p:spPr [a:noFill, solidFill, gradFill, blipFill, pattFill, grpFill]
   	// From slide
-  	if (this.getTextByPathList(node, ["p:spPr", "a:noFill"]) !== undefined) {
+  	if (this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:noFill"]) !== undefined) {
   		return isSvgMode ? "none" : "background-color: initial;";
   	}
 
   	var fillColor = undefined;
   	if (fillColor === undefined) {
-  		fillColor = this.getTextByPathList(node, ["p:spPr", "a:solidFill", "a:srgbClr", "attrs", "val"]);
+  		fillColor = this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:solidFill", "a:srgbClr", "attrs", "val"]);
   	}
 
   	// From theme
   	if (fillColor === undefined) {
-  		var schemeClr = "a:" + this.getTextByPathList(node, ["p:spPr", "a:solidFill", "a:schemeClr", "attrs", "val"]);
+  		var schemeClr = "a:" + this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:solidFill", "a:schemeClr", "attrs", "val"]);
   		fillColor = this.getSchemeColorFromTheme(schemeClr);
   	}
 
   	// 2. drawingML namespace
   	if (fillColor === undefined) {
-  		var schemeClr = "a:" + this.getTextByPathList(node, ["p:style", "a:fillRef", "a:schemeClr", "attrs", "val"]);
+  		var schemeClr = "a:" + this.convertorUtils.getTextByPathList(node, ["p:style", "a:fillRef", "a:schemeClr", "attrs", "val"]);
   		fillColor = this.getSchemeColorFromTheme(schemeClr);
   	}
 
@@ -8741,8 +8676,8 @@ class Convertor {
 
   		// Apply shade or tint
   		// TODO: 較淺, 較深 80%
-  		var lumMod = parseInt(this.getTextByPathList(node, ["p:spPr", "a:solidFill", "a:schemeClr", "a:lumMod", "attrs", "val"])) / 100000;
-  		var lumOff = parseInt(this.getTextByPathList(node, ["p:spPr", "a:solidFill", "a:schemeClr", "a:lumOff", "attrs", "val"])) / 100000;
+  		var lumMod = parseInt(this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:solidFill", "a:schemeClr", "a:lumMod", "attrs", "val"])) / 100000;
+  		var lumOff = parseInt(this.convertorUtils.getTextByPathList(node, ["p:spPr", "a:solidFill", "a:schemeClr", "a:lumOff", "attrs", "val"])) / 100000;
   		if (isNaN(lumMod)) {
   			lumMod = 1.0;
   		}
@@ -8769,8 +8704,8 @@ class Convertor {
   getSlideBackgroundFill(slideContent, slideLayoutContent, slideMasterContent,warpObj) {
     //console.log(slideContent)
     //this.getFillType(node)
-    var bgPr = this.getTextByPathList(slideContent, ["p:sld", "p:cSld","p:bg","p:bgPr"]);
-    var bgRef = this.getTextByPathList(slideContent, ["p:sld", "p:cSld","p:bg","p:bgRef"]);
+    var bgPr = this.convertorUtils.getTextByPathList(slideContent, ["p:sld", "p:cSld","p:bg","p:bgPr"]);
+    var bgRef = this.convertorUtils.getTextByPathList(slideContent, ["p:sld", "p:cSld","p:bg","p:bgRef"]);
     var bgcolor;
     if(bgPr !== undefined){
       //bgcolor = "background-color: blue;";
@@ -8793,9 +8728,9 @@ class Convertor {
       //console.log("slideContent",bgRef)
       var phClr;
       if (bgRef["a:srgbClr"] !== undefined) {
-        phClr = this.getTextByPathList(bgRef,["a:srgbClr","attrs", "val"]); //#...
+        phClr = this.convertorUtils.getTextByPathList(bgRef,["a:srgbClr","attrs", "val"]); //#...
       }else if(bgRef["a:schemeClr"] !== undefined) { //a:schemeClr
-        var schemeClr = this.getTextByPathList(bgRef,["a:schemeClr","attrs", "val"]);
+        var schemeClr = this.convertorUtils.getTextByPathList(bgRef,["a:schemeClr","attrs", "val"]);
         phClr = this.getSchemeColorFromTheme("a:" + schemeClr,slideMasterContent); //#...
         //console.log("schemeClr",schemeClr,"phClr=",phClr)
       }
@@ -8850,8 +8785,8 @@ class Convertor {
       }
 
     }else{
-      bgPr = this.getTextByPathList(slideLayoutContent, ["p:sldLayout", "p:cSld","p:bg","p:bgPr"]);
-      bgRef = this.getTextByPathList(slideLayoutContent, ["p:sldLayout", "p:cSld","p:bg","p:bgRef"]);
+      bgPr = this.convertorUtils.getTextByPathList(slideLayoutContent, ["p:sldLayout", "p:cSld","p:bg","p:bgPr"]);
+      bgRef = this.convertorUtils.getTextByPathList(slideLayoutContent, ["p:sldLayout", "p:cSld","p:bg","p:bgRef"]);
       //console.log("slideLayoutContent",bgPr,bgRef)
       if(bgPr !== undefined){
         var bgFillTyp =  this.getFillType(bgPr);
@@ -8870,8 +8805,8 @@ class Convertor {
       }else if(bgRef !== undefined){
         bgcolor = "background: red;";
       }else{
-        bgPr = this.getTextByPathList(slideMasterContent, ["p:sldMaster", "p:cSld","p:bg","p:bgPr"]);
-        bgRef = this.getTextByPathList(slideMasterContent, ["p:sldMaster", "p:cSld","p:bg","p:bgRef"]);
+        bgPr = this.convertorUtils.getTextByPathList(slideMasterContent, ["p:sldMaster", "p:cSld","p:bg","p:bgPr"]);
+        bgRef = this.convertorUtils.getTextByPathList(slideMasterContent, ["p:sldMaster", "p:cSld","p:bg","p:bgRef"]);
 
         //console.log("bgRef",bgRef["a:schemeClr"]["attrs"]["val"])
         if(bgPr !== undefined){
@@ -8893,9 +8828,9 @@ class Convertor {
           //var phClr = this.getSolidFill(bgRef);
           var phClr;
           if (bgRef["a:srgbClr"] !== undefined) {
-            phClr = this.getTextByPathList(bgRef,["a:srgbClr","attrs", "val"]); //#...
+            phClr = this.convertorUtils.getTextByPathList(bgRef,["a:srgbClr","attrs", "val"]); //#...
           }else if(bgRef["a:schemeClr"] !== undefined) { //a:schemeClr
-            var schemeClr = this.getTextByPathList(bgRef,["a:schemeClr","attrs", "val"]);
+            var schemeClr = this.convertorUtils.getTextByPathList(bgRef,["a:schemeClr","attrs", "val"]);
 
             phClr = this.getSchemeColorFromTheme("a:" + schemeClr,slideMasterContent); //#...
             //console.log("phClr",phClr)
@@ -8970,15 +8905,15 @@ class Convertor {
       var lo_color = "";
       if (gsLst[i]["a:srgbClr"] !== undefined) {
         if(phClr === undefined){
-          lo_color = this.getTextByPathList(gsLst[i],["a:srgbClr","attrs", "val"]); //#...
+          lo_color = this.convertorUtils.getTextByPathList(gsLst[i],["a:srgbClr","attrs", "val"]); //#...
         }
-        lo_tint = this.getTextByPathList(gsLst[i],["a:srgbClr","a:tint","attrs","val"]);
+        lo_tint = this.convertorUtils.getTextByPathList(gsLst[i],["a:srgbClr","a:tint","attrs","val"]);
       }else if(gsLst[i]["a:schemeClr"] !== undefined) { //a:schemeClr
         if(phClr === undefined){
-          var schemeClr = this.getTextByPathList(gsLst[i],["a:schemeClr","attrs", "val"]);
+          var schemeClr = this.convertorUtils.getTextByPathList(gsLst[i],["a:schemeClr","attrs", "val"]);
           lo_color = this.getSchemeColorFromTheme("a:" + schemeClr,slideMasterContent); //#...
         }
-        lo_tint = this.getTextByPathList(gsLst[i],["a:schemeClr","a:tint","attrs","val"]);
+        lo_tint = this.convertorUtils.getTextByPathList(gsLst[i],["a:schemeClr","a:tint","attrs","val"]);
         //console.log("schemeClr",schemeClr,slideMasterContent)
       }
       //console.log("lo_color",lo_color)
@@ -9034,7 +8969,7 @@ class Convertor {
     // From slide
     //Fill Type:
     //console.log("ShapeFill: ", node)
-    var fillType = this.getFillType(this.getTextByPathList(node, ["p:spPr"]));
+    var fillType = this.getFillType(this.convertorUtils.getTextByPathList(node, ["p:spPr"]));
     var fillColor;
     if (fillType == "NO_FILL") {
       return isSvgMode ? "none" : "background-color: initial;";
@@ -9057,7 +8992,7 @@ class Convertor {
 
     // 2. drawingML namespace
     if (fillColor === undefined) {
-      var clrName = this.getTextByPathList(node, ["p:style", "a:fillRef"]);
+      var clrName = this.convertorUtils.getTextByPathList(node, ["p:style", "a:fillRef"]);
       fillColor = this.getSolidFill(clrName);
     }
 
@@ -9145,8 +9080,8 @@ class Convertor {
       var lo_tint;
       var lo_color = this.getSolidFill(gsLst[i]);
       if (gsLst[i]["a:srgbClr"] !== undefined) {
-        var lumMod = parseInt(this.getTextByPathList(node, ["a:srgbClr", "a:lumMod", "attrs", "val"])) / 100000;
-        var lumOff = parseInt(this.getTextByPathList(node, ["a:srgbClr", "a:lumOff", "attrs", "val"])) / 100000;
+        var lumMod = parseInt(this.convertorUtils.getTextByPathList(node, ["a:srgbClr", "a:lumMod", "attrs", "val"])) / 100000;
+        var lumOff = parseInt(this.convertorUtils.getTextByPathList(node, ["a:srgbClr", "a:lumOff", "attrs", "val"])) / 100000;
         if (isNaN(lumMod)) {
           lumMod = 1.0;
         }
@@ -9156,8 +9091,8 @@ class Convertor {
         //console.log([lumMod, lumOff]);
         lo_color = this.applyLumModify(lo_color, lumMod, lumOff);
       }else if(gsLst[i]["a:schemeClr"] !== undefined) { //a:schemeClr
-        var lumMod = parseInt(this.getTextByPathList(gsLst[i], ["a:schemeClr", "a:lumMod", "attrs", "val"])) / 100000;
-        var lumOff = parseInt(this.getTextByPathList(gsLst[i], ["a:schemeClr", "a:lumOff", "attrs", "val"])) / 100000;
+        var lumMod = parseInt(this.convertorUtils.getTextByPathList(gsLst[i], ["a:schemeClr", "a:lumMod", "attrs", "val"])) / 100000;
+        var lumOff = parseInt(this.convertorUtils.getTextByPathList(gsLst[i], ["a:schemeClr", "a:lumOff", "attrs", "val"])) / 100000;
         if (isNaN(lumMod)) {
           lumMod = 1.0;
         }
@@ -9190,11 +9125,11 @@ class Convertor {
     var rId = node["a:blip"]["attrs"]["r:embed"];
     var imgPath;
     if(type=="slideBg"){
-      imgPath =  this.getTextByPathList(warpObj,["slideResObj",rId,"target"]);
+      imgPath =  this.convertorUtils.getTextByPathList(warpObj,["slideResObj",rId,"target"]);
     }else if(type == "layoutBg"){
-      imgPath =  this.getTextByPathList(warpObj,["layoutResObj",rId,"target"]);
+      imgPath =  this.convertorUtils.getTextByPathList(warpObj,["layoutResObj",rId,"target"]);
     }else if(type=="masterBg"){
-      imgPath =  this.getTextByPathList(warpObj,["masterResObj",rId,"target"]);
+      imgPath =  this.convertorUtils.getTextByPathList(warpObj,["masterResObj",rId,"target"]);
     }
     if(imgPath === undefined){
       return undefined;
@@ -9224,9 +9159,9 @@ class Convertor {
     var color = "FFF";
 
     if (node["a:srgbClr"] !== undefined) {
-      color = this.getTextByPathList(node,["a:srgbClr","attrs", "val"]); //#...
+      color = this.convertorUtils.getTextByPathList(node,["a:srgbClr","attrs", "val"]); //#...
     }else if(node["a:schemeClr"] !== undefined) { //a:schemeClr
-      var schemeClr = this.getTextByPathList(node,["a:schemeClr","attrs", "val"]);
+      var schemeClr = this.convertorUtils.getTextByPathList(node,["a:schemeClr","attrs", "val"]);
       //console.log(schemeClr)
       color = this.getSchemeColorFromTheme("a:" + schemeClr,undefined); //#...
 
@@ -9258,7 +9193,7 @@ class Convertor {
         // console.log("hslClr: " + hslClr);
     }else if(node["a:sysClr"] !== undefined){
       //<a:sysClr val="windowText" lastClr="000000"/>  //Need to test/////////////////////////////////////////////
-      var sysClr = this.getTextByPathList(node,["a:sysClr","attrs","lastClr"]);
+      var sysClr = this.convertorUtils.getTextByPathList(node,["a:sysClr","attrs","lastClr"]);
       if(sysClr !== undefined){
         color = sysClr;
       }
@@ -9310,33 +9245,33 @@ class Convertor {
     var opcity = 1;
 
     if (solidFill["a:srgbClr"] !== undefined) {
-      var tint = this.getTextByPathList(solidFill,["a:srgbClr","a:tint","attrs", "val"]);
+      var tint = this.convertorUtils.getTextByPathList(solidFill,["a:srgbClr","a:tint","attrs", "val"]);
       if(tint !== undefined){
         opcity =  parseInt(tint) / 100000;
       }
     } else if (solidFill["a:schemeClr"] !== undefined) {
-      var tint = this.getTextByPathList(solidFill,["a:schemeClr","a:tint","attrs", "val"]);
+      var tint = this.convertorUtils.getTextByPathList(solidFill,["a:schemeClr","a:tint","attrs", "val"]);
       if(tint !== undefined){
         opcity =  parseInt(tint) / 100000;
       }
     }else if(solidFill["a:scrgbClr"] !== undefined){
-      var tint = this.getTextByPathList(solidFill,["a:scrgbClr","a:tint","attrs", "val"]);
+      var tint = this.convertorUtils.getTextByPathList(solidFill,["a:scrgbClr","a:tint","attrs", "val"]);
       if(tint !== undefined){
         opcity =  parseInt(tint) / 100000;
       }
 
     }else if(solidFill["a:prstClr"] !== undefined){
-      var tint = this.getTextByPathList(solidFill,["a:prstClr","a:tint","attrs", "val"]);
+      var tint = this.convertorUtils.getTextByPathList(solidFill,["a:prstClr","a:tint","attrs", "val"]);
       if(tint !== undefined){
         opcity =  parseInt(tint) / 100000;
       }
     }else if(solidFill["a:hslClr"] !== undefined){
-      var tint = this.getTextByPathList(solidFill,["a:hslClr","a:tint","attrs", "val"]);
+      var tint = this.convertorUtils.getTextByPathList(solidFill,["a:hslClr","a:tint","attrs", "val"]);
       if(tint !== undefined){
         opcity =  parseInt(tint) / 100000;
       }
     }else if(solidFill["a:sysClr"] !== undefined){
-      var tint = this.getTextByPathList(solidFill,["a:sysClr","a:tint","attrs", "val"]);
+      var tint = this.convertorUtils.getTextByPathList(solidFill,["a:sysClr","a:tint","attrs", "val"]);
       if(tint !== undefined){
         opcity =  parseInt(tint) / 100000;
       }
@@ -9350,7 +9285,7 @@ class Convertor {
   	// e.g. tx2="dk2" bg2="lt2" tx1="dk1" bg1="lt1"
 
     if(this.slideLayoutClrOvride == '' || this.slideLayoutClrOvride === undefined ){
-      this.slideLayoutClrOvride = this.getTextByPathList(sldMasterNode,["p:sldMaster","p:clrMap","attrs"])
+      this.slideLayoutClrOvride = this.convertorUtils.getTextByPathList(sldMasterNode,["p:sldMaster","p:clrMap","attrs"])
     }
     //console.log(slideLayoutClrOvride);
     var schmClrName =  schemeClr.substr(2);
@@ -9381,91 +9316,12 @@ class Convertor {
       }
     }
 
-  	var refNode = this.getTextByPathList(this.themeContent, ["a:theme", "a:themeElements", "a:clrScheme", schemeClr]);
-    var color = this.getTextByPathList(refNode, ["a:srgbClr", "attrs", "val"]);
+  	var refNode = this.convertorUtils.getTextByPathList(this.themeContent, ["a:theme", "a:themeElements", "a:clrScheme", schemeClr]);
+    var color = this.convertorUtils.getTextByPathList(refNode, ["a:srgbClr", "attrs", "val"]);
     if (color === undefined && refNode !== undefined) {
-      color = this.getTextByPathList(refNode, ["a:sysClr", "attrs", "lastClr"]);
+      color = this.convertorUtils.getTextByPathList(refNode, ["a:sysClr", "attrs", "lastClr"]);
     }
   	return color;
-  }
-
-  extractChartData(serNode) {
-  	var dataMat = new Array();
-
-    if (serNode === undefined) {
-  		return dataMat;
-  	}
-
-    let that = this; //Klaas - FIXED
-  	if (serNode["c:xVal"] !== undefined || serNode["cft"] !== undefined) {
-  		var dataRow = new Array();
-  		if (serNode["c:xVal"] !== undefined) { // Scatter case (with only one Y set of values)
-            // Label
-            var colName = that.getTextByPathList(serNode, ["c:tx", "c:strRef", "c:strCache", "c:pt", "c:v"])[0] || index;
-            for (var i = 0; i < serNode["c:xVal"]["c:numRef"]["c:numCache"]["c:pt"].length; i++) {
-                var x1 = parseFloat(serNode["c:xVal"]["c:numRef"]["c:numCache"]["c:pt"][i]["c:v"][0]);
-                var x2 = parseFloat(serNode["c:yVal"]["c:numRef"]["c:numCache"]["c:pt"][i]["c:v"][0]);
-                dataRow.push({x: x1, y: x2});
-            }
-            dataMat.push({key: colName, values: dataRow});
-        } else { // Pie Chart case
-            this.eachElement(serNode["c:val"]["c:numRef"]["c:numCache"]["c:pt"], function(innerNode, index) {
-                dataRow.push(parseFloat(innerNode["c:v"]));
-                return "";
-            });
-        }
-
-  	} else {
-
-  		this.eachElement(serNode, function(innerNode, index) {
-  			var dataRow = new Array();
-        //Klaas: Typeerrorconvertor.js:1538 Uncaught TypeError: Cannot read property 'getTextByPathList' of undefined
-        //Klaas: is problem with scoping? it should work, unless there is recursion. then we need
-        //Klaas: ES7 => fat arrow, .bind(this) or that = this to keep track of lexical/dynamic scope
-        //var colName = this.getTextByPathList(innerNode, ["c:tx", "c:strRef", "c:strCache", "c:pt", "c:v"]) || index;
-
-            var colName = null;
-            if (that.getTextByPathList(innerNode, ["c:tx", "c:strRef", "c:strCache", "c:pt", "c:v"])) {
-                colName = that.getTextByPathList(innerNode, ["c:tx", "c:strRef", "c:strCache", "c:pt", "c:v"])[0];
-            } else {
-                colName= index;
-            }
-
-  			// Category (string or number)
-  			var rowNames = {};
-  			if (that.getTextByPathList(innerNode, ["c:cat", "c:strRef", "c:strCache", "c:pt"]) !== undefined) {
-  				that.eachElement(innerNode["c:cat"]["c:strRef"]["c:strCache"]["c:pt"], function(innerNode, index) {
-  					rowNames[innerNode["attrs"]["idx"]] = innerNode["c:v"];
-  					return "";
-  				});
-  			} else if (that.getTextByPathList(innerNode, ["c:cat", "c:numRef", "c:numCache", "c:pt"]) !== undefined) {
-                that.eachElement(innerNode["c:cat"]["c:numRef"]["c:numCache"]["c:pt"], function(innerNode, index) {
-                rowNames[innerNode["attrs"]["idx"]] = innerNode["c:v"];
-                return "";
-            });
-            }
-
-  			// Value
-        if (that.getTextByPathList(innerNode, ["c:val", "c:numRef", "c:numCache", "c:pt"]) !== undefined) {
-          that.eachElement(innerNode["c:val"]["c:numRef"]["c:numCache"]["c:pt"], function(innerNode, index) {
-            dataRow.push({x: innerNode["attrs"]["idx"], y: parseFloat(innerNode["c:v"])});
-            return "";
-          });
-        } else if (that.getTextByPathList(innerNode, ["c:xVal", "c:numRef", "c:numCache", "c:pt"]) !== undefined) {
-            for (var i = 0; i < innerNode["c:xVal"]["c:numRef"]["c:numCache"]["c:pt"].length; i++) {
-                var x1 = parseFloat(innerNode["c:xVal"]["c:numRef"]["c:numCache"]["c:pt"][i]["c:v"][0]);
-                var x2 = parseFloat(innerNode["c:yVal"]["c:numRef"]["c:numCache"]["c:pt"][i]["c:v"][0]);
-                dataRow.push({x: x1, y: x2});
-            }
-        }
-
-  			dataMat.push({key: colName, values: dataRow, xlabels: rowNames});
-  			return "";
-  		});
-
-  	}
-
-  	return dataMat;
   }
 
   // ===== Node functions =====
@@ -9475,64 +9331,11 @@ class Convertor {
    * @param {string} pathStr
    */
   getTextByPathStr(node, pathStr) {
-  	return this.getTextByPathList(node, pathStr.trim().split(/\s+/));
+  	return this.convertorUtils.getTextByPathList(node, pathStr.trim().split(/\s+/));
       //http://www.w3schools.com/jsref/jsref_split.asp
-      //return this.getTextByPathList(node, pathStr.trim().split(","));
+      //return this.convertorUtils.getTextByPathList(node, pathStr.trim().split(","));
   }
-
-  /**
-   * getTextByPathList
-   * @param {Object} node
-   * @param {string Array} path
-   */
-  getTextByPathList(node, path) {
-
-  	if (path.constructor !== Array) {
-  		throw Error("Error of path type! path is not array.");
-  	}
-
-  	if (node === undefined) {
-  		return undefined;
-  	}
-
-  	var l = path.length;
-  	for (var i=0; i<l; i++) {
-          //klaas: this might be something that goes wrong...
-  //TODO THIS LOG        console.log('node = ' + node + 'path = ' +  path[i]);
-          //console.log('node = ' + node + 'path = ' +  path);
-          //console.log('node = ' + node + 'path.lenght = ' +  l);
-  //TODO THIS LOG        console.log(node);
-  		node = node[path[i]]; //!!!
-
-  		if (node === undefined) {
-  			return undefined;
-  		}
-  	}
-
-  	return node;
-  }
-
-  /**
-   * eachElement
-   * @param {Object} node
-   * @param {function} doFunction
-   */
-  eachElement(node, doFunction) {
-  	if (node === undefined) {
-  		return;
-  	}
-  	var result = "";
-  	if (node.constructor === Array) {
-  		var l = node.length;
-  		for (var i=0; i<l; i++) {
-  			result += doFunction(node[i], i);
-  		}
-  	} else {
-  		result += doFunction(node, 0);
-  	}
-  	return result;
-  }
-
+    
   // ===== Color functions =====
   /**
    * applyShade
