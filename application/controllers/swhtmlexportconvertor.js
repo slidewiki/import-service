@@ -49,6 +49,26 @@ class SWHTMLExportConvertor {
           content = contentAndSpeakerNotes.substring(0, asideStart1);
           speakerNotes = contentAndSpeakerNotes.substring(asideStart2 + 1, asideEnd);
         }
+        
+        //Extract title if not defined in the data-menu-item (e.g. external reveal.js)
+        if (slideTitle === '') {
+          let headingTags = ['<h1', '<h2', '<h3', '<h4', '<h5', '<h6'];
+          let index = 0;
+          while (slideTitle === '' && index < headingTags.length) {
+            let titleStart1 = content.indexOf(headingTags[index], 0);
+            if (titleStart1 > -1) {
+              let titleStart2 = content.indexOf('>', titleStart1);
+              let titleEnd = content.indexOf('</h', titleStart2);
+              slideTitle = content.substring(titleStart2 + 1, titleEnd);
+            }
+            if (slideTitle !== '') {
+              slideTitle = slideTitle.replace(/<[^>]*>/g, '');//strip html tags
+            } else {
+              index++;
+            }
+          }
+        }
+        
         slide = {content: content, notes: speakerNotes, title: slideTitle};
         slides.push(slide);
         currentIndex = sectionEnd;
