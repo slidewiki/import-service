@@ -1,8 +1,8 @@
 'use strict';
-let imagehandler = require('./imagehandler.js');
-let JSZip = require('../PPTX2HTML/js/jszip.min.js');
+//let imagehandler = require('./imagehandler.js');
+//let JSZip = require('../PPTX2HTML/js/jszip.min.js');
 
-class SWHTMLExportConvertor {
+class RevealConvertor {
   constructor() {
     this.fileName = 'index.html';
   }
@@ -10,6 +10,8 @@ class SWHTMLExportConvertor {
   convertHTMLExport(data) {
     let zip = new JSZip(data);
     let textFile = zip.file(this.fileName).asText();
+
+    return;
 
     //extract slide size
     const outerDiv1 = textFile.indexOf('class="pptx2html"', 0);
@@ -105,26 +107,34 @@ class SWHTMLExportConvertor {
 }
 
 module.exports = {
-  SWHTMLExportConvertor
+  RevealConvertor
 };
+
+/*
+ * Test: Class RevealConvertor
+ */
+// CreateInstance
+var testInstance = new RevealConvertor();
+
+//testInstance.convertHTMLExport('Test.zip');
 
 /*
  * start :: new general import
  */
 // "use strict";
 
-//var fs = require("fs");
-//var JSZip = require("jszip");
+var fs = require("fs");
+var JSZip = require("jszip");
 
 //RevealZIP();
 
 // read a zip file
 
 function RevealZIP() {
-    fs.readFile("reveal.zip", function(err, data) {
+    fs.readFile("Test.zip", function(err, data) {
         JSZip.loadAsync(data).then(function(zip) {
             Object.keys(zip.files).forEach(function(filename) {
-                if (filename == "reveal.js/test.html") {
+                if (filename == "index.html") {
                     zip.files[filename].async('string').then(function(fileData) {
                         Reveal2JSON(fileData);
                     })
@@ -134,7 +144,6 @@ function RevealZIP() {
     });
 
 }
-
 
 //Reveal2JSON
 /*
@@ -508,8 +517,8 @@ function Reveal2JSON(html) {
 
     // Objective: Export JSON
     var fileJSON = 'presentationSlidewikiRevealImport.json';
-    writeFile(fileJSON, JSON.stringify(JSONdeck));
-
+    //writeFile(fileJSON, JSON.stringify(JSONdeck));
+    console.log(JSONdeck);
 
 }
 
