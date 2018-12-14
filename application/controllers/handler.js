@@ -11,6 +11,7 @@ const config = require('../configuration');
 const Microservices = require('../configs/microservices');
 let Convertor = require('../PPTX2HTML/js/convertor.js');
 let SWHTMLExportConvertor = require('./swhtmlexportconvertor.js');
+let pick = require('lodash/pick');
 
 module.exports = {
   //Import uploaded PPTX and transform to HTML via PPTX2HTML  or return ERROR
@@ -142,6 +143,7 @@ function createDeckFromPPTX(buffer, user, jwt, language, license, deckName, desc
     const slideSize = (result.slideSize) ? result.slideSize : {'width': 0, 'height': 0};
 
     return createDeck({
+      user,
       language,
       license,
       deckName,
@@ -192,6 +194,7 @@ function createDeckFromSWHTMLExport(buffer, user, jwt, language, license, deckNa
   swHTMLExportConvertor.extractAndConvertImages(firstSlide.content, buffer, jwt).then((content) => {
     firstSlide.content = content;
     return createDeck({
+      user,
       language,
       license,
       deckName,
@@ -390,23 +393,35 @@ function convertImagesAndCreateNodesRecursive(license, deckId, previousSlideId, 
 
 //Send a request to insert a new deck with the first slide
 function createDeck(options) {
-  let {language, license, deckName, description, tags, theme, firstSlide, authToken} = options;
+  let {user, language, license, deckName, description, tags, theme, firstSlide, authToken} = options;
 
   //Send a request to insert a new deck with the first slide
   let myPromise = new Promise((resolve, reject) => {
-    let title = '';
+    let firstSlideTitle = '';
     if (firstSlide.title && firstSlide.title !== ''){
-      title = firstSlide.title;
+      firstSlideTitle = firstSlide.title;
     } else if (firstSlide.ctrTitle && firstSlide.ctrTitle !== ''){
-      title = firstSlide.ctrTitle;
+      firstSlideTitle = firstSlide.ctrTitle;
     } else if (firstSlide.subTitle && firstSlide.subTitle !== ''){
-      title = firstSlide.subTitle;
+      firstSlideTitle = firstSlide.subTitle;
     }
-
-    title = title.trim();
-
-    if (title.length > 100) {
-      title = title.substring(0,99) + '...';
+    firstSlideTitle = firstSlideTitle.trim();
+    if (firstSlideTitle.length > 100) {
+      firstSlideTitle = firstSlideTitle.substring(0,99) + '...';
+    }
+    // prepare tag data to send to deck service
+    let tagsPromise = Promise.resolve([]);
+    if (tags && tags.length) {
+      // send tags to tag-service
+      tagsPromise = rp.post({
+        uri: Microservices.tag.uri + '/tag/upload',
+        json: true,
+        body: {
+          user: user,
+          tags: tags,
+        }
+      }).then((receivedtags) => receivedtags.map((t) => pick(t, 'tagType', 'tagName', 'defaultName')));
+      // TODO maybe catch an error here ?
     }
 
     let jsonData = {
@@ -417,11 +432,11 @@ function createDeck(options) {
       translation: {
         status: 'original'
       },
-      tags: tags,
+      tags: [],
       theme: theme,
       first_slide: {
         content: firstSlide.content,
-        title: (title !== '') ? title : 'Slide 1',//It is not allowed to be empty
+        title: (firstSlideTitle !== '') ? firstSlideTitle : 'Slide 1',//It is not allowed to be empty
         speakernotes: firstSlide.notes
       }
     };
@@ -432,17 +447,34 @@ function createDeck(options) {
 
     let headers = {};
     headers[config.JWT.HEADER] = authToken;
-
-    rp.post({
-      uri: Microservices.deck.uri + '/deck/new',
-      body: jsonData,
-      json: true,
-      headers,
-    }).then((newDeck) => {
-      resolve(newDeck);
+    
+    tagsPromise.then((receivedtags) => {
+      jsonData.tags = receivedtags;
+      rp.post({
+        uri: Microservices.deck.uri + '/deck/new',
+        body: jsonData,
+        json: true,
+        headers,
+      }).then((newDeck) => {
+        resolve(newDeck);
+      }).catch((err) => {
+        console.log('Error', err);
+        reject(err);
+      });
     }).catch((err) => {
       console.log('Error', err);
-      reject(err);
+      //if tags promisses failed, create a deck without tags
+      rp.post({
+        uri: Microservices.deck.uri + '/deck/new',
+        body: jsonData,
+        json: true,
+        headers,
+      }).then((newDeck) => {
+        resolve(newDeck);
+      }).catch((err) => {
+        console.log('Error', err);
+        reject(err);
+      });
     });
   });
 

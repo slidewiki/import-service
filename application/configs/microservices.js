@@ -28,5 +28,8 @@ module.exports = {
     //from line 96- 107 in /application/controllers/handler.js
     uri: (!co.isEmpty(process.env.VIRTUAL_HOST)) ? process.env.VIRTUAL_HOST : 'importservice.experimental.slidewiki.org'
   },
+  'tag': {
+    uri: (!co.isEmpty(process.env.SERVICE_URL_TAG)) ? process.env.SERVICE_URL_TAG : 'http://tagservice'
+  },
 
 };
